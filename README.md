@@ -1,18 +1,15 @@
 # sbt-github-actions
 
-TODO description
+A trivial plugin for assisting in building sbt projects using [GitHub Actions](https://github.com/features/actions), in the style of [sbt-travisci](https://github.com/dwijnand/sbt-travisci).
 
 ## Usage
 
+Add the following to your `plugins.sbt`:
+
 ```sbt
-// ...if using bintray
-// resolvers += Resolver.bintrayRepo("djspiewak", "maven")
-
-libraryDependencies += "com.codecommit" %% "sbt-github-actions" % "<version>"
+addSbtPlugin("com.codecommit" % "sbt-github-actions" % <latest>)
 ```
 
-Published for Scala 2.12.10.
+## Keys
 
-```scala
-import sbtghactions._
-```
+- `githubIsWorkflowBuild` : `Boolean` – Indicates whether or not the build is currently running within a GitHub Actions Workflow
