@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Daniel Spiewak
+ * Copyright 2020 Daniel Spiewak
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,4 +14,12 @@
  * limitations under the License.
  */
 
-package object sbtghactions
+package sbtghactions
+
+import sbt._
+
+trait GitHubActionsKeys {
+  lazy val githubIsWorkflowBuild = settingKey[Boolean]("Indicates whether or not the current sbt session is running within a GitHub Actions Workflow")
+}
+
+object GitHubActionsKeys extends GitHubActionsKeys

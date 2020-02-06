@@ -14,13 +14,19 @@
  * limitations under the License.
  */
 
-name := "sbt-github-actions"
+package sbtghactions
 
-ThisBuild / baseVersion := "0.1"
+import sbt._
 
-ThisBuild / organization := "com.codecommit"
-ThisBuild / publishGithubUser := "djspiewak"
-ThisBuild / publishFullName := "Daniel Spiewak"
+object GitHubActionsPlugin extends AutoPlugin {
 
-sbtPlugin := true
-sbtVersion := "1.3.8"
+  override def requires = plugins.JvmPlugin
+  override def trigger = allRequirements
+
+  object autoImport extends GitHubActionsKeys
+
+  import autoImport._
+
+  override def projectSettings = Seq(
+    githubIsWorkflowBuild := sys.env.get("GITHUB_ACTIONS").map(true ==).getOrElse(false))
+}
