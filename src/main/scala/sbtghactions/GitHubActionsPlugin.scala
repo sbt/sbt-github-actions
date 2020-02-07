@@ -28,5 +28,5 @@ object GitHubActionsPlugin extends AutoPlugin {
   import autoImport._
 
   override def projectSettings = Seq(
-    githubIsWorkflowBuild := sys.env.get("GITHUB_ACTIONS").map(true ==).getOrElse(false))
+    githubIsWorkflowBuild := sys.env.get("GITHUB_ACTIONS").map("true" ==).getOrElse(false))
 }
