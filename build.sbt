@@ -24,3 +24,5 @@ ThisBuild / publishFullName := "Daniel Spiewak"
 
 sbtPlugin := true
 sbtVersion := "1.3.8"
+
+libraryDependencies += "org.yaml" % "snakeyaml" % "1.25"

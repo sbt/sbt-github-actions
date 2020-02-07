@@ -19,7 +19,12 @@ package sbtghactions
 import sbt._
 
 trait GitHubActionsKeys {
+
   lazy val githubIsWorkflowBuild = settingKey[Boolean]("Indicates whether or not the current sbt session is running within a GitHub Actions Workflow")
+
+  lazy val githubWorkflowName = settingKey[String]("Contains the name of the currently-running workflow, if defined")
+
+  lazy val githubWorkflowDefinition = settingKey[Map[String, Any]]("The raw (parsed) contents of the workflow manifest file corresponding to this build, recursively converted to Scala")
 }
 
 object GitHubActionsKeys extends GitHubActionsKeys

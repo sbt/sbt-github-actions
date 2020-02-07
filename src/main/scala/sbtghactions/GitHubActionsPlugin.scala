@@ -16,7 +16,12 @@
 
 package sbtghactions
 
-import sbt._
+import sbt._, Keys._
+import sbt.io.Using
+
+import org.yaml.snakeyaml.Yaml
+
+import scala.collection.JavaConverters._
 
 object GitHubActionsPlugin extends AutoPlugin {
 
@@ -27,6 +32,65 @@ object GitHubActionsPlugin extends AutoPlugin {
 
   import autoImport._
 
-  override def projectSettings = Seq(
+  private[this] def recursivelyConvert(a: Any): Any = a match {
+    case map: java.util.Map[_, _] =>
+      map.asScala.toMap map { case (k, v) => k -> recursivelyConvert(v) }
+
+    case ls: java.util.List[_] =>
+      ls.asScala.toList.map(recursivelyConvert)
+
+    case i: java.lang.Integer =>
+      i.intValue
+
+    case b: java.lang.Boolean =>
+      b.booleanValue
+
+    case f: java.lang.Float =>
+      f.floatValue
+
+    case d: java.lang.Double =>
+      d.doubleValue
+
+    case l: java.lang.Long =>
+      l.longValue
+  }
+
+  private val workflowParseSettings = Seq(
+    githubWorkflowName := sys.env("GITHUB_WORKFLOW"),
+
+    githubWorkflowDefinition := {
+      val log = sLog.value
+      val name = githubWorkflowName.value
+      val base = baseDirectory.value
+
+      if (name != null) {
+        val workflowsDir = base / ".github" / "workflows"
+
+        val results = workflowsDir.listFiles().filter(_.getName.endsWith(".yml")).toList.view flatMap { potential =>
+          Using.fileInputStream(potential) { fis =>
+            Option(new Yaml().load[Any](fis)) collect {
+              case map: java.util.Map[_, _] =>
+                map.asScala.toMap map { case (k, v) => k.toString -> recursivelyConvert(v) }
+            }
+          }
+        }
+
+        results.headOption getOrElse {
+          log.warn("unable to find or parse workflow YAML definition")
+          log.warn("assuming the empty map for `githubWorkflowDefinition`")
+
+          Map()
+        }
+      } else {
+        log.warn("sbt does not appear to be running within GitHub Actions ($GITHUB_WORKFLOW is undefined)")
+        log.warn("assuming the empty map for `githubWorkflowDefinition`")
+
+        Map()
+      }
+    })
+
+  override def buildSettings = workflowParseSettings
+
+  override def globalSettings = Seq(
     githubIsWorkflowBuild := sys.env.get("GITHUB_ACTIONS").map("true" ==).getOrElse(false))
 }
