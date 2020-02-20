@@ -53,6 +53,8 @@ object GitHubActionsPlugin extends AutoPlugin {
 
     case l: java.lang.Long =>
       l.longValue
+
+    case s: String => s
   }
 
   private val workflowParseSettings = {
