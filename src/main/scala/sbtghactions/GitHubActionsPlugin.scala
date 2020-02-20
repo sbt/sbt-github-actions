@@ -68,6 +68,7 @@ object GitHubActionsPlugin extends AutoPlugin {
 
             if (name != null) {
               val workflowsDir = base / ".github" / "workflows"
+              log.info(s"looking for workflow definition in $workflowsDir")
 
               val results = workflowsDir.listFiles().filter(_.getName.endsWith(".yml")).toList.view flatMap { potential =>
                 Using.fileInputStream(potential) { fis =>
@@ -76,6 +77,8 @@ object GitHubActionsPlugin extends AutoPlugin {
                       map.asScala.toMap map { case (k, v) => k.toString -> recursivelyConvert(v) }
                   }
                 }
+              } filter { map =>
+                map("name") == name
               }
 
               results.headOption getOrElse {
