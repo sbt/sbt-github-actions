@@ -55,39 +55,47 @@ object GitHubActionsPlugin extends AutoPlugin {
       l.longValue
   }
 
-  private val workflowParseSettings = Seq(
-    githubWorkflowName := sys.env("GITHUB_WORKFLOW"),
+  private val workflowParseSettings = {
+    sys.env.get("GITHUB_WORKFLOW") match {
+      case Some(workflowName) =>
+        Seq(
+          githubWorkflowName := workflowName,
 
-    githubWorkflowDefinition := {
-      val log = sLog.value
-      val name = githubWorkflowName.value
-      val base = baseDirectory.value
+          githubWorkflowDefinition := {
+            val log = sLog.value
+            val name = githubWorkflowName.value
+            val base = baseDirectory.value
 
-      if (name != null) {
-        val workflowsDir = base / ".github" / "workflows"
+            if (name != null) {
+              val workflowsDir = base / ".github" / "workflows"
 
-        val results = workflowsDir.listFiles().filter(_.getName.endsWith(".yml")).toList.view flatMap { potential =>
-          Using.fileInputStream(potential) { fis =>
-            Option(new Yaml().load[Any](fis)) collect {
-              case map: java.util.Map[_, _] =>
-                map.asScala.toMap map { case (k, v) => k.toString -> recursivelyConvert(v) }
+              val results = workflowsDir.listFiles().filter(_.getName.endsWith(".yml")).toList.view flatMap { potential =>
+                Using.fileInputStream(potential) { fis =>
+                  Option(new Yaml().load[Any](fis)) collect {
+                    case map: java.util.Map[_, _] =>
+                      map.asScala.toMap map { case (k, v) => k.toString -> recursivelyConvert(v) }
+                  }
+                }
+              }
+
+              results.headOption getOrElse {
+                log.warn("unable to find or parse workflow YAML definition")
+                log.warn("assuming the empty map for `githubWorkflowDefinition`")
+
+                Map()
+              }
+            } else {
+              log.warn("sbt does not appear to be running within GitHub Actions ($GITHUB_WORKFLOW is undefined)")
+              log.warn("assuming the empty map for `githubWorkflowDefinition`")
+
+              Map()
             }
-          }
-        }
+          })
 
-        results.headOption getOrElse {
-          log.warn("unable to find or parse workflow YAML definition")
-          log.warn("assuming the empty map for `githubWorkflowDefinition`")
-
-          Map()
-        }
-      } else {
-        log.warn("sbt does not appear to be running within GitHub Actions ($GITHUB_WORKFLOW is undefined)")
-        log.warn("assuming the empty map for `githubWorkflowDefinition`")
-
-        Map()
-      }
-    })
+      case None =>
+        Seq()
+    }
+  }
 
   override def buildSettings = workflowParseSettings
 
