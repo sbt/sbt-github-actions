@@ -68,24 +68,29 @@ object GitHubActionsPlugin extends AutoPlugin {
 
             if (name != null) {
               val workflowsDir = base / ".github" / "workflows"
-              log.info(s"looking for workflow definition in $workflowsDir")
 
-              val results = workflowsDir.listFiles().filter(_.getName.endsWith(".yml")).toList.view flatMap { potential =>
-                Using.fileInputStream(potential) { fis =>
-                  Option(new Yaml().load[Any](fis)) collect {
-                    case map: java.util.Map[_, _] =>
-                      map.asScala.toMap map { case (k, v) => k.toString -> recursivelyConvert(v) }
+              if (workflowsDir.exists() && workflowsDir.isDirectory()) {
+                log.info(s"looking for workflow definition in $workflowsDir")
+
+                val results = workflowsDir.listFiles().filter(_.getName.endsWith(".yml")).toList.view flatMap { potential =>
+                  Using.fileInputStream(potential) { fis =>
+                    Option(new Yaml().load[Any](fis)) collect {
+                      case map: java.util.Map[_, _] =>
+                        map.asScala.toMap map { case (k, v) => k.toString -> recursivelyConvert(v) }
+                    }
                   }
+                } filter { map =>
+                  map("name") == name
                 }
-              } filter { map =>
-                map("name") == name
-              }
 
-              results.headOption getOrElse {
-                log.warn("unable to find or parse workflow YAML definition")
-                log.warn("assuming the empty map for `githubWorkflowDefinition`")
+                results.headOption getOrElse {
+                  log.warn("unable to find or parse workflow YAML definition")
+                  log.warn("assuming the empty map for `githubWorkflowDefinition`")
 
-                Map()
+                  Map()
+                }
+              } else {
+                Map()   // silently pretend nothing is wrong, because we're probably running in a meta-plugin or something random
               }
             } else {
               log.warn("sbt does not appear to be running within GitHub Actions ($GITHUB_WORKFLOW is undefined)")
