@@ -208,28 +208,24 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
 
   override def projectSettings = Seq(Global / internalTargetAggregation += target.value)
 
+  private val pathStrs = Def setting {
+    val base = (ThisBuild / baseDirectory).value.toPath
+
+    (internalTargetAggregation.value :+ file("project/target")) map { file =>
+      val path = file.toPath
+
+      if (path.isAbsolute)
+        base.relativize(path).toString
+      else
+        path.toString
+    }
+  }
+
   override def globalSettings = settingDefaults ++ Seq(
     internalTargetAggregation := Seq(),
 
-    githubWorkflowGeneratedCI := {
-      val hashes = githubWorkflowDependencyPatterns.value map { glob =>
-        s"$${{ hashFiles('$glob') }}"
-      }
-
-      val hashesStr = hashes.mkString("-")
-
-      val base = (ThisBuild / baseDirectory).value.toPath
-
-      val pathStrs = (internalTargetAggregation.value :+ file("project/target")) map { file =>
-        val path = file.toPath
-
-        if (path.isAbsolute)
-          base.relativize(path).toString
-        else
-          path.toString
-      }
-
-      val uploadSteps = pathStrs map { target =>
+    githubWorkflowGeneratedUploadSteps := {
+      pathStrs.value map { target =>
         WorkflowStep.Use(
           "actions",
           "upload-artifact",
@@ -239,8 +235,10 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
             "name" -> s"target-$${{ runner.os }}-$target",
             "path" -> target))
       }
+    },
 
-      val downloadSteps = pathStrs map { target =>
+    githubWorkflowGeneratedDownloadSteps := {
+      pathStrs.value map { target =>
         WorkflowStep.Use(
           "actions",
           "download-artifact",
@@ -248,6 +246,14 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
           name = Some(s"Download target directory '$target'"),
           params = Map("name" -> s"target-$${{ runner.os }}-$target"))
       }
+    },
+
+    githubWorkflowGeneratedCI := {
+      val hashes = githubWorkflowDependencyPatterns.value map { glob =>
+        s"$${{ hashFiles('$glob') }}"
+      }
+
+      val hashesStr = hashes.mkString("-")
 
       val preamble = List(
         WorkflowStep.Checkout,
@@ -288,12 +294,17 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
         case None => publicationCondPre
       }
 
+      val uploadStepsOpt = if (githubWorkflowPublishBranchPatterns.value.isEmpty && githubWorkflowAddedJobs.value.isEmpty)
+        Nil
+      else
+        githubWorkflowGeneratedUploadSteps.value.toList
+
       val publishJobOpt = Seq(
         WorkflowJob(
           "publish",
           "Publish Artifacts",
           preamble :::
-            downloadSteps.toList :::
+            githubWorkflowGeneratedDownloadSteps.value.toList :::
             githubWorkflowPublishPreamble.value.toList :::
             List(githubWorkflowPublish.value),   // TODO more steps
           cond = Some(s"github.event_name != 'pull_request' && $publicationCond"),
@@ -311,7 +322,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
                 List("githubWorkflowCheck"),
                 name = Some("Check that workflows are up to date")),
               githubWorkflowBuild.value) :::
-            uploadSteps.toList,
+            uploadStepsOpt,
           oses = githubWorkflowOSes.value.toList,
           scalas = crossScalaVersions.value.toList)) ++ publishJobOpt ++ githubWorkflowAddedJobs.value
     })
