@@ -273,7 +273,11 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
           "Build and Test",
           preamble :::
             githubWorkflowBuildPreamble.value.toList :::
-            List(githubWorkflowBuild.value) :::
+            List(
+              WorkflowStep.Sbt(
+                List("githubWorkflowCheck"),
+                name = Some("Check that workflows are up to date")),
+              githubWorkflowBuild.value) :::
             uploadSteps.toList,
           githubWorkflowOSes.value.toList,
           scalas = crossScalaVersions.value.toList)) ++ publishJobOpt ++ githubWorkflowAddedJobs.value
