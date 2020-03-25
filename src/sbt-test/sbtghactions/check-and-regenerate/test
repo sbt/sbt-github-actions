@@ -1,0 +1,15 @@
+-> githubWorkflowCheck
+> githubWorkflowGenerate
+> githubWorkflowCheck
+$ copy-file .github/workflows/clean.yml .github/workflows/ci.yml
+-> githubWorkflowCheck
+> githubWorkflowGenerate
+> githubWorkflowCheck
+$ copy-file .github/workflows/ci.yml .github/workflows/clean.yml
+-> githubWorkflowCheck
+> githubWorkflowGenerate
+> githubWorkflowCheck
+$ copy-file expected-ci.yml .github/workflows/ci.yml
+> githubWorkflowCheck
+$ copy-file expected-clean.yml .github/workflows/clean.yml
+> githubWorkflowCheck

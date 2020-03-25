@@ -29,3 +29,8 @@ libraryDependencies ++= Seq(
   "org.yaml" % "snakeyaml" % "1.25",
 
   "org.specs2" %% "specs2-core" % "4.8.3" % Test)
+
+enablePlugins(SbtPlugin)
+
+scriptedLaunchOpts ++= Seq("-Dplugin.version=" + version.value)
+scriptedBufferLog := true

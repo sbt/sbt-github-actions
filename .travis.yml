@@ -8,11 +8,10 @@ branches:
   except:
     - /^v\d+\.\d+\.\d+$/      # don't redundantly build tags
 
-scala:
-  - 2.12.10
+scala: 2.12.10
 
 script:
-  - sbt ++$TRAVIS_SCALA_VERSION ci
+  - sbt ++$TRAVIS_SCALA_VERSION test scripted
 
 before_cache:
   - find $HOME/.sbt -name "*.lock" -type f -delete
