@@ -281,7 +281,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
             "key" -> s"$${{ runner.os }}-sbt-cache-$hashesStr")))
 
       val publicationCondPre =
-        githubWorkflowPublishBranchPatterns.value.map(g => s"contains(github.ref, $g)").mkString("(", " || ", ")")
+        githubWorkflowPublishBranchPatterns.value.map(g => s"contains(github.ref, '$g')").mkString("(", " || ", ")")
 
       val publicationCond = githubWorkflowPublishCond.value match {
         case Some(cond) => publicationCondPre + " && (" + cond + ")"

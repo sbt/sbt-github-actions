@@ -73,7 +73,7 @@ jobs:
   publish:
     name: Publish Artifacts
     needs: [build]
-    if: github.event_name != 'pull_request' && (contains(github.ref, master) || contains(github.ref, test))
+    if: github.event_name != 'pull_request' && (contains(github.ref, 'master') || contains(github.ref, 'test'))
     strategy:
       matrix:
         os: [ubuntu-latest]
