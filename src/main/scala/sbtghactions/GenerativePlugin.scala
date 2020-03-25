@@ -221,6 +221,10 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
     }
   }
 
+  // cannot contain '\', '/', '"', ':', '<', '>', '|', '*', or '?'
+  private def sanitizeTarget(str: String): String =
+    List('\\', '/', '"', ':', '<', '>', '|', '*', '?').foldLeft(str)(_.replace(_, '_'))
+
   override def globalSettings = settingDefaults ++ Seq(
     internalTargetAggregation := Seq(),
 
@@ -232,7 +236,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
           1,
           name = Some(s"Upload target directory '$target'"),
           params = Map(
-            "name" -> s"target-$${{ runner.os }}-$target",
+            "name" -> s"target-$${{ runner.os }}-${sanitizeTarget(target)}",
             "path" -> target))
       }
     },
@@ -244,7 +248,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
           "download-artifact",
           1,
           name = Some(s"Download target directory '$target'"),
-          params = Map("name" -> s"target-$${{ runner.os }}-$target"))
+          params = Map("name" -> s"target-$${{ runner.os }}-${sanitizeTarget(target)}"))
       }
     },
 

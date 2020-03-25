@@ -67,7 +67,7 @@ jobs:
       - name: Upload target directory 'project/target'
         uses: actions/upload-artifact@v1
         with:
-          name: target-${{ runner.os }}-project/target
+          name: target-${{ runner.os }}-project_target
           path: project/target
 
   publish:
@@ -115,7 +115,7 @@ jobs:
       - name: Download target directory 'project/target'
         uses: actions/download-artifact@v1
         with:
-          name: target-${{ runner.os }}-project/target
+          name: target-${{ runner.os }}-project_target
 
       - name: Publish project
         run: sbt ++${{ matrix.scala }} +publish
