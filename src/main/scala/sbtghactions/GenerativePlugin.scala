@@ -137,6 +137,12 @@ ${indent(rendered.mkString("\n"), 1)}"""
 
     val renderedCond = job.cond.map(wrap).map("\nif: " + _).getOrElse("")
 
+    val renderedEnvPre = compileEnv(job.env)
+    val renderedEnv = if (renderedEnvPre.isEmpty)
+      ""
+    else
+      "\n" + renderedEnvPre
+
     val declareShell = job.oses.exists(_.contains("windows"))
 
     val body = s"""name: ${wrap(job.name)}${renderedNeeds}${renderedCond}
@@ -145,7 +151,7 @@ strategy:
     os: [${job.oses.mkString(", ")}]
     scala: [${job.scalas.mkString(", ")}]
     java: [${job.javas.mkString(", ")}]
-runs-on: $${{ matrix.os }}${compileEnv(job.env)}
+runs-on: $${{ matrix.os }}${renderedEnv}
 steps:
 ${indent(job.steps.map(compileStep(_, sbt, declareShell = declareShell)).mkString("\n\n"), 1)}"""
 

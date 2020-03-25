@@ -225,5 +225,33 @@ class GenerativePluginSpec extends Specification {
       with:
         java-version: $${{ matrix.java }}"""
     }
+
+    "compile a job environment, conditional, and needs with an sbt step" in {
+      val results = compileJob(
+        WorkflowJob(
+          "nada",
+          "Moooo",
+          List(
+            WorkflowStep.Sbt(List("+compile"))),
+          env = Map("not" -> "now"),
+          cond = Some("boy != girl"),
+          needs = List("unmet")),
+        "csbt")
+
+      results mustEqual s"""nada:
+  name: Moooo
+  needs: [unmet]
+  if: boy != girl
+  strategy:
+    matrix:
+      os: [ubuntu-latest]
+      scala: [2.13.1]
+      java: [adopt@1.8]
+  runs-on: $${{ matrix.os }}
+  env:
+    not: now
+  steps:
+    - run: csbt ++$${{ matrix.scala }} +compile"""
+    }
   }
 }
