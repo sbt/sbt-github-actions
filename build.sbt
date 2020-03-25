@@ -25,4 +25,7 @@ ThisBuild / publishFullName := "Daniel Spiewak"
 sbtPlugin := true
 sbtVersion := "1.3.8"
 
-libraryDependencies += "org.yaml" % "snakeyaml" % "1.25"
+libraryDependencies ++= Seq(
+  "org.yaml" % "snakeyaml" % "1.25",
+
+  "org.specs2" %% "specs2-core" % "4.8.3" % Test)

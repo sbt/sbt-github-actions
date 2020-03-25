@@ -20,9 +20,9 @@ final case class WorkflowJob(
     id: String,
     name: String,
     steps: List[WorkflowStep],
-    oses: List[String],
     cond: Option[String] = None,
     env: Map[String, String] = Map(),
+    oses: List[String] = List("ubuntu-latest"),
     scalas: List[String] = List("2.13.1"),
     javas: List[String] = List("adopt@1.8"),
     needs: List[String] = Nil)

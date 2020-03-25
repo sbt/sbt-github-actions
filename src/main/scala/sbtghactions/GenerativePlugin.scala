@@ -33,7 +33,7 @@ object GenerativePlugin extends AutoPlugin {
 
   private def indent(output: String, level: Int): String = {
     val space = (0 until level * 2).map(_ => ' ').mkString
-    space + output.replace("\n", s"\n$space")
+    (space + output.replace("\n", s"\n$space")).replaceAll("""\n[ ]+\n""", "\n\n")
   }
 
   private def isSafeString(str: String): Boolean =
@@ -58,16 +58,16 @@ object GenerativePlugin extends AutoPlugin {
 
   private def wrap(str: String): String =
     if (str.indexOf('\n') >= 0)
-      " |\n" + indent(str, 1)
+      "|\n" + indent(str, 1)
     else if (isSafeString(str))
       str
     else
       s"'${str.replace("'", "''")}'"
 
-  private def compileList(items: List[String]): String =
+  def compileList(items: List[String]): String =
     items.map(wrap).map("- " + _).mkString("\n")
 
-  private def compileEnv(env: Map[String, String]): String =
+  def compileEnv(env: Map[String, String], prefix: String = "env"): String =
     if (env.isEmpty) {
       ""
     } else {
@@ -78,23 +78,29 @@ object GenerativePlugin extends AutoPlugin {
 
           s"""$key: ${wrap(value)}"""
       }
-s"""env:
+s"""$prefix:
 ${indent(rendered.mkString("\n"), 1)}"""
     }
 
-  private def compileStep(step: WorkflowStep, sbt: String, declareShell: Boolean = false): String = {
+  def compileStep(step: WorkflowStep, sbt: String, declareShell: Boolean = false): String = {
     import WorkflowStep._
 
     val renderedName = step.name.map(wrap).map("name: " + _ + "\n").getOrElse("")
     val renderedCond = step.cond.map(wrap).map("if: " + _ + "\n").getOrElse("")
     val renderedShell = if (declareShell) "shell: bash\n" else ""
 
-    val preamblePre = renderedName + renderedCond + renderedShell + compileEnv(step.env)
+    val renderedEnvPre = compileEnv(step.env)
+    val renderedEnv = if (renderedEnvPre.isEmpty)
+      ""
+    else
+      renderedEnvPre + "\n"
+
+    val preamblePre = renderedName + renderedCond + renderedShell + renderedEnv
 
     val preamble = if (preamblePre.isEmpty)
       ""
     else
-      preamblePre + "\n"
+      preamblePre
 
     val body = step match {
       case Run(commands, _, _, _) =>
@@ -108,10 +114,10 @@ ${indent(rendered.mkString("\n"), 1)}"""
             c
         }
 
-        "run: " + wrap(s"$sbt ++$${{ matrix.scala }} ${safeCommands.mkString("\n")}")
+        "run: " + wrap(s"$sbt ++$${{ matrix.scala }} ${safeCommands.mkString(" ")}")
 
       case Use(owner, repo, version, params, _, _, _) =>
-        val renderedParamsPre = compileEnv(params)
+        val renderedParamsPre = compileEnv(params, prefix = "with")
         val renderedParams = if (renderedParamsPre.isEmpty)
           ""
         else
@@ -120,10 +126,10 @@ ${indent(rendered.mkString("\n"), 1)}"""
         s"uses: $owner/$repo@v$version" + renderedParams
     }
 
-    indent(body, 1).updated(0, '-')
+    indent(preamble + body, 1).updated(0, '-')
   }
 
-  private def compileJob(job: WorkflowJob, sbt: String): String = {
+  def compileJob(job: WorkflowJob, sbt: String): String = {
     val renderedNeeds = if (job.needs.isEmpty)
       ""
     else
@@ -133,7 +139,7 @@ ${indent(rendered.mkString("\n"), 1)}"""
 
     val declareShell = job.oses.exists(_.contains("windows"))
 
-s"""name: ${wrap(job.name)}${renderedNeeds}${renderedCond}
+    val body = s"""name: ${wrap(job.name)}${renderedNeeds}${renderedCond}
 strategy:
   matrix:
     os: [${job.oses.mkString(", ")}]
@@ -142,9 +148,11 @@ strategy:
 runs-on: $${{ matrix.os }}${compileEnv(job.env)}
 steps:
 ${indent(job.steps.map(compileStep(_, sbt, declareShell = declareShell)).mkString("\n\n"), 1)}"""
+
+    s"${job.id}:\n${indent(body, 1)}"
   }
 
-  def compile(name: String, branches: List[String], env: Map[String, String], jobs: List[WorkflowJob], sbt: String): String = {
+  def compileWorkflow(name: String, branches: List[String], env: Map[String, String], jobs: List[WorkflowJob], sbt: String): String = {
     val renderedEnvPre = compileEnv(env)
     val renderedEnv = if (renderedEnvPre.isEmpty)
       ""
@@ -269,7 +277,6 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
             downloadSteps.toList :::
             githubWorkflowPublishPreamble.value.toList :::
             List(githubWorkflowPublish.value),   // TODO more steps
-          List("ubuntu-latest"),
           cond = Some(s"github.event_name != 'pull_request' && $publicationCond"),
           scalas = List(scalaVersion.value),
           needs = List("build"))).filter(_ => !githubWorkflowPublishBranchGlobs.value.isEmpty)
@@ -286,12 +293,12 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
                 name = Some("Check that workflows are up to date")),
               githubWorkflowBuild.value) :::
             uploadSteps.toList,
-          githubWorkflowOSes.value.toList,
+          oses = githubWorkflowOSes.value.toList,
           scalas = crossScalaVersions.value.toList)) ++ publishJobOpt ++ githubWorkflowAddedJobs.value
     })
 
   private val generateCiContents = Def task {
-    compile(
+    compileWorkflow(
       "Continuous Integration",
       githubWorkflowTargetBranches.value.toList,
       githubWorkflowEnv.value,
