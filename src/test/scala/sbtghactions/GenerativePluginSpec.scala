@@ -85,6 +85,56 @@ class GenerativePluginSpec extends Specification {
             List(WorkflowStep.Run(List("echo Hello World"))))),
         "sbt") mustEqual expected
     }
+
+    "compile a workflow with two jobs" in {
+      val expected = header + s"""
+        |name: test3
+        |
+        |on:
+        |  pull_request:
+        |    - master
+        |  push:
+        |    - master
+        |
+        |jobs:
+        |  build:
+        |    name: Build and Test
+        |    strategy:
+        |      matrix:
+        |        os: [ubuntu-latest]
+        |        scala: [2.13.1]
+        |        java: [adopt@1.8]
+        |    runs-on: $${{ matrix.os }}
+        |    steps:
+        |      - run: echo yikes
+        |
+        |  what:
+        |    name: If we just didn't
+        |    strategy:
+        |      matrix:
+        |        os: [ubuntu-latest]
+        |        scala: [2.13.1]
+        |        java: [adopt@1.8]
+        |    runs-on: $${{ matrix.os }}
+        |    steps:
+        |      - run: whoami""".stripMargin
+
+      compileWorkflow(
+        "test3",
+        List("master"),
+        Map(),
+        List(
+          WorkflowJob(
+            "build",
+            "Build and Test",
+            List(WorkflowStep.Run(List("echo yikes")))),
+
+          WorkflowJob(
+            "what",
+            "If we just didn't",
+            List(WorkflowStep.Run(List("whoami"))))),
+        "") mustEqual expected
+    }
   }
 
   "step compilation" should {
