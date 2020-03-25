@@ -248,17 +248,14 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
       }
     },
 
-    githubWorkflowGeneratedCI := {
+    githubWorkflowGeneratedCacheSteps := {
       val hashes = githubWorkflowDependencyPatterns.value map { glob =>
         s"$${{ hashFiles('$glob') }}"
       }
 
       val hashesStr = hashes.mkString("-")
 
-      val preamble = List(
-        WorkflowStep.Checkout,
-        WorkflowStep.SetupScala,
-
+      Seq(
         WorkflowStep.Use(
           "actions",
           "cache",
@@ -285,6 +282,12 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
           params = Map(
             "path" -> "~/.sbt",
             "key" -> s"$${{ runner.os }}-sbt-cache-$hashesStr")))
+    },
+
+    githubWorkflowGeneratedCI := {
+      val preamble = List(
+        WorkflowStep.Checkout,
+        WorkflowStep.SetupScala) ::: githubWorkflowGeneratedCacheSteps.value.toList
 
       val publicationCondPre =
         githubWorkflowPublishBranchPatterns.value.map(g => s"contains(github.ref, '$g')").mkString("(", " || ", ")")
