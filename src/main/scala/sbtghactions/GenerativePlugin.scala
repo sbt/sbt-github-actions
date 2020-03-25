@@ -24,8 +24,8 @@ import java.io.{BufferedWriter, FileWriter}
 
 object GenerativePlugin extends AutoPlugin {
 
-  override def requires = GitHubActionsPlugin
-  override def trigger = noTrigger
+  override def requires = plugins.JvmPlugin
+  override def trigger = allRequirements
 
   object autoImport extends GenerativeKeys
 
