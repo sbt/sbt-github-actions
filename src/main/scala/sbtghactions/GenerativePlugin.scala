@@ -192,7 +192,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
 
     githubWorkflowPublishPreamble := Seq(),
     githubWorkflowPublish := WorkflowStep.Sbt(List("+publish"), name = Some("Publish project")),
-    githubWorkflowPublishBranchGlobs := Seq("master"),
+    githubWorkflowPublishBranchPatterns := Seq("master"),
     githubWorkflowPublishCond := None,
 
     githubWorkflowJavaVersions := Seq("adopt@1.8"),
@@ -281,7 +281,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
             "key" -> s"$${{ runner.os }}-sbt-cache-$hashesStr")))
 
       val publicationCondPre =
-        githubWorkflowPublishBranchGlobs.value.map(g => s"contains(github.ref, $g)").mkString(" && ")
+        githubWorkflowPublishBranchPatterns.value.map(g => s"contains(github.ref, $g)").mkString(" && ")
 
       val publicationCond = githubWorkflowPublishCond.value match {
         case Some(cond) => publicationCondPre + " && (" + cond + ")"
@@ -298,7 +298,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
             List(githubWorkflowPublish.value),   // TODO more steps
           cond = Some(s"github.event_name != 'pull_request' && $publicationCond"),
           scalas = List(scalaVersion.value),
-          needs = List("build"))).filter(_ => !githubWorkflowPublishBranchGlobs.value.isEmpty)
+          needs = List("build"))).filter(_ => !githubWorkflowPublishBranchPatterns.value.isEmpty)
 
       Seq(
         WorkflowJob(
