@@ -176,9 +176,9 @@ name: ${wrap(name)}
 
 on:
   pull_request:
-${indent(compileList(branches), 2)}
+    branches: [${branches.map(wrap).mkString(", ")}]
   push:
-${indent(compileList(branches), 2)}
+    branches: [${branches.map(wrap).mkString(", ")}]
 
 ${renderedEnv}jobs:
 ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
