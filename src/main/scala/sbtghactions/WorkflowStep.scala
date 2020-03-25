@@ -32,7 +32,7 @@ object WorkflowStep {
   val Tmate = Use("mxschmitt", "action-tmate", 2, name = Some("Setup tmate session"))
 
   def ComputeVar(name: String, cmd: String) =
-    Run(List(s"echo ::set-env name=CLONE_DIR::$$($cmd)"), name = Some(s"Export $name"))
+    Run(List(s"echo ::set-env name=$name::$$($cmd)"), name = Some(s"Export $name"))
 
   final case class Run(commands: List[String], name: Option[String] = None, cond: Option[String] = None, env: Map[String, String] = Map()) extends WorkflowStep
   final case class Sbt(commands: List[String], name: Option[String] = None, cond: Option[String] = None, env: Map[String, String] = Map()) extends WorkflowStep
