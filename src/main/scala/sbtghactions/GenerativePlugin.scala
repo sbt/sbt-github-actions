@@ -18,6 +18,8 @@ package sbtghactions
 
 import sbt._, Keys._
 
+import java.io.{BufferedWriter, FileWriter}
+
 object GenerativePlugin extends AutoPlugin {
 
   override def requires = GitHubActionsPlugin
@@ -78,13 +80,14 @@ s"""env:
 ${indent(rendered.mkString("\n"), 1)}"""
     }
 
-  private def compileStep(step: WorkflowStep, sbt: String): String = {
+  private def compileStep(step: WorkflowStep, sbt: String, declareShell: Boolean = false): String = {
     import WorkflowStep._
 
     val renderedName = step.name.map(wrap).map("name: " + _ + "\n").getOrElse("")
     val renderedCond = step.cond.map(wrap).map("if: " + _ + "\n").getOrElse("")
+    val renderedShell = if (declareShell) "shell: bash\n" else ""
 
-    val preamblePre = renderedName + renderedCond + compileEnv(step.env)
+    val preamblePre = renderedName + renderedCond + renderedShell + compileEnv(step.env)
 
     val preamble = if (preamblePre.isEmpty)
       ""
@@ -126,6 +129,8 @@ ${indent(rendered.mkString("\n"), 1)}"""
 
     val renderedCond = job.cond.map(wrap).map("\nif: " + _).getOrElse("")
 
+    val declareShell = job.oses.exists(_.contains("windows"))
+
 s"""name: ${wrap(job.name)}${renderedNeeds}${renderedCond}
 strategy:
   matrix:
@@ -134,7 +139,7 @@ strategy:
     java: [${job.javas.mkString(", ")}]
 runs-on: $${{ matrix.os }}${compileEnv(job.env)}
 steps:
-${indent(job.steps.map(compileStep(_, sbt)).mkString("\n\n"), 1)}"""
+${indent(job.steps.map(compileStep(_, sbt, declareShell = declareShell)).mkString("\n\n"), 1)}"""
   }
 
   def compile(name: String, branches: List[String], env: Map[String, String], jobs: List[WorkflowJob], sbt: String): String = {
@@ -279,10 +284,34 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
     githubWorkflowCheck / aggregate := false,
 
     githubWorkflowGenerate := {
-      ???
+      val ciContents = compile(
+        "Continuous Integration",
+        githubWorkflowTargetBranches.value.toList,
+        githubWorkflowEnv.value,
+        githubWorkflowGeneratedCI.value.toList,
+        githubWorkflowSbtCommand.value)
+
+      val githubDir = baseDirectory.value / ".github"
+      val workflowsDir = githubDir / "workflows"
+      val ciYml = workflowsDir / "ci.yml"
+
+      if (!githubDir.exists()) {
+        githubDir.mkdir()
+      }
+
+      if (!workflowsDir.exists()) {
+        workflowsDir.mkdir()
+      }
+
+      val writer = new BufferedWriter(new FileWriter(ciYml))
+      try {
+        writer.write(ciContents)
+      } finally {
+        writer.close()
+      }
     },
 
     githubWorkflowCheck := {
-      ???
+      // TODO
     })
 }
