@@ -322,7 +322,7 @@ class GenerativePluginSpec extends Specification {
     }
 
     "contains" >> {
-      compileBranchPredicate("thingy", Contains(Tag("other"))) mustEqual "contains(thingy, 'refs/tags/other')"
+      compileBranchPredicate("thingy", Contains(Tag("other"))) mustEqual "(startsWith(thingy, 'refs/tags/') && contains(thingy, 'other'))"
     }
 
     "startsWith" >> {
@@ -330,7 +330,7 @@ class GenerativePluginSpec extends Specification {
     }
 
     "endsWith" >> {
-      compileBranchPredicate("thingy", EndsWith(Branch("other"))) mustEqual "endsWith(thingy, 'refs/heads/other')"
+      compileBranchPredicate("thingy", EndsWith(Branch("other"))) mustEqual "(startsWith(thingy, 'refs/heads/') && endsWith(thingy, 'other'))"
     }
   }
 }

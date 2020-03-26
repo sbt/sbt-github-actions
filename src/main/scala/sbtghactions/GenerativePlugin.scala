@@ -85,10 +85,23 @@ object GenerativePlugin extends AutoPlugin {
   }
 
   def compileBranchPredicate(target: String, pred: RefPredicate): String = pred match {
-    case RefPredicate.Equals(ref) => s"$target == '${compileRef(ref)}'"
-    case RefPredicate.Contains(ref) => s"contains($target, '${compileRef(ref)}')"
-    case RefPredicate.StartsWith(ref) => s"startsWith($target, '${compileRef(ref)}')"
-    case RefPredicate.EndsWith(ref) => s"endsWith($target, '${compileRef(ref)}')"
+    case RefPredicate.Equals(ref) =>
+      s"$target == '${compileRef(ref)}'"
+
+    case RefPredicate.Contains(Ref.Tag(name)) =>
+      s"(startsWith($target, 'refs/tags/') && contains($target, '$name'))"
+
+    case RefPredicate.Contains(Ref.Branch(name)) =>
+      s"(startsWith($target, 'refs/heads/') && contains($target, '$name'))"
+
+    case RefPredicate.StartsWith(ref) =>
+      s"startsWith($target, '${compileRef(ref)}')"
+
+    case RefPredicate.EndsWith(Ref.Tag(name)) =>
+      s"(startsWith($target, 'refs/tags/') && endsWith($target, '$name'))"
+
+    case RefPredicate.EndsWith(Ref.Branch(name)) =>
+      s"(startsWith($target, 'refs/heads/') && endsWith($target, '$name'))"
   }
 
   def compileEnv(env: Map[String, String], prefix: String = "env"): String =
