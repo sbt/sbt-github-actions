@@ -60,7 +60,7 @@ This plugin is quite prescriptive in that it forcibly manages the contents of th
 - `githubWorkflowSbtCommand` : `String` – Any use of sbt within the generated workflow will compile to an invocation of this bash command. This defaults to `"sbt"`, but can be overridden to anything that is valid in bash syntax (e.g. `"csbt"`, or `"$SBT"`).
 - `githubWorkflowDependencyPatterns` : `Seq[String]` – A list of file globs which dictate where dependency information is stored. This is conventionally just `**/*.sbt` and `project/build.properties`. If you store dependency information in some *other* file (for example, `project/Versions.scala`), then you should add a glob which matches that file in this setting. This is used for determining the appropriate cache keys for the Ivy and Coursier caches.
 - `githubWorkflowTargetBranches` : `Seq[String]` – A list of globs which will match branches and tags for `push` and `pull-request` event types to trigger the **ci.yml** workflow. Defaults to `*`.
-- `githubWorkflowEnv` : `Map[String, String]` – An environment which is global to the entire **ci.yml** workflow. Defaults to `Map("GITHUB_TOKEN" -> "${{ secrets.GITHUB_TOKEN }}")` since this is so commonly needed.
+- `githubWorkflowEnv` : `Map[String, String]` – An environment which is global to the entire **ci.yml** workflow. Defaults to `Map("GITHUB_TOKEN" -> "${{ secrets.GITHUB_TOKEN }}")` since it's so commonly needed.
 - `githubWorkflowAddedJobs` : `Seq[WorkflowJob]` – A convenience mechanism for adding extra custom jobs to the **ci.yml** workflow (though you can also do this by modifying `githubWorkflowGeneratedCI`). Defaults to empty.
 
 #### `build` Job
