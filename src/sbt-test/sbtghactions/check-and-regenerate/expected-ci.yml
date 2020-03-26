@@ -58,16 +58,16 @@ jobs:
       - name: Build project
         run: sbt ++${{ matrix.scala }} test
 
-      - name: Upload target directory 'target'
+      - name: Upload target directory 'target' (${{ matrix.scala }})
         uses: actions/upload-artifact@v1
         with:
-          name: target-${{ runner.os }}-target
+          name: target-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}-target
           path: target
 
       - name: Upload target directory 'project/target'
         uses: actions/upload-artifact@v1
         with:
-          name: target-${{ runner.os }}-project_target
+          name: target-${{ matrix.os }}-${{ matrix.java }}-project_target
           path: project/target
 
   publish:
@@ -107,15 +107,20 @@ jobs:
           path: ~/.sbt
           key: ${{ runner.os }}-sbt-cache-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('project/build.properties') }}
 
-      - name: Download target directory 'target'
+      - name: Download target directory 'target' (2.13.1)
         uses: actions/download-artifact@v1
         with:
-          name: target-${{ runner.os }}-target
+          name: target-${{ matrix.os }}-2.13.1-${{ matrix.java }}-target
+
+      - name: Download target directory 'target' (2.12.10)
+        uses: actions/download-artifact@v1
+        with:
+          name: target-${{ matrix.os }}-2.12.10-${{ matrix.java }}-target
 
       - name: Download target directory 'project/target'
         uses: actions/download-artifact@v1
         with:
-          name: target-${{ runner.os }}-project_target
+          name: target-${{ matrix.os }}-${{ matrix.java }}-project_target
 
       - name: Publish project
         run: sbt ++${{ matrix.scala }} +publish

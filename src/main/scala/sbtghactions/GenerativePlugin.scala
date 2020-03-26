@@ -211,7 +211,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
   private val pathStrs = Def setting {
     val base = (ThisBuild / baseDirectory).value.toPath
 
-    (internalTargetAggregation.value :+ file("project/target")) map { file =>
+    internalTargetAggregation.value map { file =>
       val path = file.toPath
 
       if (path.isAbsolute)
@@ -229,27 +229,45 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
     internalTargetAggregation := Seq(),
 
     githubWorkflowGeneratedUploadSteps := {
-      pathStrs.value map { target =>
+      val mainSteps = pathStrs.value map { target =>
         WorkflowStep.Use(
           "actions",
           "upload-artifact",
           1,
-          name = Some(s"Upload target directory '$target'"),
+          name = Some(s"Upload target directory '$target' ($${{ matrix.scala }})"),
           params = Map(
-            "name" -> s"target-$${{ runner.os }}-${sanitizeTarget(target)}",
+            "name" -> s"target-$${{ matrix.os }}-$${{ matrix.scala }}-$${{ matrix.java }}-${sanitizeTarget(target)}",
             "path" -> target))
       }
+
+      mainSteps :+ WorkflowStep.Use(
+        "actions",
+        "upload-artifact",
+        1,
+        name = Some(s"Upload target directory 'project/target'"),
+        params = Map(
+          "name" -> s"target-$${{ matrix.os }}-$${{ matrix.java }}-project_target",
+          "path" -> "project/target"))
     },
 
     githubWorkflowGeneratedDownloadSteps := {
-      pathStrs.value map { target =>
-        WorkflowStep.Use(
-          "actions",
-          "download-artifact",
-          1,
-          name = Some(s"Download target directory '$target'"),
-          params = Map("name" -> s"target-$${{ runner.os }}-${sanitizeTarget(target)}"))
+      val mainSteps = pathStrs.value flatMap { target =>
+        crossScalaVersions.value map { v =>
+          WorkflowStep.Use(
+            "actions",
+            "download-artifact",
+            1,
+            name = Some(s"Download target directory '$target' ($v)"),
+            params = Map("name" -> s"target-$${{ matrix.os }}-$v-$${{ matrix.java }}-${sanitizeTarget(target)}"))
+        }
       }
+
+      mainSteps :+ WorkflowStep.Use(
+        "actions",
+        "download-artifact",
+        1,
+        name = Some(s"Download target directory 'project/target'"),
+        params = Map("name" -> s"target-$${{ matrix.os }}-$${{ matrix.java }}-project_target"))
     },
 
     githubWorkflowGeneratedCacheSteps := {
