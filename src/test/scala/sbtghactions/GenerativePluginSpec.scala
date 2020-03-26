@@ -36,9 +36,9 @@ class GenerativePluginSpec extends Specification {
         |
         |on:
         |  pull_request:
-        |    - master
+        |    branches: [master]
         |  push:
-        |    - master
+        |    branches: [master]
         |
         |jobs:
         |  """.stripMargin
@@ -52,11 +52,9 @@ class GenerativePluginSpec extends Specification {
         |
         |on:
         |  pull_request:
-        |    - master
-        |    - backport/v*
+        |    branches: [master, backport/v*]
         |  push:
-        |    - master
-        |    - backport/v*
+        |    branches: [master, backport/v*]
         |
         |env:
         |  GITHUB_TOKEN: $${{ secrets.GITHUB_TOKEN }}
@@ -92,9 +90,9 @@ class GenerativePluginSpec extends Specification {
         |
         |on:
         |  pull_request:
-        |    - master
+        |    branches: [master]
         |  push:
-        |    - master
+        |    branches: [master]
         |
         |jobs:
         |  build:
@@ -159,6 +157,16 @@ class GenerativePluginSpec extends Specification {
           name = Some("nomenclature")),
         "",
         true) mustEqual "- name: nomenclature\n  shell: bash\n  run: echo hi"
+    }
+
+    "omit shell declaration on Use step" in {
+      compileStep(
+        Use(
+          "repo",
+          "slug",
+          0),
+        "",
+        true) mustEqual "- uses: repo/slug@v0"
     }
 
     "compile sbt using the command provided" in {

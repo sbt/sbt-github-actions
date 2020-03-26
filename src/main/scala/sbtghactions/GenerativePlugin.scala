@@ -95,7 +95,7 @@ ${indent(rendered.mkString("\n"), 1)}"""
     else
       renderedEnvPre + "\n"
 
-    val preamblePre = renderedName + renderedCond + renderedShell + renderedEnv
+    val preamblePre = renderedName + renderedCond + renderedEnv
 
     val preamble = if (preamblePre.isEmpty)
       ""
@@ -104,7 +104,7 @@ ${indent(rendered.mkString("\n"), 1)}"""
 
     val body = step match {
       case Run(commands, _, _, _) =>
-        "run: " + wrap(commands.mkString("\n"))
+        renderedShell + "run: " + wrap(commands.mkString("\n"))
 
       case Sbt(commands, _, _, _) =>
         val safeCommands = commands map { c =>
@@ -114,7 +114,7 @@ ${indent(rendered.mkString("\n"), 1)}"""
             c
         }
 
-        "run: " + wrap(s"$sbt ++$${{ matrix.scala }} ${safeCommands.mkString(" ")}")
+        renderedShell + "run: " + wrap(s"$sbt ++$${{ matrix.scala }} ${safeCommands.mkString(" ")}")
 
       case Use(owner, repo, version, params, _, _, _) =>
         val renderedParamsPre = compileEnv(params, prefix = "with")
