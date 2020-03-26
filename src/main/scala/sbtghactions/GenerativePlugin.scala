@@ -27,7 +27,16 @@ object GenerativePlugin extends AutoPlugin {
   override def requires = plugins.JvmPlugin
   override def trigger = allRequirements
 
-  object autoImport extends GenerativeKeys
+  object autoImport extends GenerativeKeys {
+    type WorkflowJob = sbtghactions.WorkflowJob
+    val WorkflowJob = sbtghactions.WorkflowJob
+
+    type WorkflowStep = sbtghactions.WorkflowStep
+    val WorkflowStep = sbtghactions.WorkflowStep
+
+    type BranchPredicate = sbtghactions.BranchPredicate
+    val BranchPredicate = sbtghactions.BranchPredicate
+  }
 
   import autoImport._
 
@@ -66,6 +75,13 @@ object GenerativePlugin extends AutoPlugin {
 
   def compileList(items: List[String]): String =
     items.map(wrap).map("- " + _).mkString("\n")
+
+  def compileBranchPredicate(target: String, pred: BranchPredicate): String = pred match {
+    case BranchPredicate.Equals(name) => s"$target == '$name'"
+    case BranchPredicate.Contains(name) => s"contains($target, '$name')"
+    case BranchPredicate.StartsWith(name) => s"startsWith($target, '$name')"
+    case BranchPredicate.EndsWith(name) => s"endsWith($target, '$name')"
+  }
 
   def compileEnv(env: Map[String, String], prefix: String = "env"): String =
     if (env.isEmpty) {
@@ -192,7 +208,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
 
     githubWorkflowPublishPreamble := Seq(),
     githubWorkflowPublish := WorkflowStep.Sbt(List("+publish"), name = Some("Publish project")),
-    githubWorkflowPublishBranchPatterns := Seq("master"),
+    githubWorkflowPublishTargetBranches := Seq(BranchPredicate.Equals("master")),
     githubWorkflowPublishCond := None,
 
     githubWorkflowJavaVersions := Seq("adopt@1.8"),
@@ -312,14 +328,14 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
         WorkflowStep.SetupScala) ::: githubWorkflowGeneratedCacheSteps.value.toList
 
       val publicationCondPre =
-        githubWorkflowPublishBranchPatterns.value.map(g => s"contains(github.ref, '$g')").mkString("(", " || ", ")")
+        githubWorkflowPublishTargetBranches.value.map(compileBranchPredicate("github.ref", _)).mkString("(", " || ", ")")
 
       val publicationCond = githubWorkflowPublishCond.value match {
         case Some(cond) => publicationCondPre + " && (" + cond + ")"
         case None => publicationCondPre
       }
 
-      val uploadStepsOpt = if (githubWorkflowPublishBranchPatterns.value.isEmpty && githubWorkflowAddedJobs.value.isEmpty)
+      val uploadStepsOpt = if (githubWorkflowPublishTargetBranches.value.isEmpty && githubWorkflowAddedJobs.value.isEmpty)
         Nil
       else
         githubWorkflowGeneratedUploadSteps.value.toList
@@ -334,7 +350,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
             List(githubWorkflowPublish.value),   // TODO more steps
           cond = Some(s"github.event_name != 'pull_request' && $publicationCond"),
           scalas = List(scalaVersion.value),
-          needs = List("build"))).filter(_ => !githubWorkflowPublishBranchPatterns.value.isEmpty)
+          needs = List("build"))).filter(_ => !githubWorkflowPublishTargetBranches.value.isEmpty)
 
       Seq(
         WorkflowJob(

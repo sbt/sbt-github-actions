@@ -312,4 +312,24 @@ class GenerativePluginSpec extends Specification {
     - run: csbt ++$${{ matrix.scala }} +compile"""
     }
   }
+
+  "predicate compilation" >> {
+    import BranchPredicate._
+
+    "equals" >> {
+      compileBranchPredicate("thingy", Equals("other")) mustEqual "thingy == 'other'"
+    }
+
+    "contains" >> {
+      compileBranchPredicate("thingy", Contains("other")) mustEqual "contains(thingy, 'other')"
+    }
+
+    "startsWith" >> {
+      compileBranchPredicate("thingy", StartsWith("other")) mustEqual "startsWith(thingy, 'other')"
+    }
+
+    "endsWith" >> {
+      compileBranchPredicate("thingy", EndsWith("other")) mustEqual "endsWith(thingy, 'other')"
+    }
+  }
 }
