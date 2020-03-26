@@ -22,14 +22,19 @@ ThisBuild / organization := "com.codecommit"
 ThisBuild / publishGithubUser := "djspiewak"
 ThisBuild / publishFullName := "Daniel Spiewak"
 
+Global / scalaVersion := "2.12.10"
+
+Global / githubWorkflowOSes := Seq("ubuntu-latest", "macos-latest", "windows-latest")
+Global / githubWorkflowBuild := WorkflowStep.Sbt(List("test", "scripted"))
+
+Global / githubWorkflowPublishTargetBranches := Seq()
+
 sbtPlugin := true
 sbtVersion := "1.3.8"
 
-libraryDependencies ++= Seq(
-  "org.yaml" % "snakeyaml" % "1.25",
+libraryDependencies += "org.specs2" %% "specs2-core" % "4.8.3" % Test
 
-  "org.specs2" %% "specs2-core" % "4.8.3" % Test)
-
+disablePlugins(TravisCiPlugin)
 enablePlugins(SbtPlugin)
 
 scriptedLaunchOpts ++= Seq("-Dplugin.version=" + version.value)
