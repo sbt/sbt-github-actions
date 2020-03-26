@@ -40,10 +40,22 @@ jobs:
           path: ~/.ivy2/cache
           key: ${{ runner.os }}-sbt-ivy-cache-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('project/build.properties') }}
 
+      - name: Export COURSIER_CACHE_DIR
+        run: |
+          echo ::set-env name=COURSIER_CACHE_DIR::$(if [[ ${{ runner.os }} =~ "windows.*" ]]; then
+            echo $LOCALAPPDATA/Coursier/Cache/v1
+          elif [[ ${{ runner.os }} =~ "linux.*" ]]; then
+            echo ~/.cache/coursier/v1
+          elif [[ ${{ runner.os }} =~ "windows.*" ]]; then
+            echo ~/Library/Caches/Coursier/v1
+          else
+            exit 1
+          fi)
+
       - name: Cache coursier
         uses: actions/cache@v1
         with:
-          path: ~/.cache/coursier/v1
+          path: ${{ env.COURSIER_CACHE_DIR }}
           key: ${{ runner.os }}-sbt-coursier-cache-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('project/build.properties') }}
 
       - name: Cache sbt
@@ -95,10 +107,22 @@ jobs:
           path: ~/.ivy2/cache
           key: ${{ runner.os }}-sbt-ivy-cache-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('project/build.properties') }}
 
+      - name: Export COURSIER_CACHE_DIR
+        run: |
+          echo ::set-env name=COURSIER_CACHE_DIR::$(if [[ ${{ runner.os }} =~ "windows.*" ]]; then
+            echo $LOCALAPPDATA/Coursier/Cache/v1
+          elif [[ ${{ runner.os }} =~ "linux.*" ]]; then
+            echo ~/.cache/coursier/v1
+          elif [[ ${{ runner.os }} =~ "windows.*" ]]; then
+            echo ~/Library/Caches/Coursier/v1
+          else
+            exit 1
+          fi)
+
       - name: Cache coursier
         uses: actions/cache@v1
         with:
-          path: ~/.cache/coursier/v1
+          path: ${{ env.COURSIER_CACHE_DIR }}
           key: ${{ runner.os }}-sbt-coursier-cache-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('project/build.properties') }}
 
       - name: Cache sbt

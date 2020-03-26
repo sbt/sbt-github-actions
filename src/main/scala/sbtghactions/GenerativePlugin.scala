@@ -287,13 +287,25 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
             "path" -> "~/.ivy2/cache",
             "key" -> s"$${{ runner.os }}-sbt-ivy-cache-$hashesStr")),
 
+        WorkflowStep.ComputeVar(
+          "COURSIER_CACHE_DIR",
+          s"""if [[ $${{ runner.os }} =~ "windows.*" ]]; then
+  echo $$LOCALAPPDATA/Coursier/Cache/v1
+elif [[ $${{ runner.os }} =~ "linux.*" ]]; then
+  echo ~/.cache/coursier/v1
+elif [[ $${{ runner.os }} =~ "windows.*" ]]; then
+  echo ~/Library/Caches/Coursier/v1
+else
+  exit 1
+fi"""),
+
         WorkflowStep.Use(
           "actions",
           "cache",
           1,
           name = Some("Cache coursier"),
           params = Map(
-            "path" -> "~/.cache/coursier/v1",
+            "path" -> s"$${{ env.COURSIER_CACHE_DIR }}",
             "key" -> s"$${{ runner.os }}-sbt-coursier-cache-$hashesStr")),
 
         WorkflowStep.Use(
