@@ -34,8 +34,11 @@ object GenerativePlugin extends AutoPlugin {
     type WorkflowStep = sbtghactions.WorkflowStep
     val WorkflowStep = sbtghactions.WorkflowStep
 
-    type BranchPredicate = sbtghactions.BranchPredicate
-    val BranchPredicate = sbtghactions.BranchPredicate
+    type RefPredicate = sbtghactions.RefPredicate
+    val RefPredicate = sbtghactions.RefPredicate
+
+    type Ref = sbtghactions.Ref
+    val Ref = sbtghactions.Ref
   }
 
   import autoImport._
@@ -76,11 +79,16 @@ object GenerativePlugin extends AutoPlugin {
   def compileList(items: List[String]): String =
     items.map(wrap).map("- " + _).mkString("\n")
 
-  def compileBranchPredicate(target: String, pred: BranchPredicate): String = pred match {
-    case BranchPredicate.Equals(name) => s"$target == '$name'"
-    case BranchPredicate.Contains(name) => s"contains($target, '$name')"
-    case BranchPredicate.StartsWith(name) => s"startsWith($target, '$name')"
-    case BranchPredicate.EndsWith(name) => s"endsWith($target, '$name')"
+  def compileRef(ref: Ref): String = ref match {
+    case Ref.Branch(name) => s"refs/heads/$name"
+    case Ref.Tag(name) => s"refs/tags/$name"
+  }
+
+  def compileBranchPredicate(target: String, pred: RefPredicate): String = pred match {
+    case RefPredicate.Equals(ref) => s"$target == '${compileRef(ref)}'"
+    case RefPredicate.Contains(ref) => s"contains($target, '${compileRef(ref)}')"
+    case RefPredicate.StartsWith(ref) => s"startsWith($target, '${compileRef(ref)}')"
+    case RefPredicate.EndsWith(ref) => s"endsWith($target, '${compileRef(ref)}')"
   }
 
   def compileEnv(env: Map[String, String], prefix: String = "env"): String =
@@ -208,7 +216,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
 
     githubWorkflowPublishPreamble := Seq(),
     githubWorkflowPublish := WorkflowStep.Sbt(List("+publish"), name = Some("Publish project")),
-    githubWorkflowPublishTargetBranches := Seq(BranchPredicate.Equals("master")),
+    githubWorkflowPublishTargetBranches := Seq(RefPredicate.Equals(Ref.Branch("master"))),
     githubWorkflowPublishCond := None,
 
     githubWorkflowJavaVersions := Seq("adopt@1.8"),

@@ -16,11 +16,9 @@
 
 package sbtghactions
 
-sealed trait BranchPredicate extends Product with Serializable
+sealed trait Ref extends Product with Serializable
 
-object BranchPredicate {
-  final case class Equals(name: String) extends BranchPredicate
-  final case class Contains(name: String) extends BranchPredicate
-  final case class StartsWith(name: String) extends BranchPredicate
-  final case class EndsWith(name: String) extends BranchPredicate
+object Ref {
+  final case class Branch(name: String) extends Ref
+  final case class Tag(name: String) extends Ref
 }

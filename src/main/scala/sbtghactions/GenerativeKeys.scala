@@ -35,7 +35,7 @@ trait GenerativeKeys {
 
   lazy val githubWorkflowPublishPreamble = settingKey[Seq[WorkflowStep]]("A list of steps to insert after base setup but before publishing (default: [])")
   lazy val githubWorkflowPublish = settingKey[WorkflowStep]("A workflow step which publishes the project (default: Sbt(List(\"+publish\")))")
-  lazy val githubWorkflowPublishTargetBranches = settingKey[Seq[BranchPredicate]]("A set of branch predicates which will be applied to determine whether the current branch gets a publication stage; if empty, publish will be skipped entirely (default: [== master])")
+  lazy val githubWorkflowPublishTargetBranches = settingKey[Seq[RefPredicate]]("A set of branch predicates which will be applied to determine whether the current branch gets a publication stage; if empty, publish will be skipped entirely (default: [== master])")
   lazy val githubWorkflowPublishCond = settingKey[Option[String]]("A set of conditionals to apply to the publish job to further restrict its run (default: [])")
 
   lazy val githubWorkflowJavaVersions = settingKey[Seq[String]]("A list of Java versions (default: [adopt@1.8])")

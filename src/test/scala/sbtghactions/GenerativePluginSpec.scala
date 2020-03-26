@@ -314,22 +314,23 @@ class GenerativePluginSpec extends Specification {
   }
 
   "predicate compilation" >> {
-    import BranchPredicate._
+    import RefPredicate._
+    import Ref._
 
     "equals" >> {
-      compileBranchPredicate("thingy", Equals("other")) mustEqual "thingy == 'other'"
+      compileBranchPredicate("thingy", Equals(Branch("other"))) mustEqual "thingy == 'refs/heads/other'"
     }
 
     "contains" >> {
-      compileBranchPredicate("thingy", Contains("other")) mustEqual "contains(thingy, 'other')"
+      compileBranchPredicate("thingy", Contains(Tag("other"))) mustEqual "contains(thingy, 'refs/tags/other')"
     }
 
     "startsWith" >> {
-      compileBranchPredicate("thingy", StartsWith("other")) mustEqual "startsWith(thingy, 'other')"
+      compileBranchPredicate("thingy", StartsWith(Branch("other"))) mustEqual "startsWith(thingy, 'refs/heads/other')"
     }
 
     "endsWith" >> {
-      compileBranchPredicate("thingy", EndsWith("other")) mustEqual "endsWith(thingy, 'other')"
+      compileBranchPredicate("thingy", EndsWith(Branch("other"))) mustEqual "endsWith(thingy, 'refs/heads/other')"
     }
   }
 }
