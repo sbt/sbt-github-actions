@@ -21,6 +21,7 @@ import sbt._, Keys._
 import scala.io.Source
 
 import java.io.{BufferedWriter, FileWriter}
+import java.nio.file.FileSystems
 
 object GenerativePlugin extends AutoPlugin {
 
@@ -245,6 +246,11 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
 
   override def projectSettings = Seq(Global / internalTargetAggregation += target.value)
 
+  private val PlatformSep = FileSystems.getDefault.getSeparator
+  private def normalizeSeparators(pathStr: String): String = {
+    pathStr.replace(PlatformSep, "/")   // *force* unix separators
+  }
+
   private val pathStrs = Def setting {
     val base = (ThisBuild / baseDirectory).value.toPath
 
@@ -252,9 +258,9 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
       val path = file.toPath
 
       if (path.isAbsolute)
-        base.relativize(path).toString
+        normalizeSeparators(base.relativize(path).toString)
       else
-        path.toString
+        normalizeSeparators(path.toString)
     }
   }
 
