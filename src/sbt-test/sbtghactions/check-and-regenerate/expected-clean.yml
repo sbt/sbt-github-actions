@@ -5,7 +5,7 @@
 # change your sbt build configuration to revise the workflow description
 # to meet your needs, then regenerate this file.
 
-name: clean
+name: Clean
 
 on: push
 
