@@ -328,9 +328,39 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
           "actions",
           "cache",
           1,
-          name = Some("Cache coursier"),
+          name = Some("Cache coursier (generic)"),
           params = Map(
             "path" -> "~/.coursier/cache/v1",
+            "key" -> s"$${{ runner.os }}-generic-sbt-coursier-cache-$hashesStr")),
+
+        WorkflowStep.Use(
+          "actions",
+          "cache",
+          1,
+          name = Some("Cache coursier (linux)"),
+          cond = Some(s"contains(runner.os, 'linux')"),
+          params = Map(
+            "path" -> "~/.cache/coursier/v1",
+            "key" -> s"$${{ runner.os }}-sbt-coursier-cache-$hashesStr")),
+
+        WorkflowStep.Use(
+          "actions",
+          "cache",
+          1,
+          name = Some("Cache coursier (macOS)"),
+          cond = Some(s"contains(runner.os, 'macos')"),
+          params = Map(
+            "path" -> "~/Library/Caches/Coursier/v1",
+            "key" -> s"$${{ runner.os }}-sbt-coursier-cache-$hashesStr")),
+
+        WorkflowStep.Use(
+          "actions",
+          "cache",
+          1,
+          name = Some("Cache coursier (windows)"),
+          cond = Some(s"contains(runner.os, 'windows')"),
+          params = Map(
+            "path" -> "~/AppData/Local/Coursier/Cache/v1",
             "key" -> s"$${{ runner.os }}-sbt-coursier-cache-$hashesStr")),
 
         WorkflowStep.Use(
@@ -378,7 +408,6 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
           "build",
           "Build and Test",
           preamble :::
-            List(WorkflowStep.Run(List("mkdir -p ~/.coursier/cache/v1"), name = Some("Recreate the OG coursier cache dir"))) :::
             githubWorkflowBuildPreamble.value.toList :::
             List(
               WorkflowStep.Sbt(
