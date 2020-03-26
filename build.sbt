@@ -32,9 +32,10 @@ Global / githubWorkflowPublishTargetBranches := Seq()
 sbtPlugin := true
 sbtVersion := "1.3.8"
 
+scalacOptions += "-Xlint:_,-missing-interpolator"
+
 libraryDependencies += "org.specs2" %% "specs2-core" % "4.8.3" % Test
 
-disablePlugins(TravisCiPlugin)
 enablePlugins(SbtPlugin)
 
 scriptedLaunchOpts ++= Seq("-Dplugin.version=" + version.value)
