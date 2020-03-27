@@ -494,7 +494,8 @@ git config --global alias.rm-symlink '!git rm-symlinks'  # for back-compat."""
               githubWorkflowBuild.value) :::
             uploadStepsOpt,
           oses = githubWorkflowOSes.value.toList,
-          scalas = crossScalaVersions.value.toList)) ++ publishJobOpt ++ githubWorkflowAddedJobs.value
+          scalas = crossScalaVersions.value.toList,
+          javas = githubWorkflowJavaVersions.value.toList)) ++ publishJobOpt ++ githubWorkflowAddedJobs.value
     })
 
   private val generateCiContents = Def task {
