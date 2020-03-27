@@ -1,7 +1,8 @@
 organization := "com.codecommit"
 version := "0.0.1"
 
-Global / crossScalaVersions := Seq("2.13.1", "2.12.10")
-Global / scalaVersion := crossScalaVersions.value.head
+ThisBuild / crossScalaVersions := Seq("2.13.1", "2.12.10")
+ThisBuild / scalaVersion := crossScalaVersions.value.head
 
-Global / githubWorkflowPublishTargetBranches += RefPredicate.Equals(Ref.Tag("test"))
+ThisBuild / githubWorkflowJavaVersions += "graalvm@20.0.0"
+ThisBuild / githubWorkflowPublishTargetBranches += RefPredicate.Equals(Ref.Tag("test"))

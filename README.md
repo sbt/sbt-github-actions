@@ -51,6 +51,8 @@ This plugin is quite prescriptive in that it forcibly manages the contents of th
 
 ### Generative
 
+Any and all settings which affect the behavior of the generative plugin should be set in the `ThisBuild` scope (for example, `ThisBuild / crossScalaVersions :=` rather than just `crossScalaVersions := `). This is important because GitHub Actions workflows are global across the entire build, regardless of how individual projects are configured. A corollary of this is that it is not possible (yet) to have specific subprojects which build with different Scala versions, Java versions, or OSes. This is theoretically possible but it's very complicated. For now, I'm going to be lazy and wait for someone to say "pretty please" before implementing it.
+
 #### General
 
 - `githubWorkflowGeneratedCI` : `Seq[WorkflowJob]` — Contains a description of the **ci.yml** jobs that will drive the generation if used. This setting can be overridden to customize the jobs (e.g. by adding additional jobs to the workflow).

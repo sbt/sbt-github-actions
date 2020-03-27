@@ -244,8 +244,6 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
 
   private lazy val internalTargetAggregation = settingKey[Seq[File]]("Aggregates target directories from all subprojects")
 
-  override def projectSettings = Seq(Global / internalTargetAggregation += target.value)
-
   private val windowsGuard = Some("contains(runner.os, 'windows')")
 
   private val PlatformSep = FileSystems.getDefault.getSeparator
@@ -270,9 +268,9 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
   private def sanitizeTarget(str: String): String =
     List('\\', '/', '"', ':', '<', '>', '|', '*', '?').foldLeft(str)(_.replace(_, '_'))
 
-  override def globalSettings = settingDefaults ++ Seq(
-    internalTargetAggregation := Seq(),
+  override def globalSettings = Seq(internalTargetAggregation := Seq())
 
+  override def buildSettings = settingDefaults ++ Seq(
     githubWorkflowGeneratedUploadSteps := {
       val mainSteps = pathStrs.value map { target =>
         WorkflowStep.Use(
@@ -539,7 +537,9 @@ git config --global alias.rm-symlink '!git rm-symlinks'  # for back-compat."""
     workflowsDirTask.value / "clean.yml"
   }
 
-  override def buildSettings = Seq(
+  override def projectSettings = Seq(
+    Global / internalTargetAggregation += target.value,
+
     githubWorkflowGenerate / aggregate := false,
     githubWorkflowCheck / aggregate := false,
 
