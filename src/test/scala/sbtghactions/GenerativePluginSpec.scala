@@ -311,6 +311,34 @@ class GenerativePluginSpec extends Specification {
   steps:
     - run: csbt ++$${{ matrix.scala }} +compile"""
     }
+
+
+    "compile a job with additional matrix components" in {
+      val results = compileJob(
+        WorkflowJob(
+          "bippy",
+          "Bippity Bop Around the Clock",
+          List(
+            WorkflowStep.Run(List("echo ${{ matrix.test }}")),
+            WorkflowStep.Checkout),
+          matrixAdds = Map("test" -> List("1", "2"))),
+        "")
+
+      results mustEqual s"""bippy:
+  name: Bippity Bop Around the Clock
+  strategy:
+    matrix:
+      os: [ubuntu-latest]
+      scala: [2.13.1]
+      java: [adopt@1.8]
+      test: [1, 2]
+  runs-on: $${{ matrix.os }}
+  steps:
+    - run: echo $${{ matrix.test }}
+
+    - name: Checkout current branch (fast)
+      uses: actions/checkout@v2"""
+    }
   }
 
   "predicate compilation" >> {

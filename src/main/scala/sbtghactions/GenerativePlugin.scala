@@ -181,6 +181,15 @@ ${indent(rendered.mkString("\n"), 1)}"""
     else
       "\n" + renderedEnvPre
 
+    val renderedMatricesPre = job.matrixAdds map {
+      case (key, values) => s"$key: ${values.map(wrap).mkString("[", ", ", "]")}"
+    } mkString "\n"
+
+    val renderedMatrices = if (renderedMatricesPre.isEmpty)
+      ""
+    else
+      "\n" + indent(renderedMatricesPre, 2)
+
     val declareShell = job.oses.exists(_.contains("windows"))
 
     val body = s"""name: ${wrap(job.name)}${renderedNeeds}${renderedCond}
@@ -188,7 +197,7 @@ strategy:
   matrix:
     os: [${job.oses.mkString(", ")}]
     scala: [${job.scalas.mkString(", ")}]
-    java: [${job.javas.mkString(", ")}]
+    java: [${job.javas.mkString(", ")}]${renderedMatrices}
 runs-on: $${{ matrix.os }}${renderedEnv}
 steps:
 ${indent(job.steps.map(compileStep(_, sbt, declareShell = declareShell)).mkString("\n\n"), 1)}"""
@@ -225,6 +234,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
   val settingDefaults = Seq(
     githubWorkflowSbtCommand := "sbt",
 
+    githubWorkflowBuildMatrixAdditions := Map(),
     githubWorkflowBuildPreamble := Seq(),
     githubWorkflowBuild := WorkflowStep.Sbt(List("test"), name = Some("Build project")),
 
@@ -493,7 +503,8 @@ git config --global alias.rm-symlink '!git rm-symlinks'  # for back-compat."""
             uploadStepsOpt,
           oses = githubWorkflowOSes.value.toList,
           scalas = crossScalaVersions.value.toList,
-          javas = githubWorkflowJavaVersions.value.toList)) ++ publishJobOpt ++ githubWorkflowAddedJobs.value
+          javas = githubWorkflowJavaVersions.value.toList,
+          matrixAdds = githubWorkflowBuildMatrixAdditions.value)) ++ publishJobOpt ++ githubWorkflowAddedJobs.value
     })
 
   private val generateCiContents = Def task {
