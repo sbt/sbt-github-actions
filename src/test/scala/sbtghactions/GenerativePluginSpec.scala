@@ -43,7 +43,24 @@ class GenerativePluginSpec extends Specification {
         |jobs:
         |  """.stripMargin
 
-      compileWorkflow("test", List("master"), Map(), Nil, "sbt") mustEqual expected
+      compileWorkflow("test", List("master"), PREventType.Defaults, Map(), Nil, "sbt") mustEqual expected
+    }
+
+    "respect non-default pr types" in {
+      val expected = header + """
+        |name: test
+        |
+        |on:
+        |  pull_request:
+        |    branches: [master]
+        |    types: [ready_for_review, review_requested, opened]
+        |  push:
+        |    branches: [master]
+        |
+        |jobs:
+        |  """.stripMargin
+
+      compileWorkflow("test", List("master"), List(PREventType.ReadyForReview, PREventType.ReviewRequested, PREventType.Opened), Map(), Nil, "sbt") mustEqual expected
     }
 
     "compile a one-job workflow targeting multiple branch patterns with an environment" in {
@@ -74,6 +91,7 @@ class GenerativePluginSpec extends Specification {
       compileWorkflow(
         "test2",
         List("master", "backport/v*"),
+        PREventType.Defaults,
         Map(
           "GITHUB_TOKEN" -> s"$${{ secrets.GITHUB_TOKEN }}"),
         List(
@@ -120,6 +138,7 @@ class GenerativePluginSpec extends Specification {
       compileWorkflow(
         "test3",
         List("master"),
+        PREventType.Defaults,
         Map(),
         List(
           WorkflowJob(
@@ -360,5 +379,24 @@ class GenerativePluginSpec extends Specification {
     "endsWith" >> {
       compileBranchPredicate("thingy", EndsWith(Branch("other"))) mustEqual "(startsWith(thingy, 'refs/heads/') && endsWith(thingy, 'other'))"
     }
+  }
+
+  "pr event type compilation" >> {
+    import PREventType._
+
+    "assigned" >> (compilePREventType(Assigned) mustEqual "assigned")
+    "unassigned" >> (compilePREventType(Unassigned) mustEqual "unassigned")
+    "labeled" >> (compilePREventType(Labeled) mustEqual "labeled")
+    "unlabeled" >> (compilePREventType(Unlabeled) mustEqual "unlabeled")
+    "opened" >> (compilePREventType(Opened) mustEqual "opened")
+    "edited" >> (compilePREventType(Edited) mustEqual "edited")
+    "closed" >> (compilePREventType(Closed) mustEqual "closed")
+    "reopened" >> (compilePREventType(Reopened) mustEqual "reopened")
+    "synchronize" >> (compilePREventType(Synchronize) mustEqual "synchronize")
+    "ready_for_review" >> (compilePREventType(ReadyForReview) mustEqual "ready_for_review")
+    "locked" >> (compilePREventType(Locked) mustEqual "locked")
+    "unlocked" >> (compilePREventType(Unlocked) mustEqual "unlocked")
+    "review_requested" >> (compilePREventType(ReviewRequested) mustEqual "review_requested")
+    "review_request_removed" >> (compilePREventType(ReviewRequestRemoved) mustEqual "review_request_removed")
   }
 }
