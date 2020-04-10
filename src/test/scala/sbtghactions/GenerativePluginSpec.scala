@@ -161,6 +161,10 @@ class GenerativePluginSpec extends Specification {
       compileStep(Run(List("echo hi")), "") mustEqual "- run: echo hi"
     }
 
+    "compile a simple run with an id" in {
+      compileStep(Run(List("echo hi"), id = Some("bippy")), "") mustEqual "- id: bippy\n  run: echo hi"
+    }
+
     "compile a simple run with a name" in {
       compileStep(
         Run(

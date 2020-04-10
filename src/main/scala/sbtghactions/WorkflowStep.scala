@@ -17,6 +17,7 @@
 package sbtghactions
 
 sealed trait WorkflowStep extends Product with Serializable {
+  def id: Option[String]
   def name: Option[String]
   def cond: Option[String]
   def env: Map[String, String]
@@ -34,7 +35,7 @@ object WorkflowStep {
   def ComputeVar(name: String, cmd: String): WorkflowStep =
     Run(List(s"echo ::set-env name=$name::$$($cmd)"), name = Some(s"Export $name"))
 
-  final case class Run(commands: List[String], name: Option[String] = None, cond: Option[String] = None, env: Map[String, String] = Map()) extends WorkflowStep
-  final case class Sbt(commands: List[String], name: Option[String] = None, cond: Option[String] = None, env: Map[String, String] = Map()) extends WorkflowStep
-  final case class Use(owner: String, repo: String, version: Int, params: Map[String, String] = Map(), name: Option[String] = None, cond: Option[String] = None, env: Map[String, String] = Map()) extends WorkflowStep
+  final case class Run(commands: List[String], id: Option[String] = None, name: Option[String] = None, cond: Option[String] = None, env: Map[String, String] = Map()) extends WorkflowStep
+  final case class Sbt(commands: List[String], id: Option[String] = None, name: Option[String] = None, cond: Option[String] = None, env: Map[String, String] = Map()) extends WorkflowStep
+  final case class Use(owner: String, repo: String, version: Int, params: Map[String, String] = Map(), id: Option[String] = None, name: Option[String] = None, cond: Option[String] = None, env: Map[String, String] = Map()) extends WorkflowStep
 }

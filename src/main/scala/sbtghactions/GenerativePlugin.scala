@@ -145,6 +145,7 @@ ${indent(rendered.mkString("\n"), 1)}"""
     import WorkflowStep._
 
     val renderedName = step.name.map(wrap).map("name: " + _ + "\n").getOrElse("")
+    val renderedId = step.id.map(wrap).map("id: " + _ + "\n").getOrElse("")
     val renderedCond = step.cond.map(wrap).map("if: " + _ + "\n").getOrElse("")
     val renderedShell = if (declareShell) "shell: bash\n" else ""
 
@@ -154,7 +155,7 @@ ${indent(rendered.mkString("\n"), 1)}"""
     else
       renderedEnvPre + "\n"
 
-    val preamblePre = renderedName + renderedCond + renderedEnv
+    val preamblePre = renderedName + renderedId + renderedCond + renderedEnv
 
     val preamble = if (preamblePre.isEmpty)
       ""
@@ -162,10 +163,10 @@ ${indent(rendered.mkString("\n"), 1)}"""
       preamblePre
 
     val body = step match {
-      case Run(commands, _, _, _) =>
+      case Run(commands, _, _, _, _) =>
         renderedShell + "run: " + wrap(commands.mkString("\n"))
 
-      case Sbt(commands, _, _, _) =>
+      case Sbt(commands, _, _, _, _) =>
         val safeCommands = commands map { c =>
           if (c.indexOf(' ') >= 0)
             s"'$c'"
@@ -175,7 +176,7 @@ ${indent(rendered.mkString("\n"), 1)}"""
 
         renderedShell + "run: " + wrap(s"$sbt ++$${{ matrix.scala }} ${safeCommands.mkString(" ")}")
 
-      case Use(owner, repo, version, params, _, _, _) =>
+      case Use(owner, repo, version, params, _, _, _, _) =>
         val renderedParamsPre = compileEnv(params, prefix = "with")
         val renderedParams = if (renderedParamsPre.isEmpty)
           ""
