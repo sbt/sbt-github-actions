@@ -40,6 +40,9 @@ object GenerativePlugin extends AutoPlugin {
 
     type Ref = sbtghactions.Ref
     val Ref = sbtghactions.Ref
+
+    type PREventType = sbtghactions.PREventType
+    val PREventType = sbtghactions.PREventType
   }
 
   import autoImport._
