@@ -176,14 +176,14 @@ ${indent(rendered.mkString("\n"), 1)}"""
 
         renderedShell + "run: " + wrap(s"$sbt ++$${{ matrix.scala }} ${safeCommands.mkString(" ")}")
 
-      case Use(owner, repo, version, params, _, _, _, _) =>
+      case Use(owner, repo, ref, params, _, _, _, _) =>
         val renderedParamsPre = compileEnv(params, prefix = "with")
         val renderedParams = if (renderedParamsPre.isEmpty)
           ""
         else
           "\n" + renderedParamsPre
 
-        s"uses: $owner/$repo@v$version" + renderedParams
+        s"uses: $owner/$repo@$ref" + renderedParams
     }
 
     indent(preamble + body, 1).updated(0, '-')
@@ -324,7 +324,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
         WorkflowStep.Use(
           "actions",
           "upload-artifact",
-          1,
+          "v1",
           name = Some(s"Upload target directory '$target' ($${{ matrix.scala }})"),
           params = Map(
             "name" -> s"target-$${{ matrix.os }}-$${{ matrix.scala }}-$${{ matrix.java }}-${sanitizeTarget(target)}",
@@ -334,7 +334,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
       mainSteps :+ WorkflowStep.Use(
         "actions",
         "upload-artifact",
-        1,
+        "v1",
         name = Some(s"Upload target directory 'project/target'"),
         params = Map(
           "name" -> s"target-$${{ matrix.os }}-$${{ matrix.java }}-project_target",
@@ -347,7 +347,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
           WorkflowStep.Use(
             "actions",
             "download-artifact",
-            1,
+            "v1",
             name = Some(s"Download target directory '$target' ($v)"),
             params = Map("name" -> s"target-$${{ matrix.os }}-$v-$${{ matrix.java }}-${sanitizeTarget(target)}"))
         }
@@ -356,7 +356,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
       mainSteps :+ WorkflowStep.Use(
         "actions",
         "download-artifact",
-        1,
+        "v1",
         name = Some(s"Download target directory 'project/target'"),
         params = Map("name" -> s"target-$${{ matrix.os }}-$${{ matrix.java }}-project_target"))
     },
@@ -372,7 +372,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
         WorkflowStep.Use(
           "actions",
           "cache",
-          1,
+          "v1",
           name = Some("Cache ivy2"),
           params = Map(
             "path" -> "~/.ivy2/cache",
@@ -381,7 +381,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
         WorkflowStep.Use(
           "actions",
           "cache",
-          1,
+          "v1",
           name = Some("Cache coursier (generic)"),
           params = Map(
             "path" -> "~/.coursier/cache/v1",
@@ -390,7 +390,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
         WorkflowStep.Use(
           "actions",
           "cache",
-          1,
+          "v1",
           name = Some("Cache coursier (linux)"),
           cond = Some(s"contains(runner.os, 'linux')"),
           params = Map(
@@ -400,7 +400,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
         WorkflowStep.Use(
           "actions",
           "cache",
-          1,
+          "v1",
           name = Some("Cache coursier (macOS)"),
           cond = Some(s"contains(runner.os, 'macos')"),
           params = Map(
@@ -410,7 +410,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
         WorkflowStep.Use(
           "actions",
           "cache",
-          1,
+          "v1",
           name = Some("Cache coursier (windows)"),
           cond = Some(s"contains(runner.os, 'windows')"),
           params = Map(
@@ -420,7 +420,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
         WorkflowStep.Use(
           "actions",
           "cache",
-          1,
+          "v1",
           name = Some("Cache sbt"),
           params = Map(
             "path" -> "~/.sbt",

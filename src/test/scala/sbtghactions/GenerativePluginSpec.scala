@@ -187,9 +187,17 @@ class GenerativePluginSpec extends Specification {
         Use(
           "repo",
           "slug",
-          0),
+          "v0"),
         "",
         true) mustEqual "- uses: repo/slug@v0"
+    }
+
+    "preserve wonky version in Use" in {
+      compileStep(Use("hello", "world", "v4.0.0"), "", true) mustEqual "- uses: hello/world@v4.0.0"
+    }
+
+    "drop Use version prefix on anything that doesn't start with a number" in {
+      compileStep(Use("hello", "world", "master"), "", true) mustEqual "- uses: hello/world@master"
     }
 
     "compile sbt using the command provided" in {
@@ -200,13 +208,13 @@ class GenerativePluginSpec extends Specification {
 
     "compile use without parameters" in {
       compileStep(
-        Use("olafurpg", "setup-scala", 5),
+        Use("olafurpg", "setup-scala", "v5"),
         "") mustEqual "- uses: olafurpg/setup-scala@v5"
     }
 
     "compile use with two parameters" in {
       compileStep(
-        Use("olafurpg", "setup-scala", 5, params = Map("abc" -> "def", "cafe" -> "@42")),
+        Use("olafurpg", "setup-scala", "v5", params = Map("abc" -> "def", "cafe" -> "@42")),
         "") mustEqual "- uses: olafurpg/setup-scala@v5\n  with:\n    abc: def\n    cafe: '@42'"
     }
 
@@ -215,7 +223,7 @@ class GenerativePluginSpec extends Specification {
         Use(
           "derp",
           "nope",
-          0,
+          "v0",
           params = Map("teh" -> "schizzle", "think" -> "positive"),
           env = Map("hi" -> "there")),
         "") mustEqual "- env:\n    hi: there\n  uses: derp/nope@v0\n  with:\n    teh: schizzle\n    think: positive"
