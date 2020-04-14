@@ -154,16 +154,19 @@ jobs:
         uses: actions/download-artifact@v1
         with:
           name: target-${{ matrix.os }}-2.13.1-${{ matrix.java }}-target
+          path: target
 
       - name: Download target directory 'target' (2.12.10)
         uses: actions/download-artifact@v1
         with:
           name: target-${{ matrix.os }}-2.12.10-${{ matrix.java }}-target
+          path: target
 
       - name: Download target directory 'project/target'
         uses: actions/download-artifact@v1
         with:
           name: target-${{ matrix.os }}-${{ matrix.java }}-project_target
+          path: project/target
 
       - name: Publish project
         run: sbt ++${{ matrix.scala }} +publish

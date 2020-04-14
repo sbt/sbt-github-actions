@@ -352,7 +352,9 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
             "download-artifact",
             "v1",
             name = Some(s"Download target directory '$target' ($v)"),
-            params = Map("name" -> s"target-$${{ matrix.os }}-$v-$${{ matrix.java }}-${sanitizeTarget(target)}"))
+            params = Map(
+              "name" -> s"target-$${{ matrix.os }}-$v-$${{ matrix.java }}-${sanitizeTarget(target)}",
+              "path" -> target))
         }
       }
 
@@ -361,7 +363,9 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
         "download-artifact",
         "v1",
         name = Some(s"Download target directory 'project/target'"),
-        params = Map("name" -> s"target-$${{ matrix.os }}-$${{ matrix.java }}-project_target"))
+        params = Map(
+          "name" -> s"target-$${{ matrix.os }}-$${{ matrix.java }}-project_target",
+          "path" -> "project/target"))
     },
 
     githubWorkflowGeneratedCacheSteps := {
