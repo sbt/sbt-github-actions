@@ -532,6 +532,7 @@ git config --global alias.rm-symlink '!git rm-symlinks'  # for back-compat."""
             List(githubWorkflowPublish.value),
           cond = Some(s"github.event_name != 'pull_request' && $publicationCond"),
           scalas = List(scalaVersion.value),
+          javas = List(githubWorkflowJavaVersions.value.head),
           needs = List("build"))).filter(_ => !githubWorkflowPublishTargetBranches.value.isEmpty)
 
       Seq(
