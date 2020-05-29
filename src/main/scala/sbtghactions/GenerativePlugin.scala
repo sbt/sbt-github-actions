@@ -80,8 +80,13 @@ object GenerativePlugin extends AutoPlugin {
     else
       s"'${str.replace("'", "''")}'"
 
-  def compileList(items: List[String]): String =
-    items.map(wrap).map("- " + _).mkString("\n")
+  def compileList(items: List[String], level: Int): String = {
+    val rendered = items.map(wrap)
+    if (rendered.map(_.length).sum < 40)   // just arbitrarily...
+      rendered.mkString(" [", ", ", "]")
+    else
+      "\n" + indent(rendered.map("- " + _).mkString("\n"), level)
+  }
 
   def compilePREventType(tpe: PREventType): String = {
     import PREventType._
@@ -220,9 +225,9 @@ ${indent(rendered.mkString("\n"), 1)}"""
     val body = s"""name: ${wrap(job.name)}${renderedNeeds}${renderedCond}
 strategy:
   matrix:
-    os: [${job.oses.mkString(", ")}]
-    scala: [${job.scalas.mkString(", ")}]
-    java: [${job.javas.mkString(", ")}]${renderedMatrices}
+    os:${compileList(job.oses, 3)}
+    scala:${compileList(job.scalas, 3)}
+    java:${compileList(job.javas, 3)}${renderedMatrices}
 runs-on: $${{ matrix.os }}${renderedEnv}
 steps:
 ${indent(job.steps.map(compileStep(_, sbt, declareShell = declareShell)).mkString("\n\n"), 1)}"""

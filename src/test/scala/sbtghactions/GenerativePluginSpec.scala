@@ -370,6 +370,70 @@ class GenerativePluginSpec extends Specification {
     - name: Checkout current branch (fast)
       uses: actions/checkout@v2"""
     }
+
+    "compile a job with illegal characters in the JVM" in {
+      val results = compileJob(
+        WorkflowJob(
+          "bippy",
+          "Bippity Bop Around the Clock",
+          List(
+            WorkflowStep.Run(List("echo hello")),
+            WorkflowStep.Checkout),
+          javas = List("this:is>#illegal")),
+        "")
+
+      results mustEqual s"""bippy:
+  name: Bippity Bop Around the Clock
+  strategy:
+    matrix:
+      os: [ubuntu-latest]
+      scala: [2.13.1]
+      java: ['this:is>#illegal']
+  runs-on: $${{ matrix.os }}
+  steps:
+    - run: echo hello
+
+    - name: Checkout current branch (fast)
+      uses: actions/checkout@v2"""
+    }
+
+    "compile a job with a long list of scala versions" in {
+      val results = compileJob(
+        WorkflowJob(
+          "bippy",
+          "Bippity Bop Around the Clock",
+          List(
+            WorkflowStep.Run(List("echo hello")),
+            WorkflowStep.Checkout),
+          scalas = List("this", "is", "a", "lot", "of", "versions", "meant", "to", "overflow", "the", "bounds", "checking")),
+        "")
+
+      results mustEqual s"""bippy:
+  name: Bippity Bop Around the Clock
+  strategy:
+    matrix:
+      os: [ubuntu-latest]
+      scala:
+        - this
+        - is
+        - a
+        - lot
+        - of
+        - versions
+        - meant
+        - to
+        - overflow
+        - the
+        - bounds
+        - checking
+      java: [adopt@1.8]
+  runs-on: $${{ matrix.os }}
+  steps:
+    - run: echo hello
+
+    - name: Checkout current branch (fast)
+      uses: actions/checkout@v2"""
+    }
   }
 
   "predicate compilation" >> {
