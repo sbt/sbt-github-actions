@@ -32,9 +32,11 @@ trait GenerativeKeys {
 
   lazy val githubWorkflowBuildMatrixAdditions = settingKey[Map[String, List[String]]]("A map of additional matrix dimensions for the build job. Each list should be non-empty. (default: {})")
   lazy val githubWorkflowBuildPreamble = settingKey[Seq[WorkflowStep]]("A list of steps to insert after base setup but before compiling and testing (default: [])")
+  lazy val githubWorkflowBuildPostamble = settingKey[Seq[WorkflowStep]]("A list of steps to insert after comping and testing but before the end of the build job (default: [])")
   lazy val githubWorkflowBuild = settingKey[WorkflowStep]("A workflow step which compiles and tests the project (default: Sbt(List(\"test\")))")
 
   lazy val githubWorkflowPublishPreamble = settingKey[Seq[WorkflowStep]]("A list of steps to insert after base setup but before publishing (default: [])")
+  lazy val githubWorkflowPublishPostamble = settingKey[Seq[WorkflowStep]]("A list of steps to insert after publication but before the end of the publish job (default: [])")
   lazy val githubWorkflowPublish = settingKey[WorkflowStep]("A workflow step which publishes the project (default: Sbt(List(\"+publish\")))")
   lazy val githubWorkflowPublishTargetBranches = settingKey[Seq[RefPredicate]]("A set of branch predicates which will be applied to determine whether the current branch gets a publication stage; if empty, publish will be skipped entirely (default: [== master])")
   lazy val githubWorkflowPublishCond = settingKey[Option[String]]("A set of conditionals to apply to the publish job to further restrict its run (default: [])")
