@@ -16,7 +16,7 @@
 
 name := "sbt-github-actions"
 
-ThisBuild / baseVersion := "0.6"
+ThisBuild / baseVersion := "0.7"
 
 ThisBuild / organization := "com.codecommit"
 ThisBuild / publishGithubUser := "djspiewak"
@@ -25,7 +25,7 @@ ThisBuild / publishFullName := "Daniel Spiewak"
 ThisBuild / scalaVersion := "2.12.10"
 
 ThisBuild / githubWorkflowOSes := Seq("ubuntu-latest", "macos-latest", "windows-latest")
-ThisBuild / githubWorkflowBuild := WorkflowStep.Sbt(List("test", "scripted"))
+ThisBuild / githubWorkflowBuild := Seq(WorkflowStep.Sbt(List("test", "scripted")))
 
 ThisBuild / githubWorkflowPublishTargetBranches := Seq()
 

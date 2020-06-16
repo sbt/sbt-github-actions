@@ -80,6 +80,8 @@ jobs:
       - name: Build project
         run: sbt ++${{ matrix.scala }} test
 
+      - run: echo yo
+
       - name: Upload target directory 'target' (${{ matrix.scala }})
         uses: actions/upload-artifact@v1
         with:
@@ -170,3 +172,5 @@ jobs:
 
       - name: Publish project
         run: sbt ++${{ matrix.scala }} +publish
+
+      - run: echo sup

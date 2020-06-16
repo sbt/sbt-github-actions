@@ -281,11 +281,11 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
     githubWorkflowBuildMatrixAdditions := Map(),
     githubWorkflowBuildPreamble := Seq(),
     githubWorkflowBuildPostamble := Seq(),
-    githubWorkflowBuild := WorkflowStep.Sbt(List("test"), name = Some("Build project")),
+    githubWorkflowBuild := Seq(WorkflowStep.Sbt(List("test"), name = Some("Build project"))),
 
     githubWorkflowPublishPreamble := Seq(),
     githubWorkflowPublishPostamble := Seq(),
-    githubWorkflowPublish := WorkflowStep.Sbt(List("+publish"), name = Some("Publish project")),
+    githubWorkflowPublish := Seq(WorkflowStep.Sbt(List("+publish"), name = Some("Publish project"))),
     githubWorkflowPublishTargetBranches := Seq(RefPredicate.Equals(Ref.Branch("master"))),
     githubWorkflowPublishCond := None,
 
@@ -536,7 +536,7 @@ git config --global alias.rm-symlink '!git rm-symlinks'  # for back-compat."""
           preamble :::
             githubWorkflowGeneratedDownloadSteps.value.toList :::
             githubWorkflowPublishPreamble.value.toList :::
-            List(githubWorkflowPublish.value) :::
+            githubWorkflowPublish.value.toList :::
             githubWorkflowPublishPostamble.value.toList,
           cond = Some(s"github.event_name != 'pull_request' && $publicationCond"),
           scalas = List(scalaVersion.value),
@@ -549,11 +549,10 @@ git config --global alias.rm-symlink '!git rm-symlinks'  # for back-compat."""
           "Build and Test",
           preamble :::
             githubWorkflowBuildPreamble.value.toList :::
-            List(
-              WorkflowStep.Sbt(
-                List("githubWorkflowCheck"),
-                name = Some("Check that workflows are up to date")),
-              githubWorkflowBuild.value) :::
+            WorkflowStep.Sbt(
+              List("githubWorkflowCheck"),
+              name = Some("Check that workflows are up to date")) ::
+            githubWorkflowBuild.value.toList :::
             githubWorkflowBuildPostamble.value.toList :::
             uploadStepsOpt,
           oses = githubWorkflowOSes.value.toList,

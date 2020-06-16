@@ -8,3 +8,6 @@ ThisBuild / githubWorkflowJavaVersions += "graalvm@20.0.0"
 ThisBuild / githubWorkflowPublishTargetBranches += RefPredicate.Equals(Ref.Tag("test"))
 
 ThisBuild / githubWorkflowBuildMatrixAdditions += "test" -> List("this", "is")
+
+ThisBuild / githubWorkflowBuild += WorkflowStep.Run(List("echo yo"))
+ThisBuild / githubWorkflowPublish += WorkflowStep.Run(List("echo sup"))
