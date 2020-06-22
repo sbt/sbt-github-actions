@@ -16,16 +16,8 @@
 
 package sbtghactions
 
-final case class WorkflowJob(
-    id: String,
-    name: String,
-    steps: List[WorkflowStep],
-    cond: Option[String] = None,
-    env: Map[String, String] = Map(),
-    oses: List[String] = List("ubuntu-latest"),
-    scalas: List[String] = List("2.13.1"),
-    javas: List[String] = List("adopt@1.8"),
-    needs: List[String] = Nil,
-    matrixAdds: Map[String, List[String]] = Map(),
-    matrixIncs: List[MatrixInclude] = List(),
-    matrixExcs: List[MatrixExclude] = List())
+final case class MatrixInclude(
+    matching: Map[String, String],
+    additions: Map[String, String])
+
+final case class MatrixExclude(matching: Map[String, String])

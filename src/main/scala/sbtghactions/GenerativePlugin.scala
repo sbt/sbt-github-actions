@@ -43,6 +43,12 @@ object GenerativePlugin extends AutoPlugin {
 
     type PREventType = sbtghactions.PREventType
     val PREventType = sbtghactions.PREventType
+
+    type MatrixInclude = sbtghactions.MatrixInclude
+    val MatrixInclude = sbtghactions.MatrixInclude
+
+    type MatrixExclude = sbtghactions.MatrixExclude
+    val MatrixExclude = sbtghactions.MatrixExclude
   }
 
   import autoImport._
@@ -87,6 +93,15 @@ object GenerativePlugin extends AutoPlugin {
     else
       "\n" + indent(rendered.map("- " + _).mkString("\n"), level)
   }
+
+  def compileListOfSimpleDicts(items: List[Map[String, String]]): String =
+    items map { dict =>
+      val rendered = dict map {
+        case (key, value) => s"$key: $value"
+      } mkString "\n"
+
+      "-" + indent(rendered, 1).substring(1)
+    } mkString "\n"
 
   def compilePREventType(tpe: PREventType): String = {
     import PREventType._
@@ -211,14 +226,66 @@ ${indent(rendered.mkString("\n"), 1)}"""
     else
       "\n" + renderedEnvPre
 
+    List("include", "exclude") foreach { key =>
+      if (job.matrixAdds.contains(key)) {
+        sys.error(s"key `$key` is reserved and cannot be used in an Actions matrix definition")
+      }
+    }
+
     val renderedMatricesPre = job.matrixAdds map {
       case (key, values) => s"$key: ${values.map(wrap).mkString("[", ", ", "]")}"
     } mkString "\n"
 
-    val renderedMatrices = if (renderedMatricesPre.isEmpty)
+    // TODO refactor all of this stuff to use whitelist instead
+    val whitelist = Map("os" -> job.oses, "scala" -> job.scalas, "java" -> job.javas) ++ job.matrixAdds
+
+    def checkMatching(matching: Map[String, String]): Unit = {
+      matching foreach {
+        case (key, value) =>
+          if (!whitelist.contains(key)) {
+            sys.error(s"inclusion key `$key` was not found in matrix")
+          }
+
+          if (!whitelist(key).contains(value)) {
+            sys.error(s"inclusion key `$key` was present in matrix, but value `$value` was not in ${whitelist(key)}")
+          }
+      }
+    }
+
+    val renderedIncludesPre = if (job.matrixIncs.isEmpty) {
+      renderedMatricesPre
+    } else {
+      job.matrixIncs.foreach(inc => checkMatching(inc.matching))
+
+      val rendered = compileListOfSimpleDicts(job.matrixIncs.map(i => i.matching ++ i.additions))
+
+      val renderedMatrices = if (renderedMatricesPre.isEmpty)
+        ""
+      else
+        renderedMatricesPre + "\n"
+
+      s"${renderedMatrices}include:\n${indent(rendered, 1)}"
+    }
+
+    val renderedExcludesPre = if (job.matrixExcs.isEmpty) {
+      renderedIncludesPre
+    } else {
+      job.matrixExcs.foreach(exc => checkMatching(exc.matching))
+
+      val rendered = compileListOfSimpleDicts(job.matrixExcs.map(_.matching))
+
+      val renderedIncludes = if (renderedIncludesPre.isEmpty)
+        ""
+      else
+        renderedIncludesPre + "\n"
+
+      s"${renderedIncludes}exclude:\n${indent(rendered, 1)}"
+    }
+
+    val renderedMatrices = if (renderedExcludesPre.isEmpty)
       ""
     else
-      "\n" + indent(renderedMatricesPre, 2)
+      "\n" + indent(renderedExcludesPre, 2)
 
     val declareShell = job.oses.exists(_.contains("windows"))
 
@@ -279,6 +346,9 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
     githubWorkflowSbtCommand := "sbt",
 
     githubWorkflowBuildMatrixAdditions := Map(),
+    githubWorkflowBuildMatrixInclusions := Seq(),
+    githubWorkflowBuildMatrixExclusions := Seq(),
+
     githubWorkflowBuildPreamble := Seq(),
     githubWorkflowBuildPostamble := Seq(),
     githubWorkflowBuild := Seq(WorkflowStep.Sbt(List("test"), name = Some("Build project"))),
@@ -558,7 +628,9 @@ git config --global alias.rm-symlink '!git rm-symlinks'  # for back-compat."""
           oses = githubWorkflowOSes.value.toList,
           scalas = crossScalaVersions.value.toList,
           javas = githubWorkflowJavaVersions.value.toList,
-          matrixAdds = githubWorkflowBuildMatrixAdditions.value)) ++ publishJobOpt ++ githubWorkflowAddedJobs.value
+          matrixAdds = githubWorkflowBuildMatrixAdditions.value,
+          matrixIncs = githubWorkflowBuildMatrixInclusions.value.toList,
+          matrixExcs = githubWorkflowBuildMatrixExclusions.value.toList)) ++ publishJobOpt ++ githubWorkflowAddedJobs.value
     })
 
   private val generateCiContents = Def task {

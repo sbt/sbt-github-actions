@@ -9,5 +9,12 @@ ThisBuild / githubWorkflowPublishTargetBranches += RefPredicate.Equals(Ref.Tag("
 
 ThisBuild / githubWorkflowBuildMatrixAdditions += "test" -> List("this", "is")
 
+ThisBuild / githubWorkflowBuildMatrixInclusions += MatrixInclude(
+  Map("test" -> "this"),
+  Map("extra" -> "sparta"))
+
+ThisBuild / githubWorkflowBuildMatrixExclusions +=
+  MatrixExclude(Map("scala" -> "2.12.10", "test" -> "is"))
+
 ThisBuild / githubWorkflowBuild += WorkflowStep.Run(List("echo yo"))
 ThisBuild / githubWorkflowPublish += WorkflowStep.Run(List("echo sup"))

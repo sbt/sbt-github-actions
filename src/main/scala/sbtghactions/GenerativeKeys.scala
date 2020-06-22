@@ -31,6 +31,9 @@ trait GenerativeKeys {
   lazy val githubWorkflowSbtCommand = settingKey[String]("The command which invokes sbt (default: sbt")
 
   lazy val githubWorkflowBuildMatrixAdditions = settingKey[Map[String, List[String]]]("A map of additional matrix dimensions for the build job. Each list should be non-empty. (default: {})")
+  lazy val githubWorkflowBuildMatrixInclusions = settingKey[Seq[MatrixInclude]]("A list of matrix inclusions (default: [])")
+  lazy val githubWorkflowBuildMatrixExclusions = settingKey[Seq[MatrixExclude]]("A list of matrix exclusions (default: [])")
+
   lazy val githubWorkflowBuildPreamble = settingKey[Seq[WorkflowStep]]("A list of steps to insert after base setup but before compiling and testing (default: [])")
   lazy val githubWorkflowBuildPostamble = settingKey[Seq[WorkflowStep]]("A list of steps to insert after comping and testing but before the end of the build job (default: [])")
   lazy val githubWorkflowBuild = settingKey[Seq[WorkflowStep]]("A sequence of workflow steps which compile and test the project (default: [Sbt(List(\"test\"))])")

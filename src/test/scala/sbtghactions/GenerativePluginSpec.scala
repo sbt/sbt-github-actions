@@ -371,6 +371,134 @@ class GenerativePluginSpec extends Specification {
       uses: actions/checkout@v2"""
     }
 
+    "produce an error when compiling a job with `include` key in matrix" in {
+      compileJob(
+        WorkflowJob(
+          "bippy",
+          "Bippity Bop Around the Clock",
+          List(),
+          matrixAdds = Map("include" -> List("1", "2"))),
+        "") must throwA[RuntimeException]
+    }
+
+    "produce an error when compiling a job with `exclude` key in matrix" in {
+      compileJob(
+        WorkflowJob(
+          "bippy",
+          "Bippity Bop Around the Clock",
+          List(),
+          matrixAdds = Map("exclude" -> List("1", "2"))),
+        "") must throwA[RuntimeException]
+    }
+
+    "compile a job with a simple matching inclusion" in {
+      val results = compileJob(
+        WorkflowJob(
+          "bippy",
+          "Bippity Bop Around the Clock",
+          List(
+            WorkflowStep.Run(List("echo ${{ matrix.scala }}"))),
+          matrixIncs = List(
+            MatrixInclude(
+              Map("scala" -> "2.13.1"),
+              Map("foo" -> "bar")))),
+        "")
+
+      results mustEqual s"""bippy:
+  name: Bippity Bop Around the Clock
+  strategy:
+    matrix:
+      os: [ubuntu-latest]
+      scala: [2.13.1]
+      java: [adopt@1.8]
+      include:
+        - scala: 2.13.1
+          foo: bar
+  runs-on: $${{ matrix.os }}
+  steps:
+    - run: echo $${{ matrix.scala }}"""
+    }
+
+    "produce an error with a non-matching inclusion key" in {
+      compileJob(
+        WorkflowJob(
+          "bippy",
+          "Bippity Bop Around the Clock",
+          List(
+            WorkflowStep.Run(List("echo ${{ matrix.scala }}"))),
+          matrixIncs = List(
+            MatrixInclude(
+              Map("scalanot" -> "2.13.1"),
+              Map("foo" -> "bar")))),
+        "") must throwA[RuntimeException]
+    }
+
+    "produce an error with a non-matching inclusion value" in {
+      compileJob(
+        WorkflowJob(
+          "bippy",
+          "Bippity Bop Around the Clock",
+          List(
+            WorkflowStep.Run(List("echo ${{ matrix.scala }}"))),
+          matrixIncs = List(
+            MatrixInclude(
+              Map("scala" -> "0.12.1"),
+              Map("foo" -> "bar")))),
+        "") must throwA[RuntimeException]
+    }
+
+    "compile a job with a simple matching exclusion" in {
+      val results = compileJob(
+        WorkflowJob(
+          "bippy",
+          "Bippity Bop Around the Clock",
+          List(
+            WorkflowStep.Run(List("echo ${{ matrix.scala }}"))),
+          matrixExcs = List(
+            MatrixExclude(
+              Map("scala" -> "2.13.1")))),
+        "")
+
+      results mustEqual s"""bippy:
+  name: Bippity Bop Around the Clock
+  strategy:
+    matrix:
+      os: [ubuntu-latest]
+      scala: [2.13.1]
+      java: [adopt@1.8]
+      exclude:
+        - scala: 2.13.1
+  runs-on: $${{ matrix.os }}
+  steps:
+    - run: echo $${{ matrix.scala }}"""
+    }
+
+    "produce an error with a non-matching exclusion key" in {
+      compileJob(
+        WorkflowJob(
+          "bippy",
+          "Bippity Bop Around the Clock",
+          List(
+            WorkflowStep.Run(List("echo ${{ matrix.scala }}"))),
+          matrixExcs = List(
+            MatrixExclude(
+              Map("scalanot" -> "2.13.1")))),
+        "") must throwA[RuntimeException]
+    }
+
+    "produce an error with a non-matching exclusion value" in {
+      compileJob(
+        WorkflowJob(
+          "bippy",
+          "Bippity Bop Around the Clock",
+          List(
+            WorkflowStep.Run(List("echo ${{ matrix.scala }}"))),
+          matrixExcs = List(
+            MatrixExclude(
+              Map("scala" -> "0.12.1")))),
+        "") must throwA[RuntimeException]
+    }
+
     "compile a job with illegal characters in the JVM" in {
       val results = compileJob(
         WorkflowJob(
