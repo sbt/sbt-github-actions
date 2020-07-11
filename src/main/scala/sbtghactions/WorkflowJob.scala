@@ -23,7 +23,7 @@ final case class WorkflowJob(
     cond: Option[String] = None,
     env: Map[String, String] = Map(),
     oses: List[String] = List("ubuntu-latest"),
-    scalas: List[String] = List("2.13.1"),
+    scalas: List[String] = List("2.13.3"),
     javas: List[String] = List("adopt@1.8"),
     needs: List[String] = Nil,
     matrixAdds: Map[String, List[String]] = Map(),
