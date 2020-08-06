@@ -34,6 +34,27 @@ Ivy, sbt, and Coursier caching are all handled by the generated **ci.yml** by de
 
 This plugin is quite prescriptive in that it forcibly manages the contents of the **ci.yml** and **clean.yml** files. By default, **ci.yml** will contain a step which *verifies* that its contents (and the contents of **clean.yml**) correspond precisely to the most up-to-date generated version of themselves. If this is not the case, then the build is failed. However, there is no restriction in adding *other* workflows not named **ci.yml** or **clean.yml**. These will be ignored entirely by the plugin.
 
+### Integration with sbt-ci-release
+
+Integrating with [sbt-ci-release](https://github.com/olafurpg/sbt-ci-release) is a relatively straightforward process, and the plugins are quite complementary. First, follow all of the setup instructions in sbt-ci-release's readme. Once this is complete, add the following to your **build.sbt**:
+
+```scala
+ThisBuild / githubWorkflowTargetTags += Seq("v*")
+ThisBuild / githubWorkflowPublishTargetBranches := 
+  Seq(RefPredicate.StartsWith(Ref.Tag("v")))
+
+ThisBuild / githubWorkflowPublish := Seq(WorkflowStep.Sbt(List("ci-release")))
+```
+
+This is assuming that you *only* wish to publish tags. If you also wish to publish snapshots upon successful master builds, use the following `githubWorkflowPublishTargetBranches` declaration:
+
+```scala
+ThisBuild / githubWorkflowPublishTargetBranches += 
+  Seq(RefPredicate.StartsWith(Ref.Tag("v")))
+```
+
+Note the use of `+=` rather than `:=`.
+
 ## Tasks
 
 ### Generative
