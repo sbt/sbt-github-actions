@@ -43,7 +43,24 @@ class GenerativePluginSpec extends Specification {
         |jobs:
         |  """.stripMargin
 
-      compileWorkflow("test", List("master"), PREventType.Defaults, Map(), Nil, "sbt") mustEqual expected
+      compileWorkflow("test", List("master"), Nil, PREventType.Defaults, Map(), Nil, "sbt") mustEqual expected
+    }
+
+    "produce the appropriate skeleton around a zero-job workflow with non-empty tags" in {
+      val expected = header + """
+        |name: test
+        |
+        |on:
+        |  pull_request:
+        |    branches: [master]
+        |  push:
+        |    branches: [master]
+        |    tags: [howdy]
+        |
+        |jobs:
+        |  """.stripMargin
+
+      compileWorkflow("test", List("master"), List("howdy"), PREventType.Defaults, Map(), Nil, "sbt") mustEqual expected
     }
 
     "respect non-default pr types" in {
@@ -60,7 +77,7 @@ class GenerativePluginSpec extends Specification {
         |jobs:
         |  """.stripMargin
 
-      compileWorkflow("test", List("master"), List(PREventType.ReadyForReview, PREventType.ReviewRequested, PREventType.Opened), Map(), Nil, "sbt") mustEqual expected
+      compileWorkflow("test", List("master"), Nil, List(PREventType.ReadyForReview, PREventType.ReviewRequested, PREventType.Opened), Map(), Nil, "sbt") mustEqual expected
     }
 
     "compile a one-job workflow targeting multiple branch patterns with an environment" in {
@@ -91,6 +108,7 @@ class GenerativePluginSpec extends Specification {
       compileWorkflow(
         "test2",
         List("master", "backport/v*"),
+        Nil,
         PREventType.Defaults,
         Map(
           "GITHUB_TOKEN" -> s"$${{ secrets.GITHUB_TOKEN }}"),
@@ -138,6 +156,7 @@ class GenerativePluginSpec extends Specification {
       compileWorkflow(
         "test3",
         List("master"),
+        Nil,
         PREventType.Defaults,
         Map(),
         List(
