@@ -25,7 +25,8 @@ final case class WorkflowJob(
     oses: List[String] = List("ubuntu-latest"),
     scalas: List[String] = List("2.13.1"),
     javas: List[String] = List("adopt@1.8"),
-    needs: List[String] = Nil,
+    needs: List[String] = List(),
     matrixAdds: Map[String, List[String]] = Map(),
     matrixIncs: List[MatrixInclude] = List(),
-    matrixExcs: List[MatrixExclude] = List())
+    matrixExcs: List[MatrixExclude] = List(),
+    runsOnExtraLabels: List[String] = List())
