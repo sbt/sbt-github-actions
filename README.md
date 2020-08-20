@@ -99,6 +99,7 @@ Any and all settings which affect the behavior of the generative plugin should b
 - `githubWorkflowJavaVersions` : `Seq[String]` – A list of Java versions, using [Jabba](https://github.com/shyiko/jabba) syntax, which will be used to `build` your project. Note that the `publish` job will always run under the very first of these versions. Defaults to `[adopt@1.8]`.
 - `githubWorkflowScalaVersions` : `Seq[String]` – A list of Scala versions which will be used to `build` your project. Defaults to `crossScalaVersions` in `build`, and simply `scalaVersion` in `publish`.
 - `githubWorkflowOSes` : `Seq[String]` – A list of operating systems, which will be ultimately passed to [the `runs-on:` directive](https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idruns-on), on which to `build` your project. Defaults to `ubuntu-latest`. Note that, regardless of the value of this setting, only `ubuntu-latest` will be used for the `publish` job. This setting only affects `build`.
+- `githubWorkflowBuildRunsOnExtraLabels` : `Seq[String]` - A list of additional runs-on labels, which will be combined with the matrix.os from `githubWorkflowOSes` above allowing for singling out more specific runners.
 
 #### `publish` Job
 

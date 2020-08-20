@@ -289,13 +289,18 @@ ${indent(rendered.mkString("\n"), 1)}"""
 
     val declareShell = job.oses.exists(_.contains("windows"))
 
+    val runsOn = if (job.runsOnExtraLabels.isEmpty)
+      s"$${{ matrix.os }}"
+    else
+      job.runsOnExtraLabels.mkString(s"[ $${{ matrix.os }}, ", ", ", " ]" )
+
     val body = s"""name: ${wrap(job.name)}${renderedNeeds}${renderedCond}
 strategy:
   matrix:
     os:${compileList(job.oses, 3)}
     scala:${compileList(job.scalas, 3)}
     java:${compileList(job.javas, 3)}${renderedMatrices}
-runs-on: $${{ matrix.os }}${renderedEnv}
+runs-on: ${runsOn}${renderedEnv}
 steps:
 ${indent(job.steps.map(compileStep(_, sbt, declareShell = declareShell)).mkString("\n\n"), 1)}"""
 
@@ -355,6 +360,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
     githubWorkflowBuildMatrixAdditions := Map(),
     githubWorkflowBuildMatrixInclusions := Seq(),
     githubWorkflowBuildMatrixExclusions := Seq(),
+    githubWorkflowBuildRunsOnExtraLabels := Seq(),
 
     githubWorkflowBuildPreamble := Seq(),
     githubWorkflowBuildPostamble := Seq(),
@@ -579,7 +585,8 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
           javas = githubWorkflowJavaVersions.value.toList,
           matrixAdds = githubWorkflowBuildMatrixAdditions.value,
           matrixIncs = githubWorkflowBuildMatrixInclusions.value.toList,
-          matrixExcs = githubWorkflowBuildMatrixExclusions.value.toList)) ++ publishJobOpt ++ githubWorkflowAddedJobs.value
+          matrixExcs = githubWorkflowBuildMatrixExclusions.value.toList,
+          runsOnExtraLabels = githubWorkflowBuildRunsOnExtraLabels.value.toList )) ++ publishJobOpt ++ githubWorkflowAddedJobs.value
     })
 
   private val generateCiContents = Def task {

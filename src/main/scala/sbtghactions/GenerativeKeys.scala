@@ -33,6 +33,7 @@ trait GenerativeKeys {
   lazy val githubWorkflowBuildMatrixAdditions = settingKey[Map[String, List[String]]]("A map of additional matrix dimensions for the build job. Each list should be non-empty. (default: {})")
   lazy val githubWorkflowBuildMatrixInclusions = settingKey[Seq[MatrixInclude]]("A list of matrix inclusions (default: [])")
   lazy val githubWorkflowBuildMatrixExclusions = settingKey[Seq[MatrixExclude]]("A list of matrix exclusions (default: [])")
+  lazy val githubWorkflowBuildRunsOnExtraLabels = settingKey[Seq[String]]("A list of additional labels to append to each run of the matrix executions")
 
   lazy val githubWorkflowBuildPreamble = settingKey[Seq[WorkflowStep]]("A list of steps to insert after base setup but before compiling and testing (default: [])")
   lazy val githubWorkflowBuildPostamble = settingKey[Seq[WorkflowStep]]("A list of steps to insert after comping and testing but before the end of the build job (default: [])")
