@@ -454,8 +454,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
             "v2",
             name = Some(s"Download target directories ($v)"),
             params = Map(
-              "name" -> s"target-$${{ matrix.os }}-$v-$${{ matrix.java }}",
-              "path" -> "targets.tar"))
+              "name" -> s"target-$${{ matrix.os }}-$v-$${{ matrix.java }}"))
 
           val untar = WorkflowStep.Run(
             List(

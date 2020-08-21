@@ -160,7 +160,6 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: target-${{ matrix.os }}-2.13.1-${{ matrix.java }}
-          path: targets.tar
 
       - name: Inflate target directories (2.13.1)
         run: |
@@ -171,7 +170,6 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: target-${{ matrix.os }}-2.12.10-${{ matrix.java }}
-          path: targets.tar
 
       - name: Inflate target directories (2.12.10)
         run: |

@@ -149,7 +149,6 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: target-${{ matrix.os }}-2.13.2-${{ matrix.java }}
-          path: targets.tar
 
       - name: Inflate target directories (2.13.2)
         run: |

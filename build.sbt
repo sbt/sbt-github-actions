@@ -27,7 +27,11 @@ ThisBuild / scalaVersion := "2.12.10"
 ThisBuild / githubWorkflowOSes := Seq("ubuntu-latest", "macos-latest", "windows-latest")
 ThisBuild / githubWorkflowBuild := Seq(WorkflowStep.Sbt(List("test", "scripted")))
 
-ThisBuild / githubWorkflowPublishTargetBranches := Seq()
+// dummy publication just to test that setup works
+ThisBuild / githubWorkflowPublishTargetBranches :=
+  Seq(RefPredicate.Equals(Ref.Branch("master")))
+
+ThisBuild / githubWorkflowPublish := Seq()
 
 sbtPlugin := true
 sbtVersion := "1.3.8"
