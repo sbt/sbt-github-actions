@@ -535,7 +535,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
             "key" -> s"$${{ runner.os }}-sbt-cache-$hashesStr")))
     },
 
-    githubWorkflowGeneratedCI := {
+    githubWorkflowJobSetup := {
       val autoCrlfOpt = if (githubWorkflowOSes.value.exists(_.contains("windows"))) {
         List(
           WorkflowStep.Run(
@@ -546,11 +546,13 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
         Nil
       }
 
-      val preamble = autoCrlfOpt ::: List(
+      autoCrlfOpt ::: List(
         WorkflowStep.Checkout,
         WorkflowStep.SetupScala) :::
         githubWorkflowGeneratedCacheSteps.value.toList
+    },
 
+    githubWorkflowGeneratedCI := {
       val publicationCondPre =
         githubWorkflowPublishTargetBranches.value.map(compileBranchPredicate("github.ref", _)).mkString("(", " || ", ")")
 
@@ -568,7 +570,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
         WorkflowJob(
           "publish",
           "Publish Artifacts",
-          preamble :::
+          githubWorkflowJobSetup.value.toList :::
             githubWorkflowGeneratedDownloadSteps.value.toList :::
             githubWorkflowPublishPreamble.value.toList :::
             githubWorkflowPublish.value.toList :::
@@ -582,7 +584,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
         WorkflowJob(
           "build",
           "Build and Test",
-          preamble :::
+          githubWorkflowJobSetup.value.toList :::
             githubWorkflowBuildPreamble.value.toList :::
             WorkflowStep.Sbt(
               List("githubWorkflowCheck"),
