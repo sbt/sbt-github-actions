@@ -54,6 +54,8 @@ trait GenerativeKeys {
   lazy val githubWorkflowTargetTags = settingKey[Seq[String]]("A list of tag patterns on which to trigger push builds (default: [])")
   lazy val githubWorkflowPREventTypes = settingKey[Seq[PREventType]]("A list of pull request event types which will be used to trigger builds (default: [opened, synchronize, reopened])")
 
+  lazy val githubWorkflowArtifactUpload = settingKey[Boolean]("Controls whether or not to upload target directories in the event that multiple jobs are running sequentially. Can be set on a per-project basis (default: true)")
+
   lazy val githubWorkflowEnv = settingKey[Map[String, String]](s"A map of static environment variable assignemnts global to the workflow (default: { GITHUB_TOKEN: $${{ secrets.GITHUB_TOKEN }} })")
   lazy val githubWorkflowAddedJobs = settingKey[Seq[WorkflowJob]]("A list of additional jobs to add to the CI workflow (default: [])")
 }

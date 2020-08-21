@@ -78,23 +78,14 @@ jobs:
 
       - run: sbt ++${{ matrix.scala }} withTarget/compile
 
-      - name: Upload target directory 'target' (${{ matrix.scala }})
-        uses: actions/upload-artifact@v1
-        with:
-          name: target-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}-target
-          path: target
+      - name: Compress target directories
+        run: tar cf targets.tar target withTarget/target project/target
 
-      - name: Upload target directory 'withTarget/target' (${{ matrix.scala }})
-        uses: actions/upload-artifact@v1
+      - name: Upload target directories
+        uses: actions/upload-artifact@v2
         with:
-          name: target-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}-withTarget_target
-          path: withTarget/target
-
-      - name: Upload target directory 'project/target'
-        uses: actions/upload-artifact@v1
-        with:
-          name: target-${{ matrix.os }}-${{ matrix.java }}-project_target
-          path: project/target
+          name: target-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
+          path: targets.tar
 
   publish:
     name: Publish Artifacts
@@ -154,23 +145,16 @@ jobs:
           path: ~/.sbt
           key: ${{ runner.os }}-sbt-cache-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('project/build.properties') }}
 
-      - name: Download target directory 'target' (2.13.2)
-        uses: actions/download-artifact@v1
+      - name: Download target directories (2.13.2)
+        uses: actions/download-artifact@v2
         with:
-          name: target-${{ matrix.os }}-2.13.2-${{ matrix.java }}-target
-          path: target
+          name: target-${{ matrix.os }}-2.13.2-${{ matrix.java }}
+          path: targets.tar
 
-      - name: Download target directory 'withTarget/target' (2.13.2)
-        uses: actions/download-artifact@v1
-        with:
-          name: target-${{ matrix.os }}-2.13.2-${{ matrix.java }}-withTarget_target
-          path: withTarget/target
-
-      - name: Download target directory 'project/target'
-        uses: actions/download-artifact@v1
-        with:
-          name: target-${{ matrix.os }}-${{ matrix.java }}-project_target
-          path: project/target
+      - name: Inflate target directories (2.13.2)
+        run: |
+          tar xf targets.tar
+          rm targets.tar
 
       - name: Publish project
         run: sbt ++${{ matrix.scala }} +publish

@@ -408,55 +408,66 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
   private def sanitizeTarget(str: String): String =
     List('\\', '/', '"', ':', '<', '>', '|', '*', '?').foldLeft(str)(_.replace(_, '_'))
 
-  override def globalSettings = Seq(internalTargetAggregation := Seq())
+  override def globalSettings = Seq(
+    internalTargetAggregation := Seq(),
+    githubWorkflowArtifactUpload := true)
 
   override def buildSettings = settingDefaults ++ Seq(
     githubWorkflowPREventTypes := PREventType.Defaults,
 
     githubWorkflowGeneratedUploadSteps := {
-      val mainSteps = pathStrs.value map { target =>
-        WorkflowStep.Use(
+      if (githubWorkflowArtifactUpload.value) {
+        val sanitized = pathStrs.value map { str =>
+          if (str.indexOf(' ') >= 0)    // TODO be less naive
+            s"'$str'"
+          else
+            str
+        }
+
+        val tar = WorkflowStep.Run(
+          List(s"tar cf targets.tar ${sanitized.mkString(" ")} project/target"),
+          name = Some("Compress target directories"))
+
+        val upload = WorkflowStep.Use(
           "actions",
           "upload-artifact",
-          "v1",
-          name = Some(s"Upload target directory '$target' ($${{ matrix.scala }})"),
+          "v2",
+          name = Some(s"Upload target directories"),
           params = Map(
-            "name" -> s"target-$${{ matrix.os }}-$${{ matrix.scala }}-$${{ matrix.java }}-${sanitizeTarget(target)}",
-            "path" -> target))
-      }
+            "name" -> s"target-$${{ matrix.os }}-$${{ matrix.scala }}-$${{ matrix.java }}",
+            "path" -> "targets.tar"))
 
-      mainSteps :+ WorkflowStep.Use(
-        "actions",
-        "upload-artifact",
-        "v1",
-        name = Some(s"Upload target directory 'project/target'"),
-        params = Map(
-          "name" -> s"target-$${{ matrix.os }}-$${{ matrix.java }}-project_target",
-          "path" -> "project/target"))
+        Seq(tar, upload)
+      } else {
+        Seq()
+      }
     },
 
     githubWorkflowGeneratedDownloadSteps := {
-      val mainSteps = pathStrs.value flatMap { target =>
-        crossScalaVersions.value map { v =>
-          WorkflowStep.Use(
+      val scalas = crossScalaVersions.value
+
+      if (githubWorkflowArtifactUpload.value) {
+        scalas flatMap { v =>
+          val download = WorkflowStep.Use(
             "actions",
             "download-artifact",
-            "v1",
-            name = Some(s"Download target directory '$target' ($v)"),
+            "v2",
+            name = Some(s"Download target directories ($v)"),
             params = Map(
-              "name" -> s"target-$${{ matrix.os }}-$v-$${{ matrix.java }}-${sanitizeTarget(target)}",
-              "path" -> target))
-        }
-      }
+              "name" -> s"target-$${{ matrix.os }}-$v-$${{ matrix.java }}",
+              "path" -> "targets.tar"))
 
-      mainSteps :+ WorkflowStep.Use(
-        "actions",
-        "download-artifact",
-        "v1",
-        name = Some(s"Download target directory 'project/target'"),
-        params = Map(
-          "name" -> s"target-$${{ matrix.os }}-$${{ matrix.java }}-project_target",
-          "path" -> "project/target"))
+          val untar = WorkflowStep.Run(
+            List(
+              "tar xf targets.tar",
+              "rm targets.tar"),
+            name = Some(s"Inflate target directories ($v)"))
+
+          Seq(download, untar)
+        }
+      } else {
+        Seq()
+      }
     },
 
     githubWorkflowGeneratedCacheSteps := {
@@ -633,7 +644,12 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
   }
 
   override def projectSettings = Seq(
-    Global / internalTargetAggregation += target.value,
+    Global / internalTargetAggregation ++= {
+      if (githubWorkflowArtifactUpload.value)
+        Seq(target.value)
+      else
+        Seq()
+    },
 
     githubWorkflowGenerate / aggregate := false,
     githubWorkflowCheck / aggregate := false,
