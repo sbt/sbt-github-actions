@@ -58,8 +58,10 @@ Note the use of `+=` rather than `:=`.
 One issue you might run into is an incompatible gpg version (see https://github.com/olafurpg/sbt-ci-release/issues/95), you can work around this by installing gpg 1.4.0 by using Olafur's [excellent `setup-gpg` action](https://github.com/olafurpg/setup-gpg):
 
 ```scala
+ThisBuild / githubWorkflowPublishPreamble +=
+  WorkflowStep.Use("olafurpg", "setup-gpg", "v2")
+
 ThisBuild / githubWorkflowPublish := Seq(
-  WorkflowStep.Use("olafurpg", "setup-gpg", "v2"),
   WorkflowStep.Sbt(
     List("ci-release"),
     env = Map(
