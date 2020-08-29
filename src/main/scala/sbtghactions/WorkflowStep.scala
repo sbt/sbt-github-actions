@@ -25,7 +25,11 @@ sealed trait WorkflowStep extends Product with Serializable {
 
 object WorkflowStep {
 
-  val CheckoutFull: WorkflowStep = Use("actions", "checkout", "v1", name = Some("Checkout current branch (full)"))
+  val CheckoutFull: WorkflowStep = Use(
+    "actions", "checkout", "v2",
+    name = Some("Checkout current branch (full)"),
+    params = Map("fetch-depth" -> "0"))
+
   val Checkout: WorkflowStep = Use("actions", "checkout", "v2", name = Some("Checkout current branch (fast)"))
 
   val SetupScala: WorkflowStep = Use("olafurpg", "setup-scala", "v5", name = Some("Setup Java and Scala"), params = Map("java-version" -> s"$${{ matrix.java }}"))

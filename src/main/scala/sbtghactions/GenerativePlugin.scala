@@ -547,7 +547,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
       }
 
       autoCrlfOpt ::: List(
-        WorkflowStep.Checkout,
+        WorkflowStep.CheckoutFull,
         WorkflowStep.SetupScala) :::
         githubWorkflowGeneratedCacheSteps.value.toList
     },

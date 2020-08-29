@@ -31,8 +31,10 @@ jobs:
         shell: bash
         run: git config --global core.autocrlf false
 
-      - name: Checkout current branch (fast)
+      - name: Checkout current branch (full)
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
       - name: Setup Java and Scala
         uses: olafurpg/setup-scala@v5
@@ -110,8 +112,10 @@ jobs:
         if: contains(runner.os, 'windows')
         run: git config --global core.autocrlf false
 
-      - name: Checkout current branch (fast)
+      - name: Checkout current branch (full)
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
       - name: Setup Java and Scala
         uses: olafurpg/setup-scala@v5
