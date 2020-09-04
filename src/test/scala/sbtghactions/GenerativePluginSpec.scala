@@ -405,7 +405,7 @@ class GenerativePluginSpec extends Specification {
       os: [ubuntu-latest]
       scala: [2.13.1]
       java: [adopt@1.8]
-  runs-on: [ ${{ matrix.os }}, runner-label, runner-group ]
+  runs-on: [ "${{ matrix.os }}", runner-label, runner-group ]
   steps:
     - run: echo hello"""
     }
