@@ -292,7 +292,7 @@ ${indent(rendered.mkString("\n"), 1)}"""
     val runsOn = if (job.runsOnExtraLabels.isEmpty)
       s"$${{ matrix.os }}"
     else
-      job.runsOnExtraLabels.mkString(s"[ $${{ matrix.os }}, ", ", ", " ]" )
+      job.runsOnExtraLabels.mkString(s"""[ "$${{ matrix.os }}", """, ", ", " ]" )
 
     val body = s"""name: ${wrap(job.name)}${renderedNeeds}${renderedCond}
 strategy:
