@@ -4,7 +4,7 @@ A plugin for assisting in building sbt projects using [GitHub Actions](https://g
 
 Note that the generative functionality is *optional* and doesn't need to be used if undesired.
 
-An example of how this "source of truth" pattern differs between the two plugins can be seen with `crossScalaVersions`. With sbt-travisci, the `crossScalaVersions` and `scalaVersion` settings are populated from the `scala:` key in **.travis.yml**. However, with sbt-github-actions, the `scala:` entry in the job `matrix:` is populated from the `Global / crossScalaVersions` key in your **build.sbt**.
+An example of how this "source of truth" pattern differs between the two plugins can be seen with `crossScalaVersions`. With sbt-travisci, the `crossScalaVersions` and `scalaVersion` settings are populated from the `scala:` key in **.travis.yml**. However, with sbt-github-actions, the `scala:` entry in the job `matrix:` is populated from the `ThisBuild / crossScalaVersions` key in your **build.sbt**.
 
 ## Usage
 
@@ -14,7 +14,7 @@ Add the following to your `plugins.sbt`:
 addSbtPlugin("com.codecommit" % "sbt-github-actions" % <latest>)
 ```
 
-To use the generative functionality, run `sbt githubWorkflowGenerate` and *and commit the results*. If your sbt build is ever changed such that the generated workflow is no longer in sync, the workflow run in GitHub Actions will begin failing and you will need to re-run this task (and commit the results).
+To use the generative functionality, run `sbt githubWorkflowGenerate` and *commit the results*. If your sbt build is ever changed such that the generated workflow is no longer in sync, the workflow run in GitHub Actions will begin failing and you will need to re-run this task (and commit the results).
 
 ## General Plugin
 
