@@ -4,7 +4,7 @@ A plugin for assisting in building sbt projects using [GitHub Actions](https://g
 
 Note that the generative functionality is *optional* and doesn't need to be used if undesired.
 
-An example of how this "source of truth" pattern differs between the two plugins can be seen with `crossScalaVersions`. With sbt-travisci, the `crossScalaVersions` and `scalaVersion` settings are populated from the `scala:` key in **.travis.yml**. However, with sbt-github-actions, the `scala:` entry in the job `matrix:` is populated from the `Global / crossScalaVersions` key in your **build.sbt**.
+An example of how this "source of truth" pattern differs between the two plugins can be seen with `crossScalaVersions`. With sbt-travisci, the `crossScalaVersions` and `scalaVersion` settings are populated from the `scala:` key in **.travis.yml**. However, with sbt-github-actions, the `scala:` entry in the job `matrix:` is populated from the `ThisBuild / crossScalaVersions` key in your **build.sbt**.
 
 ## Usage
 
