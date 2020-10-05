@@ -14,7 +14,7 @@ Add the following to your `plugins.sbt`:
 addSbtPlugin("com.codecommit" % "sbt-github-actions" % <latest>)
 ```
 
-To use the generative functionality, run `sbt githubWorkflowGenerate` and *and commit the results*. If your sbt build is ever changed such that the generated workflow is no longer in sync, the workflow run in GitHub Actions will begin failing and you will need to re-run this task (and commit the results).
+To use the generative functionality, run `sbt githubWorkflowGenerate` and *commit the results*. If your sbt build is ever changed such that the generated workflow is no longer in sync, the workflow run in GitHub Actions will begin failing and you will need to re-run this task (and commit the results).
 
 ## General Plugin
 
