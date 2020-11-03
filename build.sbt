@@ -21,6 +21,7 @@ ThisBuild / baseVersion := "0.9"
 ThisBuild / organization := "com.codecommit"
 ThisBuild / publishGithubUser := "djspiewak"
 ThisBuild / publishFullName := "Daniel Spiewak"
+ThisBuild / homepage := Some(url("https://github.com/djspiewak/sbt-github-actions"))
 
 ThisBuild / scalaVersion := "2.12.10"
 
