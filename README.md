@@ -50,7 +50,7 @@ This is assuming that you *only* wish to publish tags. If you also wish to publi
 
 ```scala
 ThisBuild / githubWorkflowPublishTargetBranches += 
-  Seq(RefPredicate.StartsWith(Ref.Tag("v")))
+  RefPredicate.StartsWith(Ref.Tag("v"))
 ```
 
 Note the use of `+=` rather than `:=`.
