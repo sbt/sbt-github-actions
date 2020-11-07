@@ -474,65 +474,25 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
         s"$${{ hashFiles('$glob') }}"
       }
 
-      val hashesStr = hashes.mkString("-")
-
       Seq(
         WorkflowStep.Use(
           "actions",
           "cache",
-          "v1",
-          name = Some("Cache ivy2"),
-          params = Map(
-            "path" -> "~/.ivy2/cache",
-            "key" -> s"$${{ runner.os }}-sbt-ivy-cache-$hashesStr")),
-
-        WorkflowStep.Use(
-          "actions",
-          "cache",
-          "v1",
-          name = Some("Cache coursier (generic)"),
-          params = Map(
-            "path" -> "~/.coursier/cache/v1",
-            "key" -> s"$${{ runner.os }}-generic-sbt-coursier-cache-$hashesStr")),
-
-        WorkflowStep.Use(
-          "actions",
-          "cache",
-          "v1",
-          name = Some("Cache coursier (linux)"),
-          cond = Some(s"contains(runner.os, 'linux')"),
-          params = Map(
-            "path" -> "~/.cache/coursier/v1",
-            "key" -> s"$${{ runner.os }}-sbt-coursier-cache-$hashesStr")),
-
-        WorkflowStep.Use(
-          "actions",
-          "cache",
-          "v1",
-          name = Some("Cache coursier (macOS)"),
-          cond = Some(s"contains(runner.os, 'macos')"),
-          params = Map(
-            "path" -> "~/Library/Caches/Coursier/v1",
-            "key" -> s"$${{ runner.os }}-sbt-coursier-cache-$hashesStr")),
-
-        WorkflowStep.Use(
-          "actions",
-          "cache",
-          "v1",
-          name = Some("Cache coursier (windows)"),
-          cond = Some(s"contains(runner.os, 'windows')"),
-          params = Map(
-            "path" -> "~/AppData/Local/Coursier/Cache/v1",
-            "key" -> s"$${{ runner.os }}-sbt-coursier-cache-$hashesStr")),
-
-        WorkflowStep.Use(
-          "actions",
-          "cache",
-          "v1",
+          "v2",
           name = Some("Cache sbt"),
           params = Map(
-            "path" -> "~/.sbt",
-            "key" -> s"$${{ runner.os }}-sbt-cache-$hashesStr")))
+            "path" -> Seq(
+              "~/.sbt",
+              "~/.ivy2/cache",
+              "~/.coursier/cache/v1",
+              "~/.cache/coursier/v1",
+              "~/AppData/Local/Coursier/Cache/v1",
+              "~/Library/Caches/Coursier/v1"
+            ).mkString("\n"),
+            "key" -> s"$${{ runner.os }}-sbt-cache-v2-${hashes.mkString("-")}"
+          )
+        )
+      )
     },
 
     githubWorkflowJobSetup := {
