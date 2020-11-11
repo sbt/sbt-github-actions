@@ -59,7 +59,7 @@ One issue you might run into is an incompatible gpg version (see https://github.
 
 ```scala
 ThisBuild / githubWorkflowPublishPreamble +=
-  WorkflowStep.Use("olafurpg", "setup-gpg", "v2")
+  WorkflowStep.Use("olafurpg", "setup-gpg", "v3")
 
 ThisBuild / githubWorkflowPublish := Seq(
   WorkflowStep.Sbt(
