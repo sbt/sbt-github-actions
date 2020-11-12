@@ -294,8 +294,10 @@ ${indent(rendered.mkString("\n"), 1)}"""
     else
       job.runsOnExtraLabels.mkString(s"""[ "$${{ matrix.os }}", """, ", ", " ]" )
 
+    val renderedFailFast = job.matrixFailFast.fold("")("\n  fail-fast: " + _)
+
     val body = s"""name: ${wrap(job.name)}${renderedNeeds}${renderedCond}
-strategy:
+strategy:${renderedFailFast}
   matrix:
     os:${compileList(job.oses, 3)}
     scala:${compileList(job.scalas, 3)}
