@@ -26,6 +26,7 @@ final case class WorkflowJob(
     scalas: List[String] = List("2.13.1"),
     javas: List[String] = List("adopt@1.8"),
     needs: List[String] = List(),
+    matrixFailFast: Option[Boolean] = None,
     matrixAdds: Map[String, List[String]] = Map(),
     matrixIncs: List[MatrixInclude] = List(),
     matrixExcs: List[MatrixExclude] = List(),

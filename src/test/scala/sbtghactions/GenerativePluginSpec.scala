@@ -371,12 +371,14 @@ class GenerativePluginSpec extends Specification {
           List(
             WorkflowStep.Run(List("echo ${{ matrix.test }}")),
             WorkflowStep.Checkout),
-          matrixAdds = Map("test" -> List("1", "2"))),
+          matrixAdds = Map("test" -> List("1", "2")),
+          matrixFailFast = Some(true)),
         "")
 
       results mustEqual s"""bippy:
   name: Bippity Bop Around the Clock
   strategy:
+    fail-fast: true
     matrix:
       os: [ubuntu-latest]
       scala: [2.13.1]
