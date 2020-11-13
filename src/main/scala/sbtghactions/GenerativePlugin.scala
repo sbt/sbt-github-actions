@@ -446,7 +446,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
     },
 
     githubWorkflowGeneratedDownloadSteps := {
-      val scalas = crossScalaVersions.value
+      val scalas = githubWorkflowScalaVersions.value
 
       if (githubWorkflowArtifactUpload.value) {
         scalas flatMap { v =>
@@ -555,7 +555,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
             githubWorkflowBuildPostamble.value.toList :::
             uploadStepsOpt,
           oses = githubWorkflowOSes.value.toList,
-          scalas = crossScalaVersions.value.toList,
+          scalas = githubWorkflowScalaVersions.value.toList,
           javas = githubWorkflowJavaVersions.value.toList,
           matrixAdds = githubWorkflowBuildMatrixAdditions.value,
           matrixIncs = githubWorkflowBuildMatrixInclusions.value.toList,
