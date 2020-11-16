@@ -41,6 +41,11 @@ object WorkflowStep {
       List("echo \"" + name + "=$(" + cmd + ")\" >> $GITHUB_ENV"),
       name = Some(s"Export $name"))
 
+  def ComputePrependPATH(cmd: String): WorkflowStep =
+    Run(
+      List("echo \"$(" + cmd + ")\" >> $GITHUB_PATH"),
+      name = Some(s"Prepend $$PATH using $cmd"))
+
   final case class Run(commands: List[String], id: Option[String] = None, name: Option[String] = None, cond: Option[String] = None, env: Map[String, String] = Map()) extends WorkflowStep
   final case class Sbt(commands: List[String], id: Option[String] = None, name: Option[String] = None, cond: Option[String] = None, env: Map[String, String] = Map()) extends WorkflowStep
   final case class Use(owner: String, repo: String, ref: String, params: Map[String, String] = Map(), id: Option[String] = None, name: Option[String] = None, cond: Option[String] = None, env: Map[String, String] = Map()) extends WorkflowStep
