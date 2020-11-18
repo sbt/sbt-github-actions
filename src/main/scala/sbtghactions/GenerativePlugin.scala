@@ -359,6 +359,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
   val settingDefaults = Seq(
     githubWorkflowSbtCommand := "sbt",
 
+    githubWorkflowBuildMatrixFailFast := None,
     githubWorkflowBuildMatrixAdditions := Map(),
     githubWorkflowBuildMatrixInclusions := Seq(),
     githubWorkflowBuildMatrixExclusions := Seq(),
@@ -557,6 +558,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
           oses = githubWorkflowOSes.value.toList,
           scalas = githubWorkflowScalaVersions.value.toList,
           javas = githubWorkflowJavaVersions.value.toList,
+          matrixFailFast = githubWorkflowBuildMatrixFailFast.value,
           matrixAdds = githubWorkflowBuildMatrixAdditions.value,
           matrixIncs = githubWorkflowBuildMatrixInclusions.value.toList,
           matrixExcs = githubWorkflowBuildMatrixExclusions.value.toList,
