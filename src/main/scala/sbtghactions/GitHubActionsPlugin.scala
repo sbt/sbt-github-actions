@@ -82,9 +82,13 @@ object GitHubActionsPlugin extends AutoPlugin {
                         map.asScala.toMap map { case (k, v) => k.toString -> recursivelyConvert(v) }
                     }
                   }
-                } filter { map =>
-                  map("name") == name
-                }
+                } filter ( _ get "name" match {
+                  case Some(nameValue) =>
+                    nameValue == name
+                  case None =>
+                    log.warn("GitHub action yml file does not contain 'name' key")
+                    false
+                })
 
                 results.headOption getOrElse {
                   log.warn("unable to find or parse workflow YAML definition")
