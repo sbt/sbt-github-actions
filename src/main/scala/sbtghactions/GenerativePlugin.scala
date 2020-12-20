@@ -32,6 +32,9 @@ object GenerativePlugin extends AutoPlugin {
     type WorkflowJob = sbtghactions.WorkflowJob
     val WorkflowJob = sbtghactions.WorkflowJob
 
+    type JobContainer = sbtghactions.JobContainer
+    val JobContainer = sbtghactions.JobContainer
+
     type WorkflowStep = sbtghactions.WorkflowStep
     val WorkflowStep = sbtghactions.WorkflowStep
 
