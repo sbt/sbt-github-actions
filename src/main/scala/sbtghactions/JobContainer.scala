@@ -21,5 +21,5 @@ final case class JobContainer(
     credentials: Option[(String, String)] = None,
     env: Map[String, String] = Map(),
     volumes: Map[String, String] = Map(),
-    ports: List[Int],
+    ports: List[Int] = Nil,
     options: List[String] = Nil)
