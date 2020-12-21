@@ -32,6 +32,9 @@ object GenerativePlugin extends AutoPlugin {
     type WorkflowJob = sbtghactions.WorkflowJob
     val WorkflowJob = sbtghactions.WorkflowJob
 
+    type JobContainer = sbtghactions.JobContainer
+    val JobContainer = sbtghactions.JobContainer
+
     type WorkflowStep = sbtghactions.WorkflowStep
     val WorkflowStep = sbtghactions.WorkflowStep
 
@@ -220,6 +223,48 @@ ${indent(rendered.mkString("\n"), 1)}"""
 
     val renderedCond = job.cond.map(wrap).map("\nif: " + _).getOrElse("")
 
+    val renderedContainer = job.container match {
+      case Some(JobContainer(image, credentials, env, volumes, ports, options)) =>
+        if (credentials.isEmpty && env.isEmpty && volumes.isEmpty && ports.isEmpty && options.isEmpty) {
+          "\n" + s"container: ${wrap(image)}"
+        } else {
+          val renderedImage = s"image: ${wrap(image)}"
+
+          val renderedCredentials = credentials match {
+            case Some((username, password)) =>
+              s"\ncredentials:\n${indent(s"username: ${wrap(username)}\npassword: ${wrap(password)}", 1)}"
+
+            case None =>
+              ""
+          }
+
+          val renderedEnv = if (!env.isEmpty)
+            "\n" + compileEnv(env)
+          else
+            ""
+
+          val renderedVolumes = if (!volumes.isEmpty)
+            s"\nvolumes:${compileList(volumes.toList map { case (l, r) => s"$l:$r" }, 1)}"
+          else
+            ""
+
+          val renderedPorts = if (!ports.isEmpty)
+            s"\nports:${compileList(ports.map(_.toString), 1)}"
+          else
+            ""
+
+          val renderedOptions = if (!options.isEmpty)
+            s"\noptions: ${wrap(options.mkString(" "))}"
+          else
+            ""
+
+          s"\ncontainer:\n${indent(renderedImage + renderedCredentials + renderedEnv + renderedVolumes + renderedPorts + renderedOptions, 1)}"
+        }
+
+      case None =>
+        ""
+    }
+
     val renderedEnvPre = compileEnv(job.env)
     val renderedEnv = if (renderedEnvPre.isEmpty)
       ""
@@ -302,7 +347,7 @@ strategy:${renderedFailFast}
     os:${compileList(job.oses, 3)}
     scala:${compileList(job.scalas, 3)}
     java:${compileList(job.javas, 3)}${renderedMatrices}
-runs-on: ${runsOn}${renderedEnv}
+runs-on: ${runsOn}${renderedContainer}${renderedEnv}
 steps:
 ${indent(job.steps.map(compileStep(_, sbt, declareShell = declareShell)).mkString("\n\n"), 1)}"""
 

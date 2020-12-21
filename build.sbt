@@ -35,7 +35,7 @@ ThisBuild / githubWorkflowPublishTargetBranches :=
 ThisBuild / githubWorkflowPublish := Seq()
 
 sbtPlugin := true
-sbtVersion := "1.3.8"
+sbtVersion := "1.3.13"
 
 scalacOptions += "-Xlint:_,-missing-interpolator"
 

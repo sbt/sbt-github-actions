@@ -171,6 +171,100 @@ class GenerativePluginSpec extends Specification {
             List(WorkflowStep.Run(List("whoami"))))),
         "") mustEqual expected
     }
+
+    "render a simple container image" in {
+      val expected = header + s"""
+        |name: test4
+        |
+        |on:
+        |  pull_request:
+        |    branches: [master]
+        |  push:
+        |    branches: [master]
+        |
+        |jobs:
+        |  build:
+        |    name: Build and Test
+        |    strategy:
+        |      matrix:
+        |        os: [ubuntu-latest]
+        |        scala: [2.13.1]
+        |        java: [adopt@1.8]
+        |    runs-on: $${{ matrix.os }}
+        |    container: 'not:real-thing'
+        |    steps:
+        |      - run: echo yikes""".stripMargin
+
+      compileWorkflow(
+        "test4",
+        List("master"),
+        Nil,
+        PREventType.Defaults,
+        Map(),
+        List(
+          WorkflowJob(
+            "build",
+            "Build and Test",
+            List(WorkflowStep.Run(List("echo yikes"))),
+            container = Some(
+              JobContainer("not:real-thing")))),
+        "") mustEqual expected
+    }
+
+    "render a container with all the trimmings" in {
+      val expected = header + s"""
+        |name: test4
+        |
+        |on:
+        |  pull_request:
+        |    branches: [master]
+        |  push:
+        |    branches: [master]
+        |
+        |jobs:
+        |  build:
+        |    name: Build and Test
+        |    strategy:
+        |      matrix:
+        |        os: [ubuntu-latest]
+        |        scala: [2.13.1]
+        |        java: [adopt@1.8]
+        |    runs-on: $${{ matrix.os }}
+        |    container:
+        |      image: 'also:not-real'
+        |      credentials:
+        |        username: janedoe
+        |        password: myvoice
+        |      env:
+        |        VERSION: 1.0
+        |        PATH: /nope
+        |      volumes: ['/source:/dest/ination']
+        |      ports: [80, 443]
+        |      options: '--cpus 1'
+        |    steps:
+        |      - run: echo yikes""".stripMargin
+
+      compileWorkflow(
+        "test4",
+        List("master"),
+        Nil,
+        PREventType.Defaults,
+        Map(),
+        List(
+          WorkflowJob(
+            "build",
+            "Build and Test",
+            List(WorkflowStep.Run(List("echo yikes"))),
+            container = Some(
+              JobContainer(
+                "also:not-real",
+                credentials = Some("janedoe" -> "myvoice"),
+                env = Map("VERSION" -> "1.0", "PATH" -> "/nope"),
+                volumes = Map("/source" -> "/dest/ination"),
+                ports = List(80, 443),
+                options = List("--cpus", "1"))))),
+        "") mustEqual expected
+    }
   }
 
   "step compilation" should {

@@ -16,19 +16,10 @@
 
 package sbtghactions
 
-final case class WorkflowJob(
-    id: String,
-    name: String,
-    steps: List[WorkflowStep],
-    cond: Option[String] = None,
+final case class JobContainer(
+    image: String,
+    credentials: Option[(String, String)] = None,
     env: Map[String, String] = Map(),
-    oses: List[String] = List("ubuntu-latest"),
-    scalas: List[String] = List("2.13.1"),
-    javas: List[String] = List("adopt@1.8"),
-    needs: List[String] = List(),
-    matrixFailFast: Option[Boolean] = None,
-    matrixAdds: Map[String, List[String]] = Map(),
-    matrixIncs: List[MatrixInclude] = List(),
-    matrixExcs: List[MatrixExclude] = List(),
-    runsOnExtraLabels: List[String] = List(),
-    container: Option[JobContainer] = None)
+    volumes: Map[String, String] = Map(),
+    ports: List[Int] = Nil,
+    options: List[String] = Nil)
