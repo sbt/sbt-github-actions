@@ -202,14 +202,33 @@ ${indent(rendered.mkString("\n"), 1)}"""
 
         renderedShell + "run: " + wrap(s"$sbt ++$${{ matrix.scala }} ${safeCommands.mkString(" ")}")
 
-      case Use(owner, repo, ref, params, _, _, _, _) =>
+      case Use(ref, params, _, _, _, _) =>
         val renderedParamsPre = compileEnv(params, prefix = "with")
         val renderedParams = if (renderedParamsPre.isEmpty)
           ""
         else
           "\n" + renderedParamsPre
 
-        s"uses: $owner/$repo@$ref" + renderedParams
+        val decl = ref match {
+          case UseRef.Public(owner, repo, ref) =>
+            s"uses: $owner/$repo@$ref"
+
+          case UseRef.Local(path) =>
+            val cleaned = if (path.startsWith("./"))
+              path
+            else
+              "./" + path
+
+            s"uses: $cleaned"
+
+          case UseRef.Docker(image, tag, Some(host)) =>
+            s"uses: docker://$host/$image:$tag"
+
+          case UseRef.Docker(image, tag, None) =>
+            s"uses: docker://$image:$tag"
+        }
+
+        decl + renderedParams
     }
 
     indent(preamble + body, 1).updated(0, '-')
@@ -477,9 +496,10 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
           name = Some("Compress target directories"))
 
         val upload = WorkflowStep.Use(
-          "actions",
-          "upload-artifact",
-          "v2",
+          UseRef.Public(
+            "actions",
+            "upload-artifact",
+            "v2"),
           name = Some(s"Upload target directories"),
           params = Map(
             "name" -> s"target-$${{ matrix.os }}-$${{ matrix.scala }}-$${{ matrix.java }}",
@@ -497,9 +517,10 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
       if (githubWorkflowArtifactUpload.value) {
         scalas flatMap { v =>
           val download = WorkflowStep.Use(
-            "actions",
-            "download-artifact",
-            "v2",
+            UseRef.Public(
+              "actions",
+              "download-artifact",
+              "v2"),
             name = Some(s"Download target directories ($v)"),
             params = Map(
               "name" -> s"target-$${{ matrix.os }}-$v-$${{ matrix.java }}"))
@@ -524,9 +545,10 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
 
       Seq(
         WorkflowStep.Use(
-          "actions",
-          "cache",
-          "v2",
+          UseRef.Public(
+            "actions",
+            "cache",
+            "v2"),
           name = Some("Cache sbt"),
           params = Map(
             "path" -> Seq(

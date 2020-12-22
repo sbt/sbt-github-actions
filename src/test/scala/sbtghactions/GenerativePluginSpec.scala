@@ -298,19 +298,20 @@ class GenerativePluginSpec extends Specification {
     "omit shell declaration on Use step" in {
       compileStep(
         Use(
-          "repo",
-          "slug",
-          "v0"),
+          UseRef.Public(
+            "repo",
+            "slug",
+            "v0")),
         "",
         true) mustEqual "- uses: repo/slug@v0"
     }
 
     "preserve wonky version in Use" in {
-      compileStep(Use("hello", "world", "v4.0.0"), "", true) mustEqual "- uses: hello/world@v4.0.0"
+      compileStep(Use(UseRef.Public("hello", "world", "v4.0.0")), "", true) mustEqual "- uses: hello/world@v4.0.0"
     }
 
     "drop Use version prefix on anything that doesn't start with a number" in {
-      compileStep(Use("hello", "world", "master"), "", true) mustEqual "- uses: hello/world@master"
+      compileStep(Use(UseRef.Public("hello", "world", "master")), "", true) mustEqual "- uses: hello/world@master"
     }
 
     "compile sbt using the command provided" in {
@@ -320,23 +321,52 @@ class GenerativePluginSpec extends Specification {
     }
 
     "compile use without parameters" in {
-      compileStep(
-        Use("olafurpg", "setup-scala", "v10"),
-        "") mustEqual "- uses: olafurpg/setup-scala@v10"
+      "public" >> {
+        compileStep(
+          Use(UseRef.Public("olafurpg", "setup-scala", "v10")),
+          "") mustEqual "- uses: olafurpg/setup-scala@v10"
+      }
+
+      "directory" >> {
+        compileStep(
+          Use(UseRef.Local("foo/bar")),
+          "") mustEqual "- uses: ./foo/bar"
+      }
+
+      "directory (quantified)" >> {
+        compileStep(
+          Use(UseRef.Local("./foo/bar")),
+          "") mustEqual "- uses: ./foo/bar"
+      }
+
+      "docker" >> {
+        "docker hub" >> {
+          compileStep(
+            Use(UseRef.Docker("subarctic-merecat", "2.3.4")),
+            "") mustEqual "- uses: docker://subarctic-merecat:2.3.4"
+        }
+
+        "hosted" >> {
+          compileStep(
+            Use(UseRef.Docker("alpine-donkey", "2.3.4", host = Some("host.nope"))),
+            "") mustEqual "- uses: docker://host.nope/alpine-donkey:2.3.4"
+        }
+      }
     }
 
     "compile use with two parameters" in {
       compileStep(
-        Use("olafurpg", "setup-scala", "v10", params = Map("abc" -> "def", "cafe" -> "@42")),
+        Use(UseRef.Public("olafurpg", "setup-scala", "v10"), params = Map("abc" -> "def", "cafe" -> "@42")),
         "") mustEqual "- uses: olafurpg/setup-scala@v10\n  with:\n    abc: def\n    cafe: '@42'"
     }
 
     "compile use with two parameters and an environment" in {
       compileStep(
         Use(
-          "derp",
-          "nope",
-          "v0",
+          UseRef.Public(
+            "derp",
+            "nope",
+            "v0"),
           params = Map("teh" -> "schizzle", "think" -> "positive"),
           env = Map("hi" -> "there")),
         "") mustEqual "- env:\n    hi: there\n  uses: derp/nope@v0\n  with:\n    teh: schizzle\n    think: positive"

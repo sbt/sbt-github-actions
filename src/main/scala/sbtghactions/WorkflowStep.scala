@@ -26,15 +26,15 @@ sealed trait WorkflowStep extends Product with Serializable {
 object WorkflowStep {
 
   val CheckoutFull: WorkflowStep = Use(
-    "actions", "checkout", "v2",
+    UseRef.Public("actions", "checkout", "v2"),
     name = Some("Checkout current branch (full)"),
     params = Map("fetch-depth" -> "0"))
 
-  val Checkout: WorkflowStep = Use("actions", "checkout", "v2", name = Some("Checkout current branch (fast)"))
+  val Checkout: WorkflowStep = Use(UseRef.Public("actions", "checkout", "v2"), name = Some("Checkout current branch (fast)"))
 
-  val SetupScala: WorkflowStep = Use("olafurpg", "setup-scala", "v10", name = Some("Setup Java and Scala"), params = Map("java-version" -> s"$${{ matrix.java }}"))
+  val SetupScala: WorkflowStep = Use(UseRef.Public("olafurpg", "setup-scala", "v10"), name = Some("Setup Java and Scala"), params = Map("java-version" -> s"$${{ matrix.java }}"))
 
-  val Tmate: WorkflowStep = Use("mxschmitt", "action-tmate", "v2", name = Some("Setup tmate session"))
+  val Tmate: WorkflowStep = Use(UseRef.Public("mxschmitt", "action-tmate", "v2"), name = Some("Setup tmate session"))
 
   def ComputeVar(name: String, cmd: String): WorkflowStep =
     Run(
@@ -48,5 +48,5 @@ object WorkflowStep {
 
   final case class Run(commands: List[String], id: Option[String] = None, name: Option[String] = None, cond: Option[String] = None, env: Map[String, String] = Map()) extends WorkflowStep
   final case class Sbt(commands: List[String], id: Option[String] = None, name: Option[String] = None, cond: Option[String] = None, env: Map[String, String] = Map()) extends WorkflowStep
-  final case class Use(owner: String, repo: String, ref: String, params: Map[String, String] = Map(), id: Option[String] = None, name: Option[String] = None, cond: Option[String] = None, env: Map[String, String] = Map()) extends WorkflowStep
+  final case class Use(ref: UseRef, params: Map[String, String] = Map(), id: Option[String] = None, name: Option[String] = None, cond: Option[String] = None, env: Map[String, String] = Map()) extends WorkflowStep
 }
