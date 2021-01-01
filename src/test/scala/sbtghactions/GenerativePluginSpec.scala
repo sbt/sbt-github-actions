@@ -99,7 +99,7 @@ class GenerativePluginSpec extends Specification {
         |    strategy:
         |      matrix:
         |        os: [ubuntu-latest]
-        |        scala: [2.13.1]
+        |        scala: [2.13.4]
         |        java: [adopt@1.8]
         |    runs-on: $${{ matrix.os }}
         |    steps:
@@ -136,7 +136,7 @@ class GenerativePluginSpec extends Specification {
         |    strategy:
         |      matrix:
         |        os: [ubuntu-latest]
-        |        scala: [2.13.1]
+        |        scala: [2.13.4]
         |        java: [adopt@1.8]
         |    runs-on: $${{ matrix.os }}
         |    steps:
@@ -147,7 +147,7 @@ class GenerativePluginSpec extends Specification {
         |    strategy:
         |      matrix:
         |        os: [ubuntu-latest]
-        |        scala: [2.13.1]
+        |        scala: [2.13.4]
         |        java: [adopt@1.8]
         |    runs-on: $${{ matrix.os }}
         |    steps:
@@ -188,7 +188,7 @@ class GenerativePluginSpec extends Specification {
         |    strategy:
         |      matrix:
         |        os: [ubuntu-latest]
-        |        scala: [2.13.1]
+        |        scala: [2.13.4]
         |        java: [adopt@1.8]
         |    runs-on: $${{ matrix.os }}
         |    container: 'not:real-thing'
@@ -227,7 +227,7 @@ class GenerativePluginSpec extends Specification {
         |    strategy:
         |      matrix:
         |        os: [ubuntu-latest]
-        |        scala: [2.13.1]
+        |        scala: [2.13.4]
         |        java: [adopt@1.8]
         |    runs-on: $${{ matrix.os }}
         |    container:
@@ -369,7 +369,7 @@ class GenerativePluginSpec extends Specification {
   strategy:
     matrix:
       os: [ubuntu-latest]
-      scala: [2.13.1]
+      scala: [2.13.4]
       java: [adopt@1.8]
   runs-on: $${{ matrix.os }}
   steps:
@@ -394,7 +394,7 @@ class GenerativePluginSpec extends Specification {
   strategy:
     matrix:
       os: [ubuntu-latest, windows-latest, macos-latest]
-      scala: [2.13.1]
+      scala: [2.13.4]
       java: [adopt@1.8]
   runs-on: $${{ matrix.os }}
   steps:
@@ -409,7 +409,7 @@ class GenerativePluginSpec extends Specification {
           "How to get to...",
           List(
             WorkflowStep.SetupScala),
-          scalas = List("2.12.10", "2.13.1"),
+          scalas = List("2.12.10", "2.13.4"),
           javas = List("adopt@1.8", "graal@20.0.0")),
         "")
 
@@ -418,7 +418,7 @@ class GenerativePluginSpec extends Specification {
   strategy:
     matrix:
       os: [ubuntu-latest]
-      scala: [2.12.10, 2.13.1]
+      scala: [2.12.10, 2.13.4]
       java: [adopt@1.8, graal@20.0.0]
   runs-on: $${{ matrix.os }}
   steps:
@@ -447,7 +447,7 @@ class GenerativePluginSpec extends Specification {
   strategy:
     matrix:
       os: [ubuntu-latest]
-      scala: [2.13.1]
+      scala: [2.13.4]
       java: [adopt@1.8]
   runs-on: $${{ matrix.os }}
   env:
@@ -475,7 +475,7 @@ class GenerativePluginSpec extends Specification {
     fail-fast: true
     matrix:
       os: [ubuntu-latest]
-      scala: [2.13.1]
+      scala: [2.13.4]
       java: [adopt@1.8]
       test: [1, 2]
   runs-on: $${{ matrix.os }}
@@ -499,7 +499,7 @@ class GenerativePluginSpec extends Specification {
   strategy:
     matrix:
       os: [ubuntu-latest]
-      scala: [2.13.1]
+      scala: [2.13.4]
       java: [adopt@1.8]
   runs-on: [ "${{ matrix.os }}", runner-label, runner-group ]
   steps:
@@ -535,7 +535,7 @@ class GenerativePluginSpec extends Specification {
             WorkflowStep.Run(List("echo ${{ matrix.scala }}"))),
           matrixIncs = List(
             MatrixInclude(
-              Map("scala" -> "2.13.1"),
+              Map("scala" -> "2.13.4"),
               Map("foo" -> "bar")))),
         "")
 
@@ -544,10 +544,10 @@ class GenerativePluginSpec extends Specification {
   strategy:
     matrix:
       os: [ubuntu-latest]
-      scala: [2.13.1]
+      scala: [2.13.4]
       java: [adopt@1.8]
       include:
-        - scala: 2.13.1
+        - scala: 2.13.4
           foo: bar
   runs-on: $${{ matrix.os }}
   steps:
@@ -563,7 +563,7 @@ class GenerativePluginSpec extends Specification {
             WorkflowStep.Run(List("echo ${{ matrix.scala }}"))),
           matrixIncs = List(
             MatrixInclude(
-              Map("scalanot" -> "2.13.1"),
+              Map("scalanot" -> "2.13.4"),
               Map("foo" -> "bar")))),
         "") must throwA[RuntimeException]
     }
@@ -591,7 +591,7 @@ class GenerativePluginSpec extends Specification {
             WorkflowStep.Run(List("echo ${{ matrix.scala }}"))),
           matrixExcs = List(
             MatrixExclude(
-              Map("scala" -> "2.13.1")))),
+              Map("scala" -> "2.13.4")))),
         "")
 
       results mustEqual s"""bippy:
@@ -599,10 +599,10 @@ class GenerativePluginSpec extends Specification {
   strategy:
     matrix:
       os: [ubuntu-latest]
-      scala: [2.13.1]
+      scala: [2.13.4]
       java: [adopt@1.8]
       exclude:
-        - scala: 2.13.1
+        - scala: 2.13.4
   runs-on: $${{ matrix.os }}
   steps:
     - run: echo $${{ matrix.scala }}"""
@@ -617,7 +617,7 @@ class GenerativePluginSpec extends Specification {
             WorkflowStep.Run(List("echo ${{ matrix.scala }}"))),
           matrixExcs = List(
             MatrixExclude(
-              Map("scalanot" -> "2.13.1")))),
+              Map("scalanot" -> "2.13.4")))),
         "") must throwA[RuntimeException]
     }
 
@@ -650,7 +650,7 @@ class GenerativePluginSpec extends Specification {
   strategy:
     matrix:
       os: [ubuntu-latest]
-      scala: [2.13.1]
+      scala: [2.13.4]
       java: ['this:is>#illegal']
   runs-on: $${{ matrix.os }}
   steps:
