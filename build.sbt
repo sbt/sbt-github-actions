@@ -30,7 +30,7 @@ ThisBuild / githubWorkflowBuild := Seq(WorkflowStep.Sbt(List("test", "scripted")
 
 // dummy publication just to test that setup works
 ThisBuild / githubWorkflowPublishTargetBranches :=
-  Seq(RefPredicate.Equals(Ref.Branch("master")))
+  Seq(RefPredicate.Equals(Ref.Branch("main")))
 
 ThisBuild / githubWorkflowPublish := Seq()
 

@@ -36,14 +36,14 @@ class GenerativePluginSpec extends Specification {
         |
         |on:
         |  pull_request:
-        |    branches: [master]
+        |    branches: [main]
         |  push:
-        |    branches: [master]
+        |    branches: [main]
         |
         |jobs:
         |  """.stripMargin
 
-      compileWorkflow("test", List("master"), Nil, PREventType.Defaults, Map(), Nil, "sbt") mustEqual expected
+      compileWorkflow("test", List("main"), Nil, PREventType.Defaults, Map(), Nil, "sbt") mustEqual expected
     }
 
     "produce the appropriate skeleton around a zero-job workflow with non-empty tags" in {
@@ -52,15 +52,15 @@ class GenerativePluginSpec extends Specification {
         |
         |on:
         |  pull_request:
-        |    branches: [master]
+        |    branches: [main]
         |  push:
-        |    branches: [master]
+        |    branches: [main]
         |    tags: [howdy]
         |
         |jobs:
         |  """.stripMargin
 
-      compileWorkflow("test", List("master"), List("howdy"), PREventType.Defaults, Map(), Nil, "sbt") mustEqual expected
+      compileWorkflow("test", List("main"), List("howdy"), PREventType.Defaults, Map(), Nil, "sbt") mustEqual expected
     }
 
     "respect non-default pr types" in {
@@ -69,15 +69,15 @@ class GenerativePluginSpec extends Specification {
         |
         |on:
         |  pull_request:
-        |    branches: [master]
+        |    branches: [main]
         |    types: [ready_for_review, review_requested, opened]
         |  push:
-        |    branches: [master]
+        |    branches: [main]
         |
         |jobs:
         |  """.stripMargin
 
-      compileWorkflow("test", List("master"), Nil, List(PREventType.ReadyForReview, PREventType.ReviewRequested, PREventType.Opened), Map(), Nil, "sbt") mustEqual expected
+      compileWorkflow("test", List("main"), Nil, List(PREventType.ReadyForReview, PREventType.ReviewRequested, PREventType.Opened), Map(), Nil, "sbt") mustEqual expected
     }
 
     "compile a one-job workflow targeting multiple branch patterns with an environment" in {
@@ -86,9 +86,9 @@ class GenerativePluginSpec extends Specification {
         |
         |on:
         |  pull_request:
-        |    branches: [master, backport/v*]
+        |    branches: [main, backport/v*]
         |  push:
-        |    branches: [master, backport/v*]
+        |    branches: [main, backport/v*]
         |
         |env:
         |  GITHUB_TOKEN: $${{ secrets.GITHUB_TOKEN }}
@@ -107,7 +107,7 @@ class GenerativePluginSpec extends Specification {
 
       compileWorkflow(
         "test2",
-        List("master", "backport/v*"),
+        List("main", "backport/v*"),
         Nil,
         PREventType.Defaults,
         Map(
@@ -126,9 +126,9 @@ class GenerativePluginSpec extends Specification {
         |
         |on:
         |  pull_request:
-        |    branches: [master]
+        |    branches: [main]
         |  push:
-        |    branches: [master]
+        |    branches: [main]
         |
         |jobs:
         |  build:
@@ -155,7 +155,7 @@ class GenerativePluginSpec extends Specification {
 
       compileWorkflow(
         "test3",
-        List("master"),
+        List("main"),
         Nil,
         PREventType.Defaults,
         Map(),
@@ -178,9 +178,9 @@ class GenerativePluginSpec extends Specification {
         |
         |on:
         |  pull_request:
-        |    branches: [master]
+        |    branches: [main]
         |  push:
-        |    branches: [master]
+        |    branches: [main]
         |
         |jobs:
         |  build:
@@ -197,7 +197,7 @@ class GenerativePluginSpec extends Specification {
 
       compileWorkflow(
         "test4",
-        List("master"),
+        List("main"),
         Nil,
         PREventType.Defaults,
         Map(),
@@ -217,9 +217,9 @@ class GenerativePluginSpec extends Specification {
         |
         |on:
         |  pull_request:
-        |    branches: [master]
+        |    branches: [main]
         |  push:
-        |    branches: [master]
+        |    branches: [main]
         |
         |jobs:
         |  build:
@@ -246,7 +246,7 @@ class GenerativePluginSpec extends Specification {
 
       compileWorkflow(
         "test4",
-        List("master"),
+        List("main"),
         Nil,
         PREventType.Defaults,
         Map(),
@@ -311,7 +311,7 @@ class GenerativePluginSpec extends Specification {
     }
 
     "drop Use version prefix on anything that doesn't start with a number" in {
-      compileStep(Use(UseRef.Public("hello", "world", "master")), "", true) mustEqual "- uses: hello/world@master"
+      compileStep(Use(UseRef.Public("hello", "world", "main")), "", true) mustEqual "- uses: hello/world@main"
     }
 
     "compile sbt using the command provided" in {
