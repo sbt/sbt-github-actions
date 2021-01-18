@@ -44,6 +44,9 @@ object GenerativePlugin extends AutoPlugin {
     type Ref = sbtghactions.Ref
     val Ref = sbtghactions.Ref
 
+    type UseRef = sbtghactions.UseRef
+    val UseRef = sbtghactions.UseRef
+
     type PREventType = sbtghactions.PREventType
     val PREventType = sbtghactions.PREventType
 
