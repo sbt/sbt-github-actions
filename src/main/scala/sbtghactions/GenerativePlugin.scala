@@ -16,12 +16,12 @@
 
 package sbtghactions
 
-import sbt._, Keys._
-
-import scala.io.Source
+import sbt.Keys._
+import sbt._
 
 import java.io.{BufferedWriter, FileWriter}
 import java.nio.file.FileSystems
+import scala.io.Source
 
 object GenerativePlugin extends AutoPlugin {
 
@@ -155,6 +155,17 @@ object GenerativePlugin extends AutoPlugin {
       s"(startsWith($target, 'refs/heads/') && endsWith($target, '$name'))"
   }
 
+  def compileEnvironment(environment: JobEnvironment): String =
+    environment.url match {
+      case Some(url) =>
+        val fields = s"""name: ${wrap(environment.name)}
+           |url: ${wrap(url.toString)}""".stripMargin
+        s"""environment:
+           |${indent(fields, 1)}""".stripMargin
+      case None =>
+        s"environment: ${wrap(environment.name)}"
+    }
+
   def compileEnv(env: Map[String, String], prefix: String = "env"): String =
     if (env.isEmpty) {
       ""
@@ -242,6 +253,8 @@ ${indent(rendered.mkString("\n"), 1)}"""
       ""
     else
       s"\nneeds: [${job.needs.mkString(", ")}]"
+
+    val renderedEnvironment = job.environment.map(compileEnvironment).map("\n" + _).getOrElse("")
 
     val renderedCond = job.cond.map(wrap).map("\nif: " + _).getOrElse("")
 
@@ -369,7 +382,7 @@ strategy:${renderedFailFast}
     os:${compileList(job.oses, 3)}
     scala:${compileList(job.scalas, 3)}
     java:${compileList(job.javas, 3)}${renderedMatrices}
-runs-on: ${runsOn}${renderedContainer}${renderedEnv}
+runs-on: ${runsOn}${renderedEnvironment}${renderedContainer}${renderedEnv}
 steps:
 ${indent(job.steps.map(compileStep(_, sbt, declareShell = declareShell)).mkString("\n\n"), 1)}"""
 
