@@ -31,4 +31,5 @@ final case class WorkflowJob(
     matrixIncs: List[MatrixInclude] = List(),
     matrixExcs: List[MatrixExclude] = List(),
     runsOnExtraLabels: List[String] = List(),
-    container: Option[JobContainer] = None)
+    container: Option[JobContainer] = None,
+    environment: Option[JobEnvironment] = None)
