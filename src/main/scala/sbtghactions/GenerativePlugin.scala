@@ -622,9 +622,11 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
             githubWorkflowPublish.value.toList :::
             githubWorkflowPublishPostamble.value.toList,
           cond = Some(s"github.event_name != 'pull_request' && $publicationCond"),
-          scalas = List(scalaVersion.value),
+          scalas = githubWorkflowScalaVersions.value.toList,
           javas = List(githubWorkflowJavaVersions.value.head),
-          needs = List("build"))).filter(_ => !githubWorkflowPublishTargetBranches.value.isEmpty)
+          needs = List("build")
+        )
+      ).filter(_ => githubWorkflowPublishTargetBranches.value.nonEmpty)
 
       Seq(
         WorkflowJob(
