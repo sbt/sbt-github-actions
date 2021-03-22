@@ -424,7 +424,15 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
 }
 
   val settingDefaults = Seq(
-    githubWorkflowSbtCommand := "sbt",
+    githubWorkflowSbtCommand := {
+      val sbtVersionNumber = VersionNumber(sbtVersion.value)
+      val hasNativeThinClient = sbtVersionNumber._1.exists {
+        case 0 => false
+        case 1 => sbtVersionNumber._2.exists(_ >= 4)
+        case _ => true
+      }
+      if (hasNativeThinClient) "sbtn" else "sbt"
+    },
 
     githubWorkflowBuildMatrixFailFast := None,
     githubWorkflowBuildMatrixAdditions := Map(),
