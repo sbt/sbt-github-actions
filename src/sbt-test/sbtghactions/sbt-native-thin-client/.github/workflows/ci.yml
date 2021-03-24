@@ -49,30 +49,30 @@ jobs:
           key: ${{ runner.os }}-sbt-cache-v2-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('project/build.properties') }}
 
       - name: Check that workflows are up to date
-        run: sbtn ++${{ matrix.scala }} githubWorkflowCheck
+        run: sbt --client ++${{ matrix.scala }} githubWorkflowCheck
 
       - name: Build project
-        run: sbtn ++${{ matrix.scala }} test
+        run: sbt --client ++${{ matrix.scala }} test
 
-      - run: sbtn ++${{ matrix.scala }} lots
+      - run: sbt --client ++${{ matrix.scala }} lots
 
-      - run: sbtn ++${{ matrix.scala }} of
+      - run: sbt --client ++${{ matrix.scala }} of
 
-      - run: sbtn ++${{ matrix.scala }} sbt
+      - run: sbt --client ++${{ matrix.scala }} sbt
 
-      - run: sbtn ++${{ matrix.scala }} tasks
+      - run: sbt --client ++${{ matrix.scala }} tasks
 
-      - run: sbtn ++${{ matrix.scala }} run
+      - run: sbt --client ++${{ matrix.scala }} run
 
-      - run: sbtn ++${{ matrix.scala }} as
+      - run: sbt --client ++${{ matrix.scala }} as
 
-      - run: sbtn ++${{ matrix.scala }} separate
+      - run: sbt --client ++${{ matrix.scala }} separate
 
-      - run: sbtn ++${{ matrix.scala }} steps
+      - run: sbt --client ++${{ matrix.scala }} steps
 
-      - run: sbtn ++${{ matrix.scala }} using
+      - run: sbt --client ++${{ matrix.scala }} using
 
-      - run: sbtn ++${{ matrix.scala }} sbtn
+      - run: sbt --client ++${{ matrix.scala }} sbtn
 
       - name: Compress target directories
         run: tar cf targets.tar target project/target
@@ -127,4 +127,4 @@ jobs:
           rm targets.tar
 
       - name: Publish project
-        run: sbtn ++${{ matrix.scala }} +publish
+        run: sbt --client ++${{ matrix.scala }} +publish

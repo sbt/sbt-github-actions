@@ -431,7 +431,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
         case 1 => sbtVersionNumber._2.exists(_ >= 4)
         case _ => true
       }
-      if (hasNativeThinClient) "sbtn" else "sbt"
+      if (hasNativeThinClient) "sbt --client" else "sbt"
     },
 
     githubWorkflowBuildMatrixFailFast := None,
