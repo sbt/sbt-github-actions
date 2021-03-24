@@ -196,14 +196,18 @@ ${indent(rendered.mkString("\n"), 1)}"""
         renderedShell + "run: " + wrap(commands.mkString("\n"))
 
       case Sbt(commands, _, _, _, _) =>
-        val safeCommands = commands map { c =>
+        val version = "++${{ matrix.scala }}"
+        val sbtClientMode = sbt.matches("""sbt.* --client($| .*)""")
+        val safeCommands = if (sbtClientMode)
+          s"'${(version :: commands).mkString("; ")}'"
+        else commands map { c =>
           if (c.indexOf(' ') >= 0)
             s"'$c'"
           else
             c
-        }
+        } mkString(version + " ", " ", "")
 
-        renderedShell + "run: " + wrap(s"$sbt ++$${{ matrix.scala }} ${safeCommands.mkString(" ")}")
+        renderedShell + "run: " + wrap(s"$sbt $safeCommands")
 
       case Use(ref, params, _, _, _, _) =>
         val renderedParamsPre = compileEnv(params, prefix = "with")
