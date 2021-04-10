@@ -459,7 +459,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
     githubWorkflowScalaVersions := crossScalaVersions.value,
     githubWorkflowOSes := Seq("ubuntu-latest"),
     githubWorkflowDependencyPatterns := Seq("**/*.sbt", "project/build.properties"),
-    githubWorkflowTargetBranches := Seq("*"),
+    githubWorkflowTargetBranches := Seq("**"),
     githubWorkflowTargetTags := Seq(),
 
     githubWorkflowEnv := Map("GITHUB_TOKEN" -> s"$${{ secrets.GITHUB_TOKEN }}"),
@@ -486,10 +486,6 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
         normalizeSeparators(path.toString)
     }
   }
-
-  // cannot contain '\', '/', '"', ':', '<', '>', '|', '*', or '?'
-  private def sanitizeTarget(str: String): String =
-    List('\\', '/', '"', ':', '<', '>', '|', '*', '?').foldLeft(str)(_.replace(_, '_'))
 
   override def globalSettings = Seq(
     internalTargetAggregation := Seq(),
