@@ -428,14 +428,14 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
 }
 
   val settingDefaults = Seq(
-    githubWorkflowSbtCommand := {
+    githubWorkflowSbtCommand := "sbt",
+    githubWorkflowUseSbtThinClient := {
       val sbtVersionNumber = VersionNumber(sbtVersion.value)
-      val hasNativeThinClient = sbtVersionNumber._1.exists {
+      sbtVersionNumber._1.exists {
         case 0 => false
         case 1 => sbtVersionNumber._2.exists(_ >= 4)
         case _ => true
       }
-      if (hasNativeThinClient) "sbt --client" else "sbt"
     },
 
     githubWorkflowBuildMatrixFailFast := None,
@@ -648,6 +648,11 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
     })
 
   private val generateCiContents = Def task {
+    val sbt = if (githubWorkflowUseSbtThinClient.value) {
+      githubWorkflowSbtCommand.value + " --client"
+    } else {
+      githubWorkflowSbtCommand.value
+    }
     compileWorkflow(
       "Continuous Integration",
       githubWorkflowTargetBranches.value.toList,
@@ -655,7 +660,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
       githubWorkflowPREventTypes.value.toList,
       githubWorkflowEnv.value,
       githubWorkflowGeneratedCI.value.toList,
-      githubWorkflowSbtCommand.value)
+      sbt)
   }
 
   private val readCleanContents = Def task {
