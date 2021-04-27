@@ -17,12 +17,13 @@
 package sbtghactions
 
 import sbt._
-import Keys._
+import sbt.Keys._
 
-import scala.io.Source
+
 import java.io.{BufferedWriter, FileWriter}
 import java.nio.file.FileSystems
 import scala.annotation.tailrec
+import scala.io.Source
 
 object GenerativePlugin extends AutoPlugin {
 
@@ -156,6 +157,17 @@ object GenerativePlugin extends AutoPlugin {
       s"(startsWith($target, 'refs/heads/') && endsWith($target, '$name'))"
   }
 
+  def compileEnvironment(environment: JobEnvironment): String =
+    environment.url match {
+      case Some(url) =>
+        val fields = s"""name: ${wrap(environment.name)}
+           |url: ${wrap(url.toString)}""".stripMargin
+        s"""environment:
+           |${indent(fields, 1)}""".stripMargin
+      case None =>
+        s"environment: ${wrap(environment.name)}"
+    }
+
   def compileEnv(env: Map[String, String], prefix: String = "env"): String =
     if (env.isEmpty) {
       ""
@@ -247,6 +259,8 @@ ${indent(rendered.mkString("\n"), 1)}"""
       ""
     else
       s"\nneeds: [${job.needs.mkString(", ")}]"
+
+    val renderedEnvironment = job.environment.map(compileEnvironment).map("\n" + _).getOrElse("")
 
     val renderedCond = job.cond.map(wrap).map("\nif: " + _).getOrElse("")
 
@@ -374,7 +388,7 @@ strategy:${renderedFailFast}
     os:${compileList(job.oses, 3)}
     scala:${compileList(job.scalas, 3)}
     java:${compileList(job.javas, 3)}${renderedMatrices}
-runs-on: ${runsOn}${renderedContainer}${renderedEnv}
+runs-on: ${runsOn}${renderedEnvironment}${renderedContainer}${renderedEnv}
 steps:
 ${indent(job.steps.map(compileStep(_, sbt, declareShell = declareShell)).mkString("\n\n"), 1)}"""
 
@@ -459,7 +473,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
     githubWorkflowScalaVersions := crossScalaVersions.value,
     githubWorkflowOSes := Seq("ubuntu-latest"),
     githubWorkflowDependencyPatterns := Seq("**/*.sbt", "project/build.properties"),
-    githubWorkflowTargetBranches := Seq("*"),
+    githubWorkflowTargetBranches := Seq("**"),
     githubWorkflowTargetTags := Seq(),
 
     githubWorkflowEnv := Map("GITHUB_TOKEN" -> s"$${{ secrets.GITHUB_TOKEN }}"),
@@ -486,10 +500,6 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
         normalizeSeparators(path.toString)
     }
   }
-
-  // cannot contain '\', '/', '"', ':', '<', '>', '|', '*', or '?'
-  private def sanitizeTarget(str: String): String =
-    List('\\', '/', '"', ':', '<', '>', '|', '*', '?').foldLeft(str)(_.replace(_, '_'))
 
   override def globalSettings = Seq(
     internalTargetAggregation := Seq(),

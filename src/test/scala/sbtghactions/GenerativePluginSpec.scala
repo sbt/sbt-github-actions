@@ -18,6 +18,8 @@ package sbtghactions
 
 import org.specs2.mutable.Specification
 
+import java.net.URL
+
 class GenerativePluginSpec extends Specification {
   import GenerativePlugin._
 
@@ -80,7 +82,7 @@ class GenerativePluginSpec extends Specification {
       compileWorkflow("test", List("main"), Nil, List(PREventType.ReadyForReview, PREventType.ReviewRequested, PREventType.Opened), Map(), Nil, "sbt") mustEqual expected
     }
 
-    "compile a one-job workflow targeting multiple branch patterns with an environment" in {
+    "compile a one-job workflow targeting multiple branch patterns with a environment variables" in {
       val expected = header + s"""
         |name: test2
         |
@@ -360,7 +362,7 @@ class GenerativePluginSpec extends Specification {
         "") mustEqual "- uses: olafurpg/setup-scala@v10\n  with:\n    abc: def\n    cafe: '@42'"
     }
 
-    "compile use with two parameters and an environment" in {
+    "compile use with two parameters and environment variables" in {
       compileStep(
         Use(
           UseRef.Public(
@@ -458,7 +460,7 @@ class GenerativePluginSpec extends Specification {
         java-version: $${{ matrix.java }}"""
     }
 
-    "compile a job environment, conditional, and needs with an sbt step" in {
+    "compile a job with environment variables, conditional, and needs with an sbt step" in {
       val results = compileJob(
         WorkflowJob(
           "nada",
@@ -486,6 +488,53 @@ class GenerativePluginSpec extends Specification {
     - run: csbt ++$${{ matrix.scala }} +compile"""
     }
 
+    "compile a job with an environment" in {
+      val results = compileJob(
+        WorkflowJob(
+          "publish",
+          "Publish Release",
+          List(
+            WorkflowStep.Sbt(List("ci-release"))),
+          environment = Some(JobEnvironment("release"))),
+        "csbt")
+
+      results mustEqual s"""publish:
+  name: Publish Release
+  strategy:
+    matrix:
+      os: [ubuntu-latest]
+      scala: [2.13.4]
+      java: [adopt@1.8]
+  runs-on: $${{ matrix.os }}
+  environment: release
+  steps:
+    - run: csbt ++$${{ matrix.scala }} ci-release"""
+    }
+
+    "compile a job with an environment containing a url" in {
+      val results = compileJob(
+        WorkflowJob(
+          "publish",
+          "Publish Release",
+          List(
+            WorkflowStep.Sbt(List("ci-release"))),
+          environment = Some(JobEnvironment("release", Some(new URL("https://github.com"))))),
+        "csbt")
+
+      results mustEqual s"""publish:
+  name: Publish Release
+  strategy:
+    matrix:
+      os: [ubuntu-latest]
+      scala: [2.13.4]
+      java: [adopt@1.8]
+  runs-on: $${{ matrix.os }}
+  environment:
+    name: release
+    url: 'https://github.com'
+  steps:
+    - run: csbt ++$${{ matrix.scala }} ci-release"""
+    }
 
     "compile a job with additional matrix components" in {
       val results = compileJob(
