@@ -817,4 +817,64 @@ class GenerativePluginSpec extends Specification {
     "review_requested" >> (compilePREventType(ReviewRequested) mustEqual "review_requested")
     "review_request_removed" >> (compilePREventType(ReviewRequestRemoved) mustEqual "review_request_removed")
   }
+
+  "diff" should {
+    "highlight the first different character" in {
+      val expected =
+        """abc
+          |
+          |def
+          |
+          |ghi""".stripMargin
+      val actual =
+        """abc
+          |
+          |df
+          |
+          |ghi""".stripMargin
+      val expectedDiff =
+        """abc
+          |
+          |df
+          | ^ (different character)
+          |
+          |ghi""".stripMargin
+      val actualDiff = GenerativePlugin.diff(expected, actual)
+      expectedDiff mustEqual actualDiff
+    }
+    "highlight the missing lines" in {
+      val expected =
+        """abc
+          |def
+          |ghi""".stripMargin
+      val actual =
+        """abc
+          |def""".stripMargin
+      val expectedDiff =
+        """abc
+          |def
+          |   ^ (missing lines)""".stripMargin
+      val actualDiff = GenerativePlugin.diff(expected, actual)
+      expectedDiff mustEqual actualDiff
+    }
+    "highlight the additionl lines" in {
+      val expected =
+        """abc
+          |def
+          |ghi""".stripMargin
+      val actual =
+        """abc
+          |def
+          |ghi
+          |jkl""".stripMargin
+      val expectedDiff =
+        """abc
+          |def
+          |ghi
+          |   ^ (additional lines)
+          |jkl""".stripMargin
+      val actualDiff = GenerativePlugin.diff(expected, actual)
+      expectedDiff mustEqual actualDiff
+    }
+  }
 }
