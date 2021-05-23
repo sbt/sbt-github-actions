@@ -37,6 +37,8 @@ ThisBuild / githubWorkflowPublish := Seq()
 sbtPlugin := true
 sbtVersion := "1.3.13"
 
+publishMavenStyle := true
+
 scalacOptions += "-Xlint:_,-missing-interpolator"
 
 libraryDependencies += "org.specs2" %% "specs2-core" % "4.8.3" % Test
