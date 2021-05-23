@@ -22,7 +22,6 @@ import sbt.Keys._
 
 import java.io.{BufferedWriter, FileWriter}
 import java.nio.file.FileSystems
-import scala.annotation.tailrec
 import scala.io.Source
 
 object GenerativePlugin extends AutoPlugin {
