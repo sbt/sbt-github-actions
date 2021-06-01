@@ -45,7 +45,14 @@ class GenerativePluginSpec extends Specification {
         |jobs:
         |  """.stripMargin
 
-      compileWorkflow("test", List("main"), Nil, PREventType.Defaults, Map(), Nil, "sbt") mustEqual expected
+      compileWorkflow(
+        Workflow(
+          "test",
+          List(PullRequest(List("main"), PREventType.Defaults), Push(List("main"), Nil)),
+          Nil
+          ),
+        Map(),
+        "sbt") mustEqual expected
     }
 
     "produce the appropriate skeleton around a zero-job workflow with non-empty tags" in {
@@ -62,7 +69,14 @@ class GenerativePluginSpec extends Specification {
         |jobs:
         |  """.stripMargin
 
-      compileWorkflow("test", List("main"), List("howdy"), PREventType.Defaults, Map(), Nil, "sbt") mustEqual expected
+      compileWorkflow(
+        Workflow(
+          "test",
+          List(PullRequest(List("main"), PREventType.Defaults), Push(List("main"), List("howdy"))),
+          Nil
+          ),
+        Map(),
+        "sbt") mustEqual expected
     }
 
     "respect non-default pr types" in {
@@ -79,7 +93,18 @@ class GenerativePluginSpec extends Specification {
         |jobs:
         |  """.stripMargin
 
-      compileWorkflow("test", List("main"), Nil, List(PREventType.ReadyForReview, PREventType.ReviewRequested, PREventType.Opened), Map(), Nil, "sbt") mustEqual expected
+      compileWorkflow(
+        Workflow(
+          "test",
+          List(
+            PullRequest(
+              List("main"),
+              List(PREventType.ReadyForReview, PREventType.ReviewRequested, PREventType.Opened)),
+            Push(List("main"), Nil)),
+          Nil
+          ),
+        Map(),
+        "sbt") mustEqual expected
     }
 
     "compile a one-job workflow targeting multiple branch patterns with a environment variables" in {
@@ -108,17 +133,20 @@ class GenerativePluginSpec extends Specification {
         |      - run: echo Hello World""".stripMargin
 
       compileWorkflow(
-        "test2",
-        List("main", "backport/v*"),
-        Nil,
-        PREventType.Defaults,
+        Workflow(
+          "test2",
+          List(
+            PullRequest(List("main", "backport/v*"), PREventType.Defaults),
+            Push(List("main", "backport/v*"), Nil)
+            ),
+          List(
+            WorkflowJob(
+              "build",
+              "Build and Test",
+              List(WorkflowStep.Run(List("echo Hello World")))))
+          ),
         Map(
           "GITHUB_TOKEN" -> s"$${{ secrets.GITHUB_TOKEN }}"),
-        List(
-          WorkflowJob(
-            "build",
-            "Build and Test",
-            List(WorkflowStep.Run(List("echo Hello World"))))),
         "sbt") mustEqual expected
     }
 
@@ -155,22 +183,23 @@ class GenerativePluginSpec extends Specification {
         |    steps:
         |      - run: whoami""".stripMargin
 
-      compileWorkflow(
-        "test3",
-        List("main"),
-        Nil,
-        PREventType.Defaults,
-        Map(),
-        List(
-          WorkflowJob(
-            "build",
-            "Build and Test",
-            List(WorkflowStep.Run(List("echo yikes")))),
 
-          WorkflowJob(
-            "what",
-            "If we just didn't",
-            List(WorkflowStep.Run(List("whoami"))))),
+      compileWorkflow(
+        Workflow(
+          "test3",
+          List(PullRequest(List("main"), PREventType.Defaults), Push(List("main"), Nil)),
+          List(
+            WorkflowJob(
+              "build",
+              "Build and Test",
+              List(WorkflowStep.Run(List("echo yikes")))),
+
+            WorkflowJob(
+              "what",
+              "If we just didn't",
+              List(WorkflowStep.Run(List("whoami")))))
+          ),
+        Map(),
         "") mustEqual expected
     }
 
@@ -198,18 +227,18 @@ class GenerativePluginSpec extends Specification {
         |      - run: echo yikes""".stripMargin
 
       compileWorkflow(
-        "test4",
-        List("main"),
-        Nil,
-        PREventType.Defaults,
+        Workflow(
+          "test4",
+          List(PullRequest(List("main"), PREventType.Defaults), Push(List("main"), Nil)),
+          List(
+            WorkflowJob(
+              "build",
+              "Build and Test",
+              List(WorkflowStep.Run(List("echo yikes"))),
+              container = Some(
+                JobContainer("not:real-thing"))))
+          ),
         Map(),
-        List(
-          WorkflowJob(
-            "build",
-            "Build and Test",
-            List(WorkflowStep.Run(List("echo yikes"))),
-            container = Some(
-              JobContainer("not:real-thing")))),
         "") mustEqual expected
     }
 
@@ -247,24 +276,24 @@ class GenerativePluginSpec extends Specification {
         |      - run: echo yikes""".stripMargin
 
       compileWorkflow(
-        "test4",
-        List("main"),
-        Nil,
-        PREventType.Defaults,
+        Workflow(
+          "test4",
+          List(PullRequest(List("main"), PREventType.Defaults), Push(List("main"), Nil)),
+          List(
+            WorkflowJob(
+              "build",
+              "Build and Test",
+              List(WorkflowStep.Run(List("echo yikes"))),
+              container = Some(
+                JobContainer(
+                  "also:not-real",
+                  credentials = Some("janedoe" -> "myvoice"),
+                  env = Map("VERSION" -> "1.0", "PATH" -> "/nope"),
+                  volumes = Map("/source" -> "/dest/ination"),
+                  ports = List(80, 443),
+                  options = List("--cpus", "1")))))
+          ),
         Map(),
-        List(
-          WorkflowJob(
-            "build",
-            "Build and Test",
-            List(WorkflowStep.Run(List("echo yikes"))),
-            container = Some(
-              JobContainer(
-                "also:not-real",
-                credentials = Some("janedoe" -> "myvoice"),
-                env = Map("VERSION" -> "1.0", "PATH" -> "/nope"),
-                volumes = Map("/source" -> "/dest/ination"),
-                ports = List(80, 443),
-                options = List("--cpus", "1"))))),
         "") mustEqual expected
     }
   }
@@ -779,8 +808,8 @@ class GenerativePluginSpec extends Specification {
   }
 
   "predicate compilation" >> {
-    import RefPredicate._
     import Ref._
+    import RefPredicate._
 
     "equals" >> {
       compileBranchPredicate("thingy", Equals(Branch("other"))) mustEqual "thingy == 'refs/heads/other'"
