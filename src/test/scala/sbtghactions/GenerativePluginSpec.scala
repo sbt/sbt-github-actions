@@ -354,8 +354,8 @@ class GenerativePluginSpec extends Specification {
     "compile use without parameters" in {
       "public" >> {
         compileStep(
-          Use(UseRef.Public("olafurpg", "setup-scala", "v10")),
-          "") mustEqual "- uses: olafurpg/setup-scala@v10"
+          Use(UseRef.Public("olafurpg", "setup-scala", "v12")),
+          "") mustEqual "- uses: olafurpg/setup-scala@v12"
       }
 
       "directory" >> {
@@ -387,8 +387,8 @@ class GenerativePluginSpec extends Specification {
 
     "compile use with two parameters" in {
       compileStep(
-        Use(UseRef.Public("olafurpg", "setup-scala", "v10"), params = Map("abc" -> "def", "cafe" -> "@42")),
-        "") mustEqual "- uses: olafurpg/setup-scala@v10\n  with:\n    abc: def\n    cafe: '@42'"
+        Use(UseRef.Public("olafurpg", "setup-scala", "v12"), params = Map("abc" -> "def", "cafe" -> "@42")),
+        "") mustEqual "- uses: olafurpg/setup-scala@v12\n  with:\n    abc: def\n    cafe: '@42'"
     }
 
     "compile use with two parameters and environment variables" in {
@@ -484,7 +484,7 @@ class GenerativePluginSpec extends Specification {
   runs-on: $${{ matrix.os }}
   steps:
     - name: Setup Java and Scala
-      uses: olafurpg/setup-scala@v10
+      uses: olafurpg/setup-scala@v12
       with:
         java-version: $${{ matrix.java }}"""
     }
