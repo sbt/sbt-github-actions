@@ -19,7 +19,6 @@ package sbtghactions
 import sbt._
 import sbt.Keys._
 
-
 import java.io.{BufferedWriter, FileWriter}
 import java.nio.file.FileSystems
 import scala.io.Source
@@ -646,8 +645,14 @@ ${indent(workflow.jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
       Workflow(
       "Continuous Integration",
         List(
-          Push(githubWorkflowTargetBranches.value.toList,githubWorkflowTargetTags.value.toList),
-          PullRequest(githubWorkflowTargetBranches.value.toList,githubWorkflowPREventTypes.value.toList )
+          WebhookEvent.Push(
+            githubWorkflowTargetBranches.value.toList,
+            githubWorkflowTargetTags.value.toList
+            ),
+          WebhookEvent.PullRequest(
+            githubWorkflowTargetBranches.value.toList,
+            githubWorkflowPREventTypes.value.toList
+            )
         ),
       githubWorkflowGeneratedCI.value.toList,
       ),
