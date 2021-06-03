@@ -32,6 +32,41 @@ final case class Schedule(cron: String) extends TriggerEvent {
        |""".stripMargin
 }
 
+sealed trait ManualEvents extends TriggerEvent
+
+object ManualEvents {
+
+  final case class Input(
+      name: String,
+      description: String,
+      default: Option[String],
+      required: Boolean) {
+
+    //TODO Should we check if the name is a safe string? What if not?
+    def render: String =
+      s"""|$name:
+          |  description: ${wrap(description)}
+          |  required: $required
+          |""".stripMargin + default.map(wrap).map("default: " + _).map(indentOnce).getOrElse("")
+  }
+
+  final case class WorkflowDispatch(inputs: Seq[Input]) extends ManualEvents {
+
+    override def render: String =
+      "workflow_dispatch:\n" + renderInputs(inputs)
+  }
+
+  private def renderInputs(inputs: Seq[Input]) =
+    if (inputs.isEmpty) ""
+    else indentOnce { "inputs:\n" + inputs.map(_.render).map(indentOnce).mkString("\n") }
+
+  final case class RepositoryDispatch(types: Seq[String]) extends ManualEvents {
+
+    override def render: String =
+      s"repository_dispatch:\n" + indentOnce { renderParamWithList("types", types) }
+  }
+}
+
 sealed trait WebhookEvent extends TriggerEvent
 
 object WebhookEvent {

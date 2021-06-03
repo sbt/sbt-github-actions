@@ -50,15 +50,17 @@ object RenderFunctions {
 
   def indent(output: String, level: Int): String = {
     val space = (0 until level * 2).map(_ => ' ').mkString
-    (space + output.replace("\n", s"\n$space")).replaceAll("""\n[ ]+\n""", "\n\n")
+
+    if (output.isEmpty) ""
+    else (space + output.replace("\n", s"\n$space")).replaceAll("""\n[ ]+\n""", "\n\n")
   }
 
   def renderParamWithList(paramName: String, items: Seq[String]): String = {
     val rendered = items.map(wrap)
-    if (rendered.map(_.length).sum < 40) // just arbitrarily...
-      rendered.mkString(s"$paramName: [", ", ", "]")
-    else
-      rendered.map("- " + _).map(indentOnce).mkString(s"$paramName:\n", "\n", "\n")
+
+    if (rendered.isEmpty) ""
+    else if (rendered.map(_.length).sum < 40) rendered.mkString(s"$paramName: [", ", ", "]")
+    else rendered.map("- " + _).map(indentOnce).mkString(s"$paramName:\n", "\n", "\n")
   }
 
   object SnakeCase {
