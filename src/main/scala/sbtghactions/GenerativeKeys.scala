@@ -28,6 +28,8 @@ trait GenerativeKeys {
   lazy val githubWorkflowGeneratedDownloadSteps = settingKey[Seq[WorkflowStep]]("The sequence of steps used to download intermediate build artifacts published by an adjacent job")
   lazy val githubWorkflowGeneratedCacheSteps = settingKey[Seq[WorkflowStep]]("The sequence of steps used to configure caching for ivy, sbt, and coursier")
 
+  lazy val githubWorkflowCustomWorkflows = settingKey[Map[String, Workflow]]("Custom workflows, defined by a map of file name to Workflow.")
+
   lazy val githubWorkflowSbtCommand = settingKey[String]("The command which invokes sbt (default: sbt)")
   lazy val githubWorkflowUseSbtThinClient = settingKey[Boolean]("Whether to use sbt's native thin client (default for sbt >= 1.4: true, default for sbt < 1.4: false)")
 

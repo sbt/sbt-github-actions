@@ -51,10 +51,10 @@ class GenerativePluginSpec extends Specification {
           List(
             WebhookEvent.PullRequest(List("main"), Nil, PREventType.Defaults),
             WebhookEvent.Push(List("main"), Nil)
+            ),
+          Nil,
+          Map(),
           ),
-          Nil
-          ),
-        Map(),
         "sbt") mustEqual expected
     }
 
@@ -78,10 +78,10 @@ class GenerativePluginSpec extends Specification {
           List(
             WebhookEvent.PullRequest(List("main"), Nil, PREventType.Defaults),
             WebhookEvent.Push(List("main"), List("howdy"))
+            ),
+          Nil,
+          Map(),
           ),
-          Nil
-          ),
-        Map(),
         "sbt") mustEqual expected
     }
 
@@ -108,9 +108,9 @@ class GenerativePluginSpec extends Specification {
               Nil,
               List(PREventType.ReadyForReview, PREventType.ReviewRequested, PREventType.Opened)),
             WebhookEvent.Push(List("main"), Nil)),
-          Nil
+          Nil,
+          Map(),
           ),
-        Map(),
         "sbt") mustEqual expected
     }
 
@@ -150,10 +150,10 @@ class GenerativePluginSpec extends Specification {
             WorkflowJob(
               "build",
               "Build and Test",
-              List(WorkflowStep.Run(List("echo Hello World")))))
+              List(WorkflowStep.Run(List("echo Hello World"))))),
+          Map(
+            "GITHUB_TOKEN" -> s"$${{ secrets.GITHUB_TOKEN }}"),
           ),
-        Map(
-          "GITHUB_TOKEN" -> s"$${{ secrets.GITHUB_TOKEN }}"),
         "sbt") mustEqual expected
     }
 
@@ -197,7 +197,7 @@ class GenerativePluginSpec extends Specification {
           List(
             WebhookEvent.PullRequest(List("main"), Nil, PREventType.Defaults),
             WebhookEvent.Push(List("main"), Nil)
-          ),
+            ),
           List(
             WorkflowJob(
               "build",
@@ -207,9 +207,9 @@ class GenerativePluginSpec extends Specification {
             WorkflowJob(
               "what",
               "If we just didn't",
-              List(WorkflowStep.Run(List("whoami")))))
+              List(WorkflowStep.Run(List("whoami"))))),
+          Map(),
           ),
-        Map(),
         "") mustEqual expected
     }
 
@@ -242,16 +242,16 @@ class GenerativePluginSpec extends Specification {
           List(
             WebhookEvent.PullRequest(List("main"), Nil, PREventType.Defaults),
             WebhookEvent.Push(List("main"), Nil)
-          ),
+            ),
           List(
             WorkflowJob(
               "build",
               "Build and Test",
               List(WorkflowStep.Run(List("echo yikes"))),
               container = Some(
-                JobContainer("not:real-thing"))))
+                JobContainer("not:real-thing")))),
+          Map(),
           ),
-        Map(),
         "") mustEqual expected
     }
 
@@ -294,7 +294,7 @@ class GenerativePluginSpec extends Specification {
           List(
             WebhookEvent.PullRequest(List("main"), Nil, PREventType.Defaults),
             WebhookEvent.Push(List("main"), Nil)
-          ),
+            ),
           List(
             WorkflowJob(
               "build",
@@ -307,9 +307,9 @@ class GenerativePluginSpec extends Specification {
                   env = Map("VERSION" -> "1.0", "PATH" -> "/nope"),
                   volumes = Map("/source" -> "/dest/ination"),
                   ports = List(80, 443),
-                  options = List("--cpus", "1")))))
+                  options = List("--cpus", "1"))))),
+          Map(),
           ),
-        Map(),
         "") mustEqual expected
     }
   }

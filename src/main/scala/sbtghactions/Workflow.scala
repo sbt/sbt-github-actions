@@ -18,7 +18,11 @@ package sbtghactions
 
 import sbtghactions.RenderFunctions.{indentOnce, wrap}
 
-final case class Workflow(name: String, ons: Seq[TriggerEvent], jobs: Seq[WorkflowJob]) {
+final case class Workflow(
+    name: String,
+    ons: Seq[TriggerEvent],
+    jobs: Seq[WorkflowJob],
+    env: Map[String, String]) {
 
   def render: String =
     s"""|name: ${wrap(name)}

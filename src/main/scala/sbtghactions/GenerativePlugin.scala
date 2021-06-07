@@ -393,13 +393,9 @@ ${indent(job.steps.map(compileStep(_, sbt, declareShell = declareShell)).mkStrin
     s"${job.id}:\n${indent(body, 1)}"
   }
 
-  def compileWorkflow(
-      workflow: Workflow,
-      env: Map[String, String],
-      sbt: String)
-      : String = {
+  def compileWorkflow(workflow: Workflow, sbt: String): String = {
 
-    val renderedEnvPre = compileEnv(env)
+    val renderedEnvPre = compileEnv(workflow.env)
     val renderedEnv = if (renderedEnvPre.isEmpty)
       ""
     else
@@ -585,6 +581,8 @@ ${indent(workflow.jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
         githubWorkflowGeneratedCacheSteps.value.toList
     },
 
+    githubWorkflowCustomWorkflows := Map.empty,
+
     githubWorkflowGeneratedCI := {
       val publicationCondPre =
         githubWorkflowPublishTargetBranches.value.map(compileBranchPredicate("github.ref", _)).mkString("(", " || ", ")")
@@ -654,10 +652,10 @@ ${indent(workflow.jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
             githubWorkflowTargetTags.value.toList,
             githubWorkflowPREventTypes.value.toList
             )
+          ),
+        githubWorkflowGeneratedCI.value.toList,
+        githubWorkflowEnv.value,
         ),
-      githubWorkflowGeneratedCI.value.toList,
-      ),
-      githubWorkflowEnv.value,
       sbt)
   }
 
@@ -667,6 +665,21 @@ ${indent(workflow.jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
       src.getLines().mkString("\n")
     } finally {
       src.close()
+    }
+  }
+
+  private val customWorkflowContents = Def task {
+    val sbt = if (githubWorkflowUseSbtThinClient.value) {
+      githubWorkflowSbtCommand.value + " --client"
+    } else {
+      githubWorkflowSbtCommand.value
+    }
+
+    githubWorkflowCustomWorkflows.value.map {
+      case (file, workflow) if file.endsWith(".yml") || file.endsWith(".yaml") =>
+        file -> compileWorkflow(workflow, sbt)
+      case (file, workflow) =>
+        (file + ".yml") -> compileWorkflow(workflow, sbt)
     }
   }
 
@@ -723,6 +736,15 @@ ${indent(workflow.jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
         cleanWriter.write(cleanContents)
       } finally {
         cleanWriter.close()
+      }
+
+      customWorkflowContents.value.foreach{ case (file, content) =>
+        val writer = new BufferedWriter(new FileWriter(file))
+        try{
+          writer.write(content)
+        } finally {
+          writer.close()
+        }
       }
     },
 
