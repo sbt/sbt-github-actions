@@ -649,7 +649,7 @@ ${indent(workflow.jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
             ),
           WebhookEvent.PullRequest(
             githubWorkflowTargetBranches.value.toList,
-            githubWorkflowTargetTags.value.toList,
+            Nil,
             githubWorkflowPREventTypes.value.toList
             )
           ),
