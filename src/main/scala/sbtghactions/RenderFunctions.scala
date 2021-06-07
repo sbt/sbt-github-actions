@@ -18,6 +18,13 @@ package sbtghactions
 
 object RenderFunctions {
 
+  def renderBranches(branches: Seq[String]): String =
+    renderParamWithList("branches", branches)
+
+  def renderTypes(types: Seq[EventType]): String =
+    if (types.isEmpty) ""
+    else indentOnce { renderParamWithList("types", types.map(_.render)) }
+
   def wrap(str: String): String =
     if (str.indexOf('\n') >= 0)
       "|\n" + indent(str, 1)
@@ -50,17 +57,18 @@ object RenderFunctions {
 
   def indent(output: String, level: Int): String = {
     val space = (0 until level * 2).map(_ => ' ').mkString
+    val nlPrefixCount = output.takeWhile(_ == '\n').length
 
     if (output.isEmpty) ""
-    else (space + output.replace("\n", s"\n$space")).replaceAll("""\n[ ]+\n""", "\n\n")
+    else "\n" * nlPrefixCount + (space + output.drop(nlPrefixCount).replace("\n", s"\n$space")).replaceAll("""\n[ ]+\n""", "\n\n")
   }
 
   def renderParamWithList(paramName: String, items: Seq[String]): String = {
     val rendered = items.map(wrap)
 
     if (rendered.isEmpty) ""
-    else if (rendered.map(_.length).sum < 40) rendered.mkString(s"$paramName: [", ", ", "]")
-    else rendered.map("- " + _).map(indentOnce).mkString(s"$paramName:\n", "\n", "\n")
+    else if (rendered.map(_.length).sum < 40) rendered.mkString(s"\n$paramName: [", ", ", "]")
+    else rendered.map("- " + _).map(indentOnce).mkString(s"\n$paramName:\n", "\n", "\n")
   }
 
   object SnakeCase {

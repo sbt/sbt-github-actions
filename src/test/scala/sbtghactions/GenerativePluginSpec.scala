@@ -49,7 +49,7 @@ class GenerativePluginSpec extends Specification {
         Workflow(
           "test",
           List(
-            WebhookEvent.PullRequest(List("main"), PREventType.Defaults),
+            WebhookEvent.PullRequest(List("main"), Nil, PREventType.Defaults),
             WebhookEvent.Push(List("main"), Nil)
           ),
           Nil
@@ -76,7 +76,7 @@ class GenerativePluginSpec extends Specification {
         Workflow(
           "test",
           List(
-            WebhookEvent.PullRequest(List("main"), PREventType.Defaults),
+            WebhookEvent.PullRequest(List("main"), Nil, PREventType.Defaults),
             WebhookEvent.Push(List("main"), List("howdy"))
           ),
           Nil
@@ -105,6 +105,7 @@ class GenerativePluginSpec extends Specification {
           List(
             WebhookEvent.PullRequest(
               List("main"),
+              Nil,
               List(PREventType.ReadyForReview, PREventType.ReviewRequested, PREventType.Opened)),
             WebhookEvent.Push(List("main"), Nil)),
           Nil
@@ -142,7 +143,7 @@ class GenerativePluginSpec extends Specification {
         Workflow(
           "test2",
           List(
-            WebhookEvent.PullRequest(List("main", "backport/v*"), PREventType.Defaults),
+            WebhookEvent.PullRequest(List("main", "backport/v*"), Nil, PREventType.Defaults),
             WebhookEvent.Push(List("main", "backport/v*"), Nil)
             ),
           List(
@@ -194,7 +195,7 @@ class GenerativePluginSpec extends Specification {
         Workflow(
           "test3",
           List(
-            WebhookEvent.PullRequest(List("main"), PREventType.Defaults),
+            WebhookEvent.PullRequest(List("main"), Nil, PREventType.Defaults),
             WebhookEvent.Push(List("main"), Nil)
           ),
           List(
@@ -239,7 +240,7 @@ class GenerativePluginSpec extends Specification {
         Workflow(
           "test4",
           List(
-            WebhookEvent.PullRequest(List("main"), PREventType.Defaults),
+            WebhookEvent.PullRequest(List("main"), Nil, PREventType.Defaults),
             WebhookEvent.Push(List("main"), Nil)
           ),
           List(
@@ -291,7 +292,7 @@ class GenerativePluginSpec extends Specification {
         Workflow(
           "test4",
           List(
-            WebhookEvent.PullRequest(List("main"), PREventType.Defaults),
+            WebhookEvent.PullRequest(List("main"), Nil, PREventType.Defaults),
             WebhookEvent.Push(List("main"), Nil)
           ),
           List(

@@ -18,23 +18,21 @@ package sbtghactions
 
 import sbtghactions.RenderFunctions._
 
-sealed trait TriggerEvent {
+sealed trait TriggerEvent extends Product with Serializable {
+  val name: String = SnakeCase(productPrefix)
   def render: String
 }
 
-//TODO use CronExpr ADT?
 final case class Schedule(cron: String) extends TriggerEvent {
 
   override def render: String =
-    s"""
-       |schedule:
-       |  - cron: '$cron'
-       |""".stripMargin
+    s"""|$name:
+        |  - cron: '$cron'""".stripMargin
 }
 
-sealed trait ManualEvents extends TriggerEvent
+sealed trait ManualEvent extends TriggerEvent
 
-object ManualEvents {
+object ManualEvent {
 
   final case class Input(
       name: String,
@@ -50,59 +48,117 @@ object ManualEvents {
           |""".stripMargin + default.map(wrap).map("default: " + _).map(indentOnce).getOrElse("")
   }
 
-  final case class WorkflowDispatch(inputs: Seq[Input]) extends ManualEvents {
+  final case class WorkflowDispatch(inputs: Seq[Input]) extends ManualEvent {
 
     override def render: String =
-      "workflow_dispatch:\n" + renderInputs(inputs)
+      s"$name:${renderInputs(inputs)}"
   }
 
   private def renderInputs(inputs: Seq[Input]) =
     if (inputs.isEmpty) ""
-    else indentOnce { "inputs:\n" + inputs.map(_.render).map(indentOnce).mkString("\n") }
+    else indentOnce { "\ninputs:\n" + inputs.map(_.render).map(indentOnce).mkString("\n") }
 
-  final case class RepositoryDispatch(types: Seq[String]) extends ManualEvents {
+  final case class RepositoryDispatch(types: Seq[String]) extends ManualEvent {
 
     override def render: String =
-      s"repository_dispatch:\n" + indentOnce { renderParamWithList("types", types) }
+      s"$name:${indentOnce { renderParamWithList("types", types) }}"
   }
 }
 
 sealed trait WebhookEvent extends TriggerEvent
 
+sealed trait PlainNameEvent extends WebhookEvent {
+  final override def render: String = name
+}
+
+sealed trait TypedEvent extends WebhookEvent {
+
+  def types: Seq[EventType]
+
+  final override def render: String =
+    s"$name:${renderTypes(types)}"
+}
+
 object WebhookEvent {
+
+  final case class CheckRun(types: Seq[CheckRunEventType]) extends TypedEvent
+
+  final case class CheckSuite(types: Seq[CheckSuiteEventType]) extends TypedEvent
+
+  case object Create extends PlainNameEvent
+
+  case object Delete extends PlainNameEvent
+
+  case object Deployment extends PlainNameEvent
+
+  case object DeploymentStatus extends PlainNameEvent
+
+  case object Fork extends PlainNameEvent
+
+  case object Gollum extends PlainNameEvent
+
+  final case class IssueComment(types: Seq[IssueCommentEventType]) extends TypedEvent
+
+  final case class Issues(types: Seq[IssuesEventType]) extends TypedEvent
+
+  final case class Label(types: Seq[LabelEventType]) extends TypedEvent
+
+  final case class Milestone(types: Seq[MilestoneEventType]) extends TypedEvent
+
+  case object PageBuild extends PlainNameEvent
+
+  final case class Project(types: Seq[ProjectEventType]) extends TypedEvent
+
+  final case class ProjectCard(types: Seq[ProjectCardEventType]) extends TypedEvent
+
+  final case class ProjectColumn(types: Seq[ProjectColumnEventType]) extends TypedEvent
+
+  case object Public extends PlainNameEvent
+
+  final case class PullRequest(branches: Seq[String], tags: Seq[String], types: Seq[PREventType])
+      extends WebhookEvent {
+
+    override def render: String =
+      s"$name:" +
+        indentOnce { renderBranches(branches) + renderTags + renderTypes }
+
+    private def renderTags =
+      renderParamWithList("tags", tags)
+
+    private def renderTypes =
+      if (types == PREventType.Defaults) ""
+      else "" + renderParamWithList("types", types.map(_.render))
+
+  }
+
+  final case class PullRequestReview(types: Seq[PRReviewEventType]) extends TypedEvent
+
+  final case class PullRequestReviewComment(types: Seq[PRReviewCommentEventType]) extends TypedEvent
+
+  final case class PullRequestTarget(types: Seq[PRTargetEventType]) extends TypedEvent
 
   final case class Push(branches: Seq[String], tags: Seq[String]) extends WebhookEvent {
 
     override def render: String =
-      "push:\n" +
-        indentOnce { renderBranches + renderTags }
+      s"$name:" +
+        indentOnce { renderBranches(branches) + renderTags }
 
-    private def renderBranches =
-      renderParamWithList("branches", branches)
-
-    def renderTags: String = if (tags.isEmpty) "" else "\n" + renderParamWithList("tags", tags)
+    def renderTags: String = if (tags.isEmpty) "" else renderParamWithList("tags", tags)
 
   }
 
-  final case class PullRequest(branches: Seq[String], types: Seq[PREventType]) extends WebhookEvent {
+  final case class RegistryPackage(types: Seq[RegistryPackageEventType]) extends TypedEvent
+
+  final case class Release(types: Seq[ReleaseEventType]) extends TypedEvent
+
+  case object Status extends PlainNameEvent
+
+  final case class Watch(types: Seq[WatchEventType]) extends TypedEvent
+
+  final case class WorkflowRun(workflows: Seq[String], types: Seq[WorkflowRunEventType])
+      extends WebhookEvent {
 
     override def render: String =
-      "pull_request:\n" +
-        indentOnce { renderBranches + renderTypes }
-
-    private def renderBranches =
-      renderParamWithList("branches", branches)
-
-    private def renderTypes =
-      if (types == PREventType.Defaults) ""
-      else "\n" + renderParamWithList("types", types.map(_.toString).map(SnakeCase.apply))
-
+      s"$name:${indentOnce(renderParamWithList("workflows", workflows))}${renderTypes(types)}"
   }
-
 }
-
-
-
-
-
-
