@@ -115,15 +115,19 @@ object WebhookEvent {
 
   case object Public extends PlainNameEvent
 
-  final case class PullRequest(branches: Seq[String], tags: Seq[String], types: Seq[PREventType])
+  final case class PullRequest(
+      branches: Seq[String],
+      tags: Seq[String],
+      paths: Seq[String],
+      types: Seq[PREventType])
       extends WebhookEvent {
 
     override def render: String =
       s"$name:" +
-        indentOnce { renderBranches(branches) + renderTags + renderTypes }
+        indentOnce { renderBranches(branches) + renderTags + renderPaths + renderTypes }
 
-    private def renderTags =
-      renderParamWithList("tags", tags)
+    private def renderTags          = renderParamWithList("tags", tags)
+    private def renderPaths: String = if (paths.isEmpty) "" else renderParamWithList("paths", paths)
 
     private def renderTypes =
       if (types == PREventType.Defaults) ""
@@ -137,13 +141,15 @@ object WebhookEvent {
 
   final case class PullRequestTarget(types: Seq[PRTargetEventType]) extends TypedEvent
 
-  final case class Push(branches: Seq[String], tags: Seq[String]) extends WebhookEvent {
+  final case class Push(branches: Seq[String], tags: Seq[String], paths: Seq[String])
+      extends WebhookEvent {
 
     override def render: String =
       s"$name:" +
-        indentOnce { renderBranches(branches) + renderTags }
+        indentOnce { renderBranches(branches) + renderTags + renderPaths }
 
-    def renderTags: String = if (tags.isEmpty) "" else renderParamWithList("tags", tags)
+    def renderTags: String  = if (tags.isEmpty) "" else renderParamWithList("tags", tags)
+    def renderPaths: String = if (paths.isEmpty) "" else renderParamWithList("paths", paths)
 
   }
 

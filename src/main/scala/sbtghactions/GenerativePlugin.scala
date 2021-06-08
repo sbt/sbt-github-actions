@@ -645,10 +645,12 @@ ${indent(workflow.jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
         List(
           WebhookEvent.Push(
             githubWorkflowTargetBranches.value.toList,
-            githubWorkflowTargetTags.value.toList
+            githubWorkflowTargetTags.value.toList,
+            Nil
             ),
           WebhookEvent.PullRequest(
             githubWorkflowTargetBranches.value.toList,
+            Nil,
             Nil,
             githubWorkflowPREventTypes.value.toList
             )
@@ -738,9 +740,9 @@ ${indent(workflow.jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
         cleanWriter.close()
       }
 
-      customWorkflowContents.value.foreach{ case (file, content) =>
-        val writer = new BufferedWriter(new FileWriter(file))
-        try{
+      customWorkflowContents.value.foreach { case (file, content) =>
+        val writer = new BufferedWriter(new FileWriter(workflowsDirTask.value / file))
+        try {
           writer.write(content)
         } finally {
           writer.close()
