@@ -631,6 +631,26 @@ class GenerativePluginSpec extends Specification {
     - run: echo hello"""
     }
 
+    "compile a job with extra runs-on labels, but without oses" in {
+      compileJob(
+        WorkflowJob(
+          "job",
+          "my-name",
+          List(
+            WorkflowStep.Run(List("echo hello"))),
+          runsOnExtraLabels = List("runner-label", "runner-group"),
+          oses = Nil
+        ), "") mustEqual """job:
+  name: my-name
+  strategy:
+    matrix:
+      scala: [2.13.4]
+      java: [adopt@1.8]
+  runs-on: [ runner-label, runner-group ]
+  steps:
+    - run: echo hello"""
+    }
+
     "produce an error when compiling a job with `include` key in matrix" in {
       compileJob(
         WorkflowJob(

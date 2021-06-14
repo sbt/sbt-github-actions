@@ -373,17 +373,18 @@ ${indent(rendered.mkString("\n"), 1)}"""
 
     val declareShell = job.oses.exists(_.contains("windows"))
 
+    val matrixOs = if(job.oses.isEmpty) Nil else List("\"${{ matrix.os }}\"")
+
     val runsOn = if (job.runsOnExtraLabels.isEmpty)
       s"$${{ matrix.os }}"
     else
-      job.runsOnExtraLabels.mkString(s"""[ "$${{ matrix.os }}", """, ", ", " ]" )
+      (matrixOs ++ job.runsOnExtraLabels).mkString(s"""[ """, ", ", " ]" )
 
     val renderedFailFast = job.matrixFailFast.fold("")("\n  fail-fast: " + _)
 
     val body = s"""name: ${wrap(job.name)}${renderedNeeds}${renderedCond}
 strategy:${renderedFailFast}
-  matrix:
-    os:${compileList(job.oses, 3)}
+  matrix:${if (job.oses.isEmpty) "" else s"\n    os:${compileList(job.oses, 3)}"}
     scala:${compileList(job.scalas, 3)}
     java:${compileList(job.javas, 3)}${renderedMatrices}
 runs-on: ${runsOn}${renderedEnvironment}${renderedContainer}${renderedEnv}
