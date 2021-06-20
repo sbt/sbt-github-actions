@@ -16,8 +16,8 @@
 
 package sbtghactions
 
-import sbt._
 import sbt.Keys._
+import sbt._
 
 import java.io.{BufferedWriter, FileWriter}
 import java.nio.file.FileSystems
@@ -583,6 +583,7 @@ ${indent(workflow.jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
     },
 
     githubWorkflowCustomWorkflows := Map.empty,
+    githubWorkflowGenerationTargets := GenerationTarget.all,
 
     githubWorkflowGeneratedCI := {
       val publicationCondPre =
@@ -727,26 +728,39 @@ ${indent(workflow.jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
       val ciYml = ciYmlFile.value
       val cleanYml = cleanYmlFile.value
 
-      val ciWriter = new BufferedWriter(new FileWriter(ciYml))
-      try {
-        ciWriter.write(ciContents)
-      } finally {
-        ciWriter.close()
-      }
+      val targets = githubWorkflowGenerationTargets.value
 
-      val cleanWriter = new BufferedWriter(new FileWriter(cleanYml))
-      try {
-        cleanWriter.write(cleanContents)
-      } finally {
-        cleanWriter.close()
-      }
+      val workflowDir = workflowsDirTask.value
+      val workflowContents = customWorkflowContents.value
 
-      customWorkflowContents.value.foreach { case (file, content) =>
-        val writer = new BufferedWriter(new FileWriter(workflowsDirTask.value / file))
+
+
+      if (targets(GenerationTarget.CI)) {
+        val ciWriter = new BufferedWriter(new FileWriter(ciYml))
         try {
-          writer.write(content)
+          ciWriter.write(ciContents)
         } finally {
-          writer.close()
+          ciWriter.close()
+        }
+      }
+
+      if (targets(GenerationTarget.Clean)) {
+        val cleanWriter = new BufferedWriter(new FileWriter(cleanYml))
+        try {
+          cleanWriter.write(cleanContents)
+        } finally {
+          cleanWriter.close()
+        }
+      }
+
+      if (targets(GenerationTarget.Custom)) {
+        workflowContents.foreach { case (file, content) =>
+          val writer = new BufferedWriter(new FileWriter(workflowDir / file))
+          try {
+            writer.write(content)
+          } finally {
+            writer.close()
+          }
         }
       }
     },

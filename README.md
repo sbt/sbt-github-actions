@@ -90,6 +90,7 @@ Any and all settings which affect the behavior of the generative plugin should b
 
 #### General
 
+- `githubWorkflowGenerationTargets` : `Set[GenerationTarget]` — A set of targets to be generated. Possible values are `CI`, `Clean` and `Custom`.
 - `githubWorkflowGeneratedCI` : `Seq[WorkflowJob]` — Contains a description of the **ci.yml** jobs that will drive the generation if used. This setting can be overridden to customize the jobs (e.g. by adding additional jobs to the workflow).
 - `githubWorkflowGeneratedUploadSteps` : `Seq[WorkflowStep]` – Contains a list of steps which are used to upload generated intermediate artifacts from the `build` job. This is mostly for reference and introspection purposes; one would not be expected to *change* this setting.
 - `githubWorkflowGeneratedDownloadSteps` : `Seq[WorkflowStep]` – Contains a list of steps which are used to download generated intermediate artifacts from the `build` job. This is mostly for reference and introspection purposes; one would not be expected to *change* this setting. This setting is particularly useful in conjunction with `githubWorkflowAddedJobs`: if you're adding a job which needs access to intermediate artifacts, you should make sure these steps are part of the process.
