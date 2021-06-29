@@ -23,7 +23,7 @@ ThisBuild / publishGithubUser := "djspiewak"
 ThisBuild / publishFullName := "Daniel Spiewak"
 ThisBuild / homepage := Some(url("https://github.com/djspiewak/sbt-github-actions"))
 
-ThisBuild / scalaVersion := "2.12.10"
+ThisBuild / scalaVersion := "2.12.14"
 
 ThisBuild / githubWorkflowOSes := Seq("ubuntu-latest", "macos-latest", "windows-latest")
 ThisBuild / githubWorkflowBuild := Seq(WorkflowStep.Sbt(List("test", "scripted")))
@@ -35,7 +35,7 @@ ThisBuild / githubWorkflowPublishTargetBranches :=
 ThisBuild / githubWorkflowPublish := Seq()
 
 sbtPlugin := true
-sbtVersion := "1.3.13"
+sbtVersion := "1.5.4"
 
 publishMavenStyle := true
 
