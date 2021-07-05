@@ -41,7 +41,7 @@ publishMavenStyle := true
 
 scalacOptions += "-Xlint:_,-missing-interpolator"
 
-libraryDependencies += "org.specs2" %% "specs2-core" % "4.12.1" % Test
+libraryDependencies += "org.specs2" %% "specs2-core" % "4.12.3" % Test
 
 enablePlugins(SbtPlugin)
 
