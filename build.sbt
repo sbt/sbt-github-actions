@@ -23,7 +23,7 @@ ThisBuild / publishGithubUser := "djspiewak"
 ThisBuild / publishFullName := "Daniel Spiewak"
 ThisBuild / homepage := Some(url("https://github.com/djspiewak/sbt-github-actions"))
 
-ThisBuild / scalaVersion := "2.12.14"
+ThisBuild / crossScalaVersions := Seq("2.12.10")
 
 ThisBuild / githubWorkflowOSes := Seq("ubuntu-latest", "macos-latest", "windows-latest")
 ThisBuild / githubWorkflowBuild := Seq(WorkflowStep.Sbt(List("test", "scripted")))

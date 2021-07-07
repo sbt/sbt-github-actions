@@ -22,7 +22,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        scala: [2.12.14]
+        scala: [2.12.10]
         java: [adopt@1.8]
     runs-on: ${{ matrix.os }}
     steps:
@@ -37,7 +37,7 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Java and Scala
-        uses: olafurpg/setup-scala@v10
+        uses: olafurpg/setup-scala@v12
         with:
           java-version: ${{ matrix.java }}
 
@@ -77,7 +77,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        scala: [2.12.14]
+        scala: [2.12.10]
         java: [adopt@1.8]
     runs-on: ${{ matrix.os }}
     steps:
@@ -91,7 +91,7 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Java and Scala
-        uses: olafurpg/setup-scala@v10
+        uses: olafurpg/setup-scala@v12
         with:
           java-version: ${{ matrix.java }}
 
@@ -107,12 +107,12 @@ jobs:
             ~/Library/Caches/Coursier/v1
           key: ${{ runner.os }}-sbt-cache-v2-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('project/build.properties') }}
 
-      - name: Download target directories (2.12.14)
+      - name: Download target directories (2.12.10)
         uses: actions/download-artifact@v2
         with:
-          name: target-${{ matrix.os }}-2.12.14-${{ matrix.java }}
+          name: target-${{ matrix.os }}-2.12.10-${{ matrix.java }}
 
-      - name: Inflate target directories (2.12.14)
+      - name: Inflate target directories (2.12.10)
         run: |
           tar xf targets.tar
           rm targets.tar
