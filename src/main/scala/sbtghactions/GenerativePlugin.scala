@@ -726,6 +726,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
       val ciWriter = new BufferedWriter(new FileWriter(ciYml))
       try {
         ciWriter.write(ciContents)
+        ciWriter.newLine()
       } finally {
         ciWriter.close()
       }
@@ -733,6 +734,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
       val cleanWriter = new BufferedWriter(new FileWriter(cleanYml))
       try {
         cleanWriter.write(cleanContents)
+        cleanWriter.newLine()
       } finally {
         cleanWriter.close()
       }
