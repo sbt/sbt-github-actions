@@ -22,6 +22,7 @@ ThisBuild / organization := "com.codecommit"
 ThisBuild / publishGithubUser := "djspiewak"
 ThisBuild / publishFullName := "Daniel Spiewak"
 ThisBuild / homepage := Some(url("https://github.com/djspiewak/sbt-github-actions"))
+ThisBuild / startYear := Some(2021)
 
 ThisBuild / crossScalaVersions := Seq("2.12.10")
 
