@@ -1,7 +1,7 @@
 organization := "com.codecommit"
 version := "0.0.1"
 
-ThisBuild / crossScalaVersions := Seq("2.13.2")
+ThisBuild / crossScalaVersions := Seq("2.13.6")
 ThisBuild / scalaVersion := crossScalaVersions.value.head
 
 // explicitly don't build `withoutTarget`

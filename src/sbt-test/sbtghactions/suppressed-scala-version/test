@@ -1,0 +1,4 @@
+> githubWorkflowGenerate
+> githubWorkflowCheck
+$ copy-file expected-ci.yml .github/workflows/ci.yml
+> githubWorkflowCheck

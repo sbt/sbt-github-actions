@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Daniel Spiewak
+ * Copyright 2021 Daniel Spiewak
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -739,7 +739,7 @@ ${indent(workflow.jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
         val ciWriter = new BufferedWriter(new FileWriter(ciYml))
         try {
           ciWriter.write(ciContents)
-        } finally {
+        ciWriter.newLine()} finally {
           ciWriter.close()
         }
       }
@@ -748,7 +748,7 @@ ${indent(workflow.jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
         val cleanWriter = new BufferedWriter(new FileWriter(cleanYml))
         try {
           cleanWriter.write(cleanContents)
-        } finally {
+        cleanWriter.newLine()} finally {
           cleanWriter.close()
         }
       }
