@@ -32,7 +32,7 @@ object WorkflowStep {
 
   val Checkout: WorkflowStep = Use(UseRef.Public("actions", "checkout", "v2"), name = Some("Checkout current branch (fast)"))
 
-  val SetupScala: WorkflowStep = Use(UseRef.Public("olafurpg", "setup-scala", "v12"), name = Some("Setup Java and Scala"), params = Map("java-version" -> s"$${{ matrix.java }}"))
+  val SetupScala: WorkflowStep = Use(UseRef.Public("olafurpg", "setup-scala", "v13"), name = Some("Setup Java and Scala"), params = Map("java-version" -> s"$${{ matrix.java }}"))
 
   val Tmate: WorkflowStep = Use(UseRef.Public("mxschmitt", "action-tmate", "v2"), name = Some("Setup tmate session"))
 
