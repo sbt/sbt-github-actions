@@ -21,7 +21,6 @@ import sbt._
 
 import java.nio.file.FileSystems
 import scala.io.Source
-import java.nio.file.Files
 
 object GenerativePlugin extends AutoPlugin {
 
