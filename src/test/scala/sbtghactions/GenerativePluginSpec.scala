@@ -33,7 +33,7 @@ class GenerativePluginSpec extends Specification {
 
   "workflow compilation" should {
     "produce the appropriate skeleton around a zero-job workflow" in {
-      val expected = header + """
+      val expected = header + s"""
         |name: test
         |
         |on:
@@ -43,13 +43,14 @@ class GenerativePluginSpec extends Specification {
         |    branches: [main]
         |
         |jobs:
-        |  """.stripMargin
+        |${" " * 2}
+        |""".stripMargin
 
       compileWorkflow("test", List("main"), Nil, PREventType.Defaults, Map(), Nil, "sbt") mustEqual expected
     }
 
     "produce the appropriate skeleton around a zero-job workflow with non-empty tags" in {
-      val expected = header + """
+      val expected = header + s"""
         |name: test
         |
         |on:
@@ -60,13 +61,14 @@ class GenerativePluginSpec extends Specification {
         |    tags: [howdy]
         |
         |jobs:
-        |  """.stripMargin
+        |${" " * 2}
+        |""".stripMargin
 
       compileWorkflow("test", List("main"), List("howdy"), PREventType.Defaults, Map(), Nil, "sbt") mustEqual expected
     }
 
     "respect non-default pr types" in {
-      val expected = header + """
+      val expected = header + s"""
         |name: test
         |
         |on:
@@ -77,7 +79,8 @@ class GenerativePluginSpec extends Specification {
         |    branches: [main]
         |
         |jobs:
-        |  """.stripMargin
+        |${" " * 2}
+        |""".stripMargin
 
       compileWorkflow("test", List("main"), Nil, List(PREventType.ReadyForReview, PREventType.ReviewRequested, PREventType.Opened), Map(), Nil, "sbt") mustEqual expected
     }
@@ -105,7 +108,8 @@ class GenerativePluginSpec extends Specification {
         |        java: [adopt@1.8]
         |    runs-on: $${{ matrix.os }}
         |    steps:
-        |      - run: echo Hello World""".stripMargin
+        |      - run: echo Hello World
+        |""".stripMargin
 
       compileWorkflow(
         "test2",
@@ -153,7 +157,8 @@ class GenerativePluginSpec extends Specification {
         |        java: [adopt@1.8]
         |    runs-on: $${{ matrix.os }}
         |    steps:
-        |      - run: whoami""".stripMargin
+        |      - run: whoami
+        |""".stripMargin
 
       compileWorkflow(
         "test3",
@@ -195,7 +200,8 @@ class GenerativePluginSpec extends Specification {
         |    runs-on: $${{ matrix.os }}
         |    container: 'not:real-thing'
         |    steps:
-        |      - run: echo yikes""".stripMargin
+        |      - run: echo yikes
+        |""".stripMargin
 
       compileWorkflow(
         "test4",
@@ -244,7 +250,8 @@ class GenerativePluginSpec extends Specification {
         |      ports: [80, 443]
         |      options: '--cpus 1'
         |    steps:
-        |      - run: echo yikes""".stripMargin
+        |      - run: echo yikes
+        |""".stripMargin
 
       compileWorkflow(
         "test4",
