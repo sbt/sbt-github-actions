@@ -769,9 +769,6 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
         val previousLineLength = acc.lastOption.map(_.length).getOrElse(0)
         val padding = " " * previousLineLength
         val highlight = s"$padding^ (missing lines)"
-
-
-
         (acc :+ highlight, true)
       case ((acc, false), (expectedLine, actualLine)) =>
         val sameCount = expectedLine.zip(actualLine).takeWhile({ case (a, b) => a == b }).length
