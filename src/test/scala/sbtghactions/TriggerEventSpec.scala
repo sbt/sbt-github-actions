@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Daniel Spiewak
+ * Copyright 2021 Daniel Spiewak
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -137,7 +137,7 @@ class TriggerEventSpec extends Specification with AllExpectations {
     }
     "render only with paths" in {
       val expected =
-        """|push:
+        """|pull_request:
            |  paths: [src/main/**]""".stripMargin
       WebhookEvent.PullRequest(Nil, Nil, List("src/main/**"), Nil).render mustEqual expected
     }
