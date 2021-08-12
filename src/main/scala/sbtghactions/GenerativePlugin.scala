@@ -418,14 +418,9 @@ ${indent(workflow.jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
 
   val settingDefaults = Seq(
     githubWorkflowSbtCommand := "sbt",
-    githubWorkflowUseSbtThinClient := {
-      val sbtVersionNumber = VersionNumber(sbtVersion.value)
-      sbtVersionNumber._1.exists {
-        case 0 => false
-        case 1 => sbtVersionNumber._2.exists(_ >= 4)
-        case _ => true
-      }
-    },
+    // This is currently set to false because of https://github.com/sbt/sbt/issues/6468. When a new SBT version is
+    // released that fixes this issue then check for that SBT version (or higher) and set to true.
+    githubWorkflowUseSbtThinClient := false,
 
     githubWorkflowBuildMatrixFailFast := None,
     githubWorkflowBuildMatrixAdditions := Map(),
