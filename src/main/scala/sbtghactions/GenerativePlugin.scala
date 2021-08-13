@@ -750,7 +750,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
 
       compare(ciYml, expectedCiContents)
 
-      if(includeClean)
+      if (includeClean)
         compare(cleanYml, expectedCleanContents)
     })
 
