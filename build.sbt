@@ -36,7 +36,7 @@ ThisBuild / githubWorkflowPublishTargetBranches :=
 ThisBuild / githubWorkflowPublish := Seq()
 
 sbtPlugin := true
-sbtVersion := "1.5.4"
+sbtVersion := "1.5.5"
 
 publishMavenStyle := true
 
