@@ -16,11 +16,9 @@
 
 package sbtghactions
 
-import sbt._
 import sbt.Keys._
+import sbt._
 
-
-import java.io.{BufferedWriter, FileWriter}
 import java.nio.file.FileSystems
 import scala.io.Source
 
@@ -438,11 +436,13 @@ on:
     branches: [${branches.map(wrap).mkString(", ")}]$renderedTags
 
 ${renderedEnv}jobs:
-${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
+${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
+"""
 }
 
   val settingDefaults = Seq(
     githubWorkflowSbtCommand := "sbt",
+    githubWorkflowIncludeClean := true,
     // This is currently set to false because of https://github.com/sbt/sbt/issues/6468. When a new SBT version is
     // released that fixes this issue then check for that SBT version (or higher) and set to true.
     githubWorkflowUseSbtThinClient := false,
@@ -671,7 +671,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
   private val readCleanContents = Def task {
     val src = Source.fromURL(getClass.getResource("/clean.yml"))
     try {
-      src.getLines().mkString("\n")
+      src.mkString
     } finally {
       src.close()
     }
@@ -713,45 +713,27 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
 
     githubWorkflowGenerate := {
       val ciContents = generateCiContents.value
+      val includeClean = githubWorkflowIncludeClean.value
       val cleanContents = readCleanContents.value
 
       val ciYml = ciYmlFile.value
       val cleanYml = cleanYmlFile.value
 
-      val ciWriter = new BufferedWriter(new FileWriter(ciYml))
-      try {
-        ciWriter.write(ciContents)
-        ciWriter.newLine()
-      } finally {
-        ciWriter.close()
-      }
+      IO.write(ciYml, ciContents)
 
-      val cleanWriter = new BufferedWriter(new FileWriter(cleanYml))
-      try {
-        cleanWriter.write(cleanContents)
-        cleanWriter.newLine()
-      } finally {
-        cleanWriter.close()
-      }
+      if(includeClean)
+        IO.write(cleanYml, cleanContents)
     },
 
     githubWorkflowCheck := {
       val expectedCiContents = generateCiContents.value
+      val includeClean = githubWorkflowIncludeClean.value
       val expectedCleanContents = readCleanContents.value
 
       val ciYml = ciYmlFile.value
       val cleanYml = cleanYmlFile.value
 
       val log = state.value.log
-
-      def loadFile(file: File): String = {
-        val ciSource = Source.fromFile(file)
-        try {
-          ciSource.getLines().mkString("\n")
-        } finally {
-          ciSource.close()
-        }
-      }
 
       def reportMismatch(file: File, expected: String, actual: String): Unit = {
         log.error(s"Expected:\n$expected")
@@ -760,14 +742,16 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}"""
       }
 
       def compare(file: File, expected: String): Unit = {
-        val actual = loadFile(file)
+        val actual = IO.read(file)
         if (expected != actual) {
           reportMismatch(file, expected, actual)
         }
       }
 
       compare(ciYml, expectedCiContents)
-      compare(cleanYml, expectedCleanContents)
+
+      if (includeClean)
+        compare(cleanYml, expectedCleanContents)
     })
 
   private[sbtghactions] def diff(expected: String, actual: String): String = {
