@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Daniel Spiewak
+ * Copyright 2020-2021 Daniel Spiewak
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,8 @@ ThisBuild / organization := "com.codecommit"
 ThisBuild / publishGithubUser := "djspiewak"
 ThisBuild / publishFullName := "Daniel Spiewak"
 ThisBuild / homepage := Some(url("https://github.com/djspiewak/sbt-github-actions"))
-ThisBuild / startYear := Some(2021)
+ThisBuild / startYear := Some(2020)
+ThisBuild / endYear := Some(2021)
 
 ThisBuild / crossScalaVersions := Seq("2.12.14")
 
