@@ -24,5 +24,5 @@ val sbtGithubActionsSources = ProjectRef(file("project"), "sbtGithubActionsSourc
 val root = (project in file("."))
   .dependsOn(sbtGithubActionsSources)
   .settings(
-    addSbtPlugin("com.codecommit" % "sbt-spiewak-sonatype" % "0.21.0" exclude("com.codecommit", "sbt-github-actions"))
+    addSbtPlugin("com.codecommit" % "sbt-spiewak-sonatype" % "0.22.0" exclude("com.codecommit", "sbt-github-actions"))
   )
