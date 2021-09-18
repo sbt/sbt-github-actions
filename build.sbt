@@ -24,7 +24,7 @@ ThisBuild / publishFullName := "Daniel Spiewak"
 ThisBuild / homepage := Some(url("https://github.com/djspiewak/sbt-github-actions"))
 ThisBuild / startYear := Some(2021)
 
-ThisBuild / crossScalaVersions := Seq("2.12.14")
+ThisBuild / crossScalaVersions := Seq("2.12.15")
 
 ThisBuild / githubWorkflowOSes := Seq("ubuntu-latest", "macos-latest", "windows-latest")
 ThisBuild / githubWorkflowBuild := Seq(WorkflowStep.Sbt(List("test", "scripted")))
@@ -42,7 +42,7 @@ publishMavenStyle := true
 
 scalacOptions += "-Xlint:_,-missing-interpolator"
 
-libraryDependencies += "org.specs2" %% "specs2-core" % "4.12.3" % Test
+libraryDependencies += "org.specs2" %% "specs2-core" % "4.12.12" % Test
 
 enablePlugins(SbtPlugin)
 
