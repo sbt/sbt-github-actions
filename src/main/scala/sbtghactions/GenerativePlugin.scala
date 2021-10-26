@@ -504,6 +504,15 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
 
     githubWorkflowGeneratedUploadSteps := {
       if (githubWorkflowArtifactUpload.value) {
+
+        val scalas = VersionUtil.inferPublishVersions(githubWorkflowScalaVersions.value)
+
+        val cond = if (scalas != githubWorkflowScalaVersions.value) {
+          Some(s"contains(${scalas.map(str => s"'$str'").mkString("[", ",", "]")}, matrix.scala)")
+        } else {
+          None
+        }
+
         val sanitized = pathStrs.value map { str =>
           if (str.indexOf(' ') >= 0)    // TODO be less naive
             s"'$str'"
@@ -523,7 +532,9 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
           name = Some(s"Upload target directories"),
           params = Map(
             "name" -> s"target-$${{ matrix.os }}-$${{ matrix.scala }}-$${{ matrix.java }}",
-            "path" -> "targets.tar"))
+            "path" -> "targets.tar"),
+          cond = cond
+        )
 
         Seq(tar, upload)
       } else {
@@ -532,7 +543,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
     },
 
     githubWorkflowGeneratedDownloadSteps := {
-      val scalas = githubWorkflowScalaVersions.value
+      val scalas = VersionUtil.inferPublishVersions(githubWorkflowScalaVersions.value)
 
       if (githubWorkflowArtifactUpload.value) {
         scalas flatMap { v =>
