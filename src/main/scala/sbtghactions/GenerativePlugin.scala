@@ -522,7 +522,9 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
 
         val tar = WorkflowStep.Run(
           List(s"tar cf targets.tar ${sanitized.mkString(" ")} project/target"),
-          name = Some("Compress target directories"))
+          name = Some("Compress target directories"),
+          cond = cond
+        )
 
         val upload = WorkflowStep.Use(
           UseRef.Public(
