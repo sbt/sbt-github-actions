@@ -46,7 +46,7 @@ class GenerativePluginSpec extends Specification {
         |${" " * 2}
         |""".stripMargin
 
-      compileWorkflow("test", List("main"), Nil, PREventType.Defaults, Map(), Nil, "sbt") mustEqual expected
+      compileWorkflow("test", List("main"), Nil, Paths.None, PREventType.Defaults, Map(), Nil, "sbt") mustEqual expected
     }
 
     "produce the appropriate skeleton around a zero-job workflow with non-empty tags" in {
@@ -64,7 +64,7 @@ class GenerativePluginSpec extends Specification {
         |${" " * 2}
         |""".stripMargin
 
-      compileWorkflow("test", List("main"), List("howdy"), PREventType.Defaults, Map(), Nil, "sbt") mustEqual expected
+      compileWorkflow("test", List("main"), List("howdy"), Paths.None, PREventType.Defaults, Map(), Nil, "sbt") mustEqual expected
     }
 
     "respect non-default pr types" in {
@@ -82,7 +82,7 @@ class GenerativePluginSpec extends Specification {
         |${" " * 2}
         |""".stripMargin
 
-      compileWorkflow("test", List("main"), Nil, List(PREventType.ReadyForReview, PREventType.ReviewRequested, PREventType.Opened), Map(), Nil, "sbt") mustEqual expected
+      compileWorkflow("test", List("main"), Nil, Paths.None, List(PREventType.ReadyForReview, PREventType.ReviewRequested, PREventType.Opened), Map(), Nil, "sbt") mustEqual expected
     }
 
     "compile a one-job workflow targeting multiple branch patterns with a environment variables" in {
@@ -115,6 +115,7 @@ class GenerativePluginSpec extends Specification {
         "test2",
         List("main", "backport/v*"),
         Nil,
+        Paths.None,
         PREventType.Defaults,
         Map(
           "GITHUB_TOKEN" -> s"$${{ secrets.GITHUB_TOKEN }}"),
@@ -164,6 +165,7 @@ class GenerativePluginSpec extends Specification {
         "test3",
         List("main"),
         Nil,
+        Paths.None,
         PREventType.Defaults,
         Map(),
         List(
@@ -207,6 +209,7 @@ class GenerativePluginSpec extends Specification {
         "test4",
         List("main"),
         Nil,
+        Paths.None,
         PREventType.Defaults,
         Map(),
         List(
@@ -257,6 +260,7 @@ class GenerativePluginSpec extends Specification {
         "test4",
         List("main"),
         Nil,
+        Paths.None,
         PREventType.Defaults,
         Map(),
         List(
@@ -273,6 +277,44 @@ class GenerativePluginSpec extends Specification {
                 ports = List(80, 443),
                 options = List("--cpus", "1"))))),
         "") mustEqual expected
+    }
+
+    "render included paths on pull_request and push" in {
+      val expected = header + s"""
+        |name: test
+        |
+        |on:
+        |  pull_request:
+        |    branches: [main]
+        |    paths: ['**.scala', '**.sbt']
+        |  push:
+        |    branches: [main]
+        |    paths: ['**.scala', '**.sbt']
+        |
+        |jobs:
+        |${" " * 2}
+        |""".stripMargin
+
+      compileWorkflow("test", List("main"), Nil, Paths.Include(List("**.scala", "**.sbt")), PREventType.Defaults, Map(), Nil, "sbt") mustEqual expected
+    }
+
+    "render ignored paths on pull_request and push" in {
+      val expected = header + s"""
+        |name: test
+        |
+        |on:
+        |  pull_request:
+        |    branches: [main]
+        |    paths-ignore: [docs/**]
+        |  push:
+        |    branches: [main]
+        |    paths-ignore: [docs/**]
+        |
+        |jobs:
+        |${" " * 2}
+        |""".stripMargin
+
+      compileWorkflow("test", List("main"), Nil, Paths.Ignore(List("docs/**")), PREventType.Defaults, Map(), Nil, "sbt") mustEqual expected
     }
   }
 
