@@ -55,6 +55,7 @@ trait GenerativeKeys {
   lazy val githubWorkflowDependencyPatterns = settingKey[Seq[String]]("A list of file globes within the project which affect dependency information (default: [**/*.sbt, project/build.properties])")
   lazy val githubWorkflowTargetBranches = settingKey[Seq[String]]("A list of branch patterns on which to trigger push and PR builds (default: [*])")
   lazy val githubWorkflowTargetTags = settingKey[Seq[String]]("A list of tag patterns on which to trigger push builds (default: [])")
+  lazy val githubWorkflowTargetPaths = settingKey[Paths]("Paths which will match modified files for `push` and `pull_request` event types to trigger the workflow. May be `Paths.None`, `Paths.Include(patterns)`, or `Paths.Ignore(patterns)`. `Paths.Include` may include negative patterns. Defaults to `Paths.None`.")
   lazy val githubWorkflowPREventTypes = settingKey[Seq[PREventType]]("A list of pull request event types which will be used to trigger builds (default: [opened, synchronize, reopened])")
 
   lazy val githubWorkflowArtifactUpload = settingKey[Boolean]("Controls whether or not to upload target directories in the event that multiple jobs are running sequentially. Can be set on a per-project basis (default: true)")
