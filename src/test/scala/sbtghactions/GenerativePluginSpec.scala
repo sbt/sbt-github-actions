@@ -484,7 +484,7 @@ class GenerativePluginSpec extends Specification {
     }
 
     "compile a job with java setup, two JVMs and two Scalas" in {
-      val javas = List(JavaVersion.temurin("11"), JavaVersion.graalvm("20.0.0", "8"))
+      val javas = List(JavaSpec.temurin("11"), JavaSpec.graalvm("20.0.0", "8"))
 
       val results = compileJob(
         WorkflowJob(

@@ -16,17 +16,17 @@
 
 package sbtghactions
 
-final case class JavaVersion(dist: JavaVersion.Distribution, version: String) {
+final case class JavaSpec(dist: JavaSpec.Distribution, version: String) {
   def render: String = dist match {
-    case JavaVersion.Distribution.GraalVM(gversion) => s"graal:$gversion@$version"
+    case JavaSpec.Distribution.GraalVM(gversion) => s"graal:$gversion@$version"
     case dist => s"${dist.rendering}@$version"
   }
 }
 
-object JavaVersion {
+object JavaSpec {
 
-  def temurin(version: String): JavaVersion = JavaVersion(Distribution.Temurin, version)
-  def graalvm(graal: String, version: String): JavaVersion = JavaVersion(Distribution.GraalVM(graal), version)
+  def temurin(version: String): JavaSpec = JavaSpec(Distribution.Temurin, version)
+  def graalvm(graal: String, version: String): JavaSpec = JavaSpec(Distribution.GraalVM(graal), version)
 
   sealed abstract class Distribution(val rendering: String) extends Product with Serializable
 

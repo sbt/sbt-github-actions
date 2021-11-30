@@ -58,8 +58,8 @@ object GenerativePlugin extends AutoPlugin {
     type Paths = sbtghactions.Paths
     val Paths = sbtghactions.Paths
 
-    type JavaVersion = sbtghactions.JavaVersion
-    val JavaVersion = sbtghactions.JavaVersion
+    type JavaSpec = sbtghactions.JavaSpec
+    val JavaSpec = sbtghactions.JavaSpec
   }
 
   import autoImport._
@@ -479,7 +479,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
     githubWorkflowPublishTargetBranches := Seq(RefPredicate.Equals(Ref.Branch("main"))),
     githubWorkflowPublishCond := None,
 
-    githubWorkflowJavaVersions := Seq(JavaVersion.temurin("11")),
+    githubWorkflowJavaVersions := Seq(JavaSpec.temurin("11")),
     githubWorkflowScalaVersions := crossScalaVersions.value,
     githubWorkflowOSes := Seq("ubuntu-latest"),
     githubWorkflowDependencyPatterns := Seq("**/*.sbt", "project/build.properties"),
