@@ -32,7 +32,26 @@ object WorkflowStep {
 
   val Checkout: WorkflowStep = Use(UseRef.Public("actions", "checkout", "v2"), name = Some("Checkout current branch (fast)"))
 
-  val SetupScala: WorkflowStep = Use(UseRef.Public("olafurpg", "setup-scala", "v13"), name = Some("Setup Java and Scala"), params = Map("java-version" -> s"$${{ matrix.java }}"))
+  def SetupJava(versions: List[JavaVersion]): List[WorkflowStep] =
+    versions map {
+      case jv @ JavaVersion(JavaVersion.Distribution.GraalVM(graalVersion), version) =>
+        WorkflowStep.Use(
+          UseRef.Public("DeLaGuardo", "setup-graalvm", "5.0"),
+          name = Some(s"Setup GraalVM (${jv.render})"),
+          cond = Some(s"matrix.java == '${jv.render}'"),
+          params = Map(
+            "graalvm" -> graalVersion,
+            "java" -> version))
+
+      case jv @ JavaVersion(dist, version) =>
+        WorkflowStep.Use(
+          UseRef.Public("actions", "setup-java", "v2"),
+          name = Some(s"Setup Java (${jv.render})"),
+          cond = Some(s"matrix.java == '${jv.render}'"),
+          params = Map(
+            "distribution" -> dist.rendering,
+            "java-version" -> version))
+    }
 
   val Tmate: WorkflowStep = Use(UseRef.Public("mxschmitt", "action-tmate", "v2"), name = Some("Setup tmate session"))
 

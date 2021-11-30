@@ -57,6 +57,9 @@ object GenerativePlugin extends AutoPlugin {
 
     type Paths = sbtghactions.Paths
     val Paths = sbtghactions.Paths
+
+    type JavaVersion = sbtghactions.JavaVersion
+    val JavaVersion = sbtghactions.JavaVersion
   }
 
   import autoImport._
@@ -387,7 +390,7 @@ strategy:${renderedFailFast}
   matrix:
     os:${compileList(job.oses, 3)}
     scala:${compileList(job.scalas, 3)}
-    java:${compileList(job.javas, 3)}${renderedMatrices}
+    java:${compileList(job.javas.map(_.render), 3)}${renderedMatrices}
 runs-on: ${runsOn}${renderedEnvironment}${renderedContainer}${renderedEnv}
 steps:
 ${indent(job.steps.map(compileStep(_, sbt, declareShell = declareShell)).mkString("\n\n"), 1)}"""
@@ -427,7 +430,7 @@ s"""
     val renderedPaths = paths match {
       case Paths.None =>
         ""
-      case Paths.Include(paths) => 
+      case Paths.Include(paths) =>
         "\n" + indent(s"""paths: [${paths.map(wrap).mkString(", ")}]""", 2)
       case Paths.Ignore(paths) =>
         "\n" + indent(s"""paths-ignore: [${paths.map(wrap).mkString(", ")}]""", 2)
@@ -476,7 +479,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
     githubWorkflowPublishTargetBranches := Seq(RefPredicate.Equals(Ref.Branch("main"))),
     githubWorkflowPublishCond := None,
 
-    githubWorkflowJavaVersions := Seq("adopt@1.8"),
+    githubWorkflowJavaVersions := Seq(JavaVersion.temurin("11")),
     githubWorkflowScalaVersions := crossScalaVersions.value,
     githubWorkflowOSes := Seq("ubuntu-latest"),
     githubWorkflowDependencyPatterns := Seq("**/*.sbt", "project/build.properties"),
@@ -610,9 +613,9 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
         Nil
       }
 
-      autoCrlfOpt ::: List(
-        WorkflowStep.CheckoutFull,
-        WorkflowStep.SetupScala) :::
+      autoCrlfOpt :::
+        List(WorkflowStep.CheckoutFull) :::
+        WorkflowStep.SetupJava(githubWorkflowJavaVersions.value.toList) :::
         githubWorkflowGeneratedCacheSteps.value.toList
     },
 
