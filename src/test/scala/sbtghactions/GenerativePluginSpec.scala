@@ -371,6 +371,15 @@ class GenerativePluginSpec extends Specification {
         "$SBT") mustEqual s"- run: $$SBT ++$${{ matrix.scala }} 'show scalaVersion' compile test"
     }
 
+    "compile sbt with parameters" in {
+      compileStep(
+        Sbt(List("compile", "test"), params = Map("abc" -> "def", "cafe" -> "@42")),
+        "$SBT") mustEqual s"""- run: $$SBT ++$${{ matrix.scala }} compile test
+                         |  with:
+                         |    abc: def
+                         |    cafe: '@42'""".stripMargin
+    }
+
     "compile use without parameters" in {
       "public" >> {
         compileStep(
@@ -431,6 +440,15 @@ class GenerativePluginSpec extends Specification {
       compileStep(
         Run(List("users"), cond = Some("true")),
         "") mustEqual "- if: true\n  run: users"
+    }
+
+    "compile a run with parameters" in {
+      compileStep(
+        Run(List("echo foo"), params = Map("abc" -> "def", "cafe" -> "@42")),
+        "") mustEqual """- run: echo foo
+                        |  with:
+                        |    abc: def
+                        |    cafe: '@42'""".stripMargin
     }
   }
 
