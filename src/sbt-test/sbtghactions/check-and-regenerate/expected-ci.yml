@@ -51,7 +51,7 @@ jobs:
         uses: DeLaGuardo/setup-graalvm@5.0
         with:
           graalvm: 21.1.0
-          java: 8
+          java: java8
 
       - name: Cache sbt
         uses: actions/cache@v2
@@ -110,7 +110,7 @@ jobs:
         uses: DeLaGuardo/setup-graalvm@5.0
         with:
           graalvm: 21.1.0
-          java: 8
+          java: java8
 
       - name: Cache sbt
         uses: actions/cache@v2

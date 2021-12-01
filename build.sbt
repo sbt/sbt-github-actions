@@ -29,6 +29,7 @@ ThisBuild / crossScalaVersions := Seq("2.12.15")
 
 ThisBuild / githubWorkflowOSes := Seq("ubuntu-latest", "macos-latest", "windows-latest")
 ThisBuild / githubWorkflowBuild := Seq(WorkflowStep.Sbt(List("test", "scripted")))
+ThisBuild / githubWorkflowJavaVersions += JavaSpec.graalvm("20.3.1", "11")
 
 // dummy publication just to test that setup works
 ThisBuild / githubWorkflowPublishTargetBranches :=

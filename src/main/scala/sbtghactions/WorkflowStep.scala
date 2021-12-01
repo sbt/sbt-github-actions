@@ -41,7 +41,7 @@ object WorkflowStep {
           cond = Some(s"matrix.java == '${jv.render}'"),
           params = Map(
             "graalvm" -> graalVersion,
-            "java" -> version))
+            "java" -> s"java$version"))
 
       case jv @ JavaSpec(dist, version) =>
         WorkflowStep.Use(

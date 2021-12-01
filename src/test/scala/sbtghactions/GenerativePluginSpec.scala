@@ -534,7 +534,7 @@ class GenerativePluginSpec extends Specification {
       uses: DeLaGuardo/setup-graalvm@5.0
       with:
         graalvm: 20.0.0
-        java: 8"""
+        java: java8"""
     }
 
     "compile a job with environment variables, conditional, and needs with an sbt step" in {
