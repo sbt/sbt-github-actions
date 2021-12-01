@@ -57,6 +57,9 @@ object GenerativePlugin extends AutoPlugin {
 
     type Paths = sbtghactions.Paths
     val Paths = sbtghactions.Paths
+
+    type JavaSpec = sbtghactions.JavaSpec
+    val JavaSpec = sbtghactions.JavaSpec
   }
 
   import autoImport._
@@ -403,7 +406,7 @@ strategy:${renderedFailFast}
   matrix:
     os:${compileList(job.oses, 3)}
     scala:${compileList(job.scalas, 3)}
-    java:${compileList(job.javas, 3)}${renderedMatrices}
+    java:${compileList(job.javas.map(_.render), 3)}${renderedMatrices}
 runs-on: ${runsOn}${renderedEnvironment}${renderedContainer}${renderedEnv}
 steps:
 ${indent(job.steps.map(compileStep(_, sbt, declareShell = declareShell)).mkString("\n\n"), 1)}"""
@@ -492,7 +495,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
     githubWorkflowPublishTargetBranches := Seq(RefPredicate.Equals(Ref.Branch("main"))),
     githubWorkflowPublishCond := None,
 
-    githubWorkflowJavaVersions := Seq("adopt@1.8"),
+    githubWorkflowJavaVersions := Seq(JavaSpec.temurin("11")),
     githubWorkflowScalaVersions := crossScalaVersions.value,
     githubWorkflowOSes := Seq("ubuntu-latest"),
     githubWorkflowDependencyPatterns := Seq("**/*.sbt", "project/build.properties"),
@@ -626,9 +629,9 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
         Nil
       }
 
-      autoCrlfOpt ::: List(
-        WorkflowStep.CheckoutFull,
-        WorkflowStep.SetupScala) :::
+      autoCrlfOpt :::
+        List(WorkflowStep.CheckoutFull) :::
+        WorkflowStep.SetupJava(githubWorkflowJavaVersions.value.toList) :::
         githubWorkflowGeneratedCacheSteps.value.toList
     },
 

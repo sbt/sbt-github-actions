@@ -6,7 +6,7 @@ ThisBuild / scalaVersion := crossScalaVersions.value.head
 
 ThisBuild / githubWorkflowTargetTags += "v*"
 
-ThisBuild / githubWorkflowJavaVersions += "graalvm@21.1.0"
+ThisBuild / githubWorkflowJavaVersions += JavaSpec.graalvm("21.1.0", "8")
 ThisBuild / githubWorkflowPublishTargetBranches += RefPredicate.Equals(Ref.Tag("test"))
 
 ThisBuild / githubWorkflowBuildMatrixAdditions += "test" -> List("this", "is")

@@ -16,7 +16,7 @@
 
 name := "sbt-github-actions"
 
-ThisBuild / baseVersion := "0.13"
+ThisBuild / baseVersion := "0.14"
 
 ThisBuild / organization := "com.codecommit"
 ThisBuild / publishGithubUser := "djspiewak"
