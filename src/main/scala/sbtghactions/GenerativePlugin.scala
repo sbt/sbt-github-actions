@@ -205,29 +205,31 @@ ${indent(rendered.mkString("\n"), 1)}"""
       preamblePre
 
     val body = step match {
-      case Run(commands, _, _, _, _) =>
-        renderedShell + "run: " + wrap(commands.mkString("\n"))
+      case run: Run =>
+        renderRunBody(run.commands, run.params, renderedShell)
 
-      case Sbt(commands, _, _, _, _) =>
+      case sbtStep: Sbt =>
+        import sbtStep.commands
+
         val version = "++${{ matrix.scala }}"
         val sbtClientMode = sbt.matches("""sbt.* --client($| .*)""")
         val safeCommands = if (sbtClientMode)
           s"'${(version :: commands).mkString("; ")}'"
-        else commands map { c =>
+        else commands.map { c =>
           if (c.indexOf(' ') >= 0)
             s"'$c'"
           else
             c
-        } mkString(version + " ", " ", "")
+        }.mkString(version + " ", " ", "")
 
-        renderedShell + "run: " + wrap(s"$sbt $safeCommands")
+        renderRunBody(
+          commands = List(s"$sbt $safeCommands"),
+          params = sbtStep.params,
+          renderedShell = renderedShell
+        )
 
-      case Use(ref, params, _, _, _, _) =>
-        val renderedParamsPre = compileEnv(params, prefix = "with")
-        val renderedParams = if (renderedParamsPre.isEmpty)
-          ""
-        else
-          "\n" + renderedParamsPre
+      case use: Use =>
+        import use.{ref, params}
 
         val decl = ref match {
           case UseRef.Public(owner, repo, ref) =>
@@ -248,11 +250,25 @@ ${indent(rendered.mkString("\n"), 1)}"""
             s"uses: docker://$image:$tag"
         }
 
-        decl + renderedParams
+        decl + renderParams(params)
     }
 
     indent(preamble + body, 1).updated(0, '-')
   }
+
+  def renderRunBody(commands: List[String], params: Map[String, String], renderedShell: String) =
+      renderedShell + "run: " + wrap(commands.mkString("\n")) + renderParams(params)
+
+  def renderParams(params: Map[String, String]): String = {
+    val renderedParamsPre = compileEnv(params, prefix = "with")
+    val renderedParams = if (renderedParamsPre.isEmpty)
+      ""
+    else
+      "\n" + renderedParamsPre
+
+    renderedParams
+  }
+
 
   def compileJob(job: WorkflowJob, sbt: String): String = {
     val renderedNeeds = if (job.needs.isEmpty)
@@ -427,7 +443,7 @@ s"""
     val renderedPaths = paths match {
       case Paths.None =>
         ""
-      case Paths.Include(paths) => 
+      case Paths.Include(paths) =>
         "\n" + indent(s"""paths: [${paths.map(wrap).mkString(", ")}]""", 2)
       case Paths.Ignore(paths) =>
         "\n" + indent(s"""paths-ignore: [${paths.map(wrap).mkString(", ")}]""", 2)
