@@ -342,7 +342,7 @@ ${indent(rendered.mkString("\n"), 1)}"""
     } mkString "\n"
 
     // TODO refactor all of this stuff to use whitelist instead
-    val whitelist = Map("os" -> job.oses, "scala" -> job.scalas, "java" -> job.javas) ++ job.matrixAdds
+    val whitelist = Map("os" -> job.oses, "scala" -> job.scalas, "java" -> job.javas.map(_.render)) ++ job.matrixAdds
 
     def checkMatching(matching: Map[String, String]): Unit = {
       matching foreach {

@@ -790,6 +790,19 @@ class GenerativePluginSpec extends Specification {
         "") must throwA[RuntimeException]
     }
 
+    "allow a matching JVM exclusion" in {
+      compileJob(
+        WorkflowJob(
+          "bippy",
+          "Bippity Bop Around the Clock",
+          List(
+            WorkflowStep.Run(List("echo ${{ matrix.scala }}"))),
+          matrixExcs = List(
+            MatrixExclude(
+              Map("java" -> JavaSpec.temurin("11").render)))),
+        "") must not(throwA[RuntimeException])
+    }
+
     "compile a job with a long list of scala versions" in {
       val results = compileJob(
         WorkflowJob(
