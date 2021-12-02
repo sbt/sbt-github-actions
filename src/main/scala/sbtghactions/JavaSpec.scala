@@ -18,7 +18,7 @@ package sbtghactions
 
 final case class JavaSpec(dist: JavaSpec.Distribution, version: String) {
   def render: String = dist match {
-    case JavaSpec.Distribution.GraalVM(gversion) => s"graal:$gversion@$version"
+    case JavaSpec.Distribution.GraalVM(gversion) => s"graal_$gversion@$version"
     case dist => s"${dist.rendering}@$version"
   }
 }
