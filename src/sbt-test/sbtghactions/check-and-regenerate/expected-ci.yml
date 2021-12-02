@@ -24,7 +24,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         scala: [2.13.6, 2.12.15]
-        java: [temurin@11, 'graal:21.1.0@8']
+        java: [temurin@11, graal_21.1.0@8]
         test: [this, is]
         include:
           - test: this
@@ -46,12 +46,12 @@ jobs:
           distribution: temurin
           java-version: 11
 
-      - name: 'Setup GraalVM (graal:21.1.0@8)'
-        if: 'matrix.java == ''graal:21.1.0@8'''
+      - name: Setup GraalVM (graal_21.1.0@8)
+        if: matrix.java == 'graal_21.1.0@8'
         uses: DeLaGuardo/setup-graalvm@5.0
         with:
           graalvm: 21.1.0
-          java: 8
+          java: java8
 
       - name: Cache sbt
         uses: actions/cache@v2
@@ -105,12 +105,12 @@ jobs:
           distribution: temurin
           java-version: 11
 
-      - name: 'Setup GraalVM (graal:21.1.0@8)'
-        if: 'matrix.java == ''graal:21.1.0@8'''
+      - name: Setup GraalVM (graal_21.1.0@8)
+        if: matrix.java == 'graal_21.1.0@8'
         uses: DeLaGuardo/setup-graalvm@5.0
         with:
           graalvm: 21.1.0
-          java: 8
+          java: java8
 
       - name: Cache sbt
         uses: actions/cache@v2

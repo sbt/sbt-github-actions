@@ -519,7 +519,7 @@ class GenerativePluginSpec extends Specification {
     matrix:
       os: [ubuntu-latest]
       scala: [2.12.15, 2.13.6]
-      java: [temurin@11, 'graal:20.0.0@8']
+      java: [temurin@11, graal_20.0.0@8]
   runs-on: $${{ matrix.os }}
   steps:
     - name: Setup Java (temurin@11)
@@ -529,12 +529,12 @@ class GenerativePluginSpec extends Specification {
         distribution: temurin
         java-version: 11
 
-    - name: 'Setup GraalVM (graal:20.0.0@8)'
-      if: 'matrix.java == ''graal:20.0.0@8'''
+    - name: Setup GraalVM (graal_20.0.0@8)
+      if: matrix.java == 'graal_20.0.0@8'
       uses: DeLaGuardo/setup-graalvm@5.0
       with:
         graalvm: 20.0.0
-        java: 8"""
+        java: java8"""
     }
 
     "compile a job with environment variables, conditional, and needs with an sbt step" in {
