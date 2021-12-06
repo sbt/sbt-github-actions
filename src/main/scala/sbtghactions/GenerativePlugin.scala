@@ -186,6 +186,27 @@ s"""$prefix:
 ${indent(rendered.mkString("\n"), 1)}"""
     }
 
+  def compilePermissions(permissions: Map[String, String]): String = {
+    val validPermissions = Seq("read", "write", "none")
+
+    if (permissions.isEmpty) {
+      ""
+    } else {
+      val rendered = permissions map {
+        case (key, value) =>
+          if (!isSafeString(key) || key.indexOf(' ') >= 0)
+            sys.error(s"'$key' is not a valid permission key")
+
+          if (!validPermissions.contains(value))
+            sys.error(s"'$value' is not a valid permission value")
+
+          s"""$key: ${wrap(value)}"""
+      }
+s"""permissions:
+${indent(rendered.mkString("\n"), 1)}"""
+    }
+  }
+
   def compileStep(step: WorkflowStep, sbt: String, declareShell: Boolean = false): String = {
     import WorkflowStep._
 
@@ -331,6 +352,12 @@ ${indent(rendered.mkString("\n"), 1)}"""
     else
       "\n" + renderedEnvPre
 
+    val renderedPermissionsPre = compilePermissions(job.permissions)
+    val renderedPermissions = if (renderedPermissionsPre.isEmpty)
+      ""
+    else
+      "\n" + renderedPermissionsPre
+
     List("include", "exclude") foreach { key =>
       if (job.matrixAdds.contains(key)) {
         sys.error(s"key `$key` is reserved and cannot be used in an Actions matrix definition")
@@ -401,7 +428,7 @@ ${indent(rendered.mkString("\n"), 1)}"""
 
     val renderedFailFast = job.matrixFailFast.fold("")("\n  fail-fast: " + _)
 
-    val body = s"""name: ${wrap(job.name)}${renderedNeeds}${renderedCond}
+    val body = s"""name: ${wrap(job.name)}${renderedNeeds}${renderedCond}${renderedPermissions}
 strategy:${renderedFailFast}
   matrix:
     os:${compileList(job.oses, 3)}
@@ -421,6 +448,7 @@ ${indent(job.steps.map(compileStep(_, sbt, declareShell = declareShell)).mkStrin
       paths: Paths,
       prEventTypes: List[PREventType],
       env: Map[String, String],
+      permissions: Map[String, String],
       jobs: List[WorkflowJob],
       sbt: String)
       : String = {
@@ -430,6 +458,12 @@ ${indent(job.steps.map(compileStep(_, sbt, declareShell = declareShell)).mkStrin
       ""
     else
       renderedEnvPre + "\n\n"
+
+    val renderedPermissionsPre = compilePermissions(permissions)
+    val renderedPermissions = if (renderedPermissionsPre.isEmpty)
+      ""
+    else
+      renderedPermissionsPre + "\n\n"
 
     val renderedTypesPre = prEventTypes.map(compilePREventType).mkString("[", ", ", "]")
     val renderedTypes = if (prEventTypes.sortBy(_.toString) == PREventType.Defaults)
@@ -467,7 +501,7 @@ on:
   push:
     branches: [${branches.map(wrap).mkString(", ")}]$renderedTags$renderedPaths
 
-${renderedEnv}jobs:
+${renderedEnv}${renderedPermissions}jobs:
 ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
 """
 }
@@ -504,6 +538,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
     githubWorkflowTargetPaths := Paths.None,
 
     githubWorkflowEnv := Map("GITHUB_TOKEN" -> s"$${{ secrets.GITHUB_TOKEN }}"),
+    githubWorkflowTokenPermissions := Map(),
     githubWorkflowAddedJobs := Seq())
 
   private lazy val internalTargetAggregation = settingKey[Seq[File]]("Aggregates target directories from all subprojects")
@@ -698,6 +733,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
       githubWorkflowTargetPaths.value,
       githubWorkflowPREventTypes.value.toList,
       githubWorkflowEnv.value,
+      githubWorkflowTokenPermissions.value,
       githubWorkflowGeneratedCI.value.toList,
       sbt)
   }

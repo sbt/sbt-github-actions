@@ -46,7 +46,7 @@ class GenerativePluginSpec extends Specification {
         |${" " * 2}
         |""".stripMargin
 
-      compileWorkflow("test", List("main"), Nil, Paths.None, PREventType.Defaults, Map(), Nil, "sbt") mustEqual expected
+      compileWorkflow("test", List("main"), Nil, Paths.None, PREventType.Defaults, Map(), Map(), Nil, "sbt") mustEqual expected
     }
 
     "produce the appropriate skeleton around a zero-job workflow with non-empty tags" in {
@@ -64,7 +64,7 @@ class GenerativePluginSpec extends Specification {
         |${" " * 2}
         |""".stripMargin
 
-      compileWorkflow("test", List("main"), List("howdy"), Paths.None, PREventType.Defaults, Map(), Nil, "sbt") mustEqual expected
+      compileWorkflow("test", List("main"), List("howdy"), Paths.None, PREventType.Defaults, Map(), Map(), Nil, "sbt") mustEqual expected
     }
 
     "respect non-default pr types" in {
@@ -82,7 +82,7 @@ class GenerativePluginSpec extends Specification {
         |${" " * 2}
         |""".stripMargin
 
-      compileWorkflow("test", List("main"), Nil, Paths.None, List(PREventType.ReadyForReview, PREventType.ReviewRequested, PREventType.Opened), Map(), Nil, "sbt") mustEqual expected
+      compileWorkflow("test", List("main"), Nil, Paths.None, List(PREventType.ReadyForReview, PREventType.ReviewRequested, PREventType.Opened), Map(), Map(), Nil, "sbt") mustEqual expected
     }
 
     "compile a one-job workflow targeting multiple branch patterns with a environment variables" in {
@@ -119,6 +119,7 @@ class GenerativePluginSpec extends Specification {
         PREventType.Defaults,
         Map(
           "GITHUB_TOKEN" -> s"$${{ secrets.GITHUB_TOKEN }}"),
+        Map(),
         List(
           WorkflowJob(
             "build",
@@ -168,6 +169,7 @@ class GenerativePluginSpec extends Specification {
         Paths.None,
         PREventType.Defaults,
         Map(),
+        Map(),
         List(
           WorkflowJob(
             "build",
@@ -212,6 +214,7 @@ class GenerativePluginSpec extends Specification {
         Paths.None,
         PREventType.Defaults,
         Map(),
+        Map(),
         List(
           WorkflowJob(
             "build",
@@ -235,6 +238,9 @@ class GenerativePluginSpec extends Specification {
         |jobs:
         |  build:
         |    name: Build and Test
+        |    permissions:
+        |      id-token: write
+        |      contents: read
         |    strategy:
         |      matrix:
         |        os: [ubuntu-latest]
@@ -263,11 +269,13 @@ class GenerativePluginSpec extends Specification {
         Paths.None,
         PREventType.Defaults,
         Map(),
+        Map(),
         List(
           WorkflowJob(
             "build",
             "Build and Test",
             List(WorkflowStep.Run(List("echo yikes"))),
+            permissions = Map("id-token" -> "write", "contents" -> "read"),
             container = Some(
               JobContainer(
                 "also:not-real",
@@ -295,7 +303,7 @@ class GenerativePluginSpec extends Specification {
         |${" " * 2}
         |""".stripMargin
 
-      compileWorkflow("test", List("main"), Nil, Paths.Include(List("**.scala", "**.sbt")), PREventType.Defaults, Map(), Nil, "sbt") mustEqual expected
+      compileWorkflow("test", List("main"), Nil, Paths.Include(List("**.scala", "**.sbt")), PREventType.Defaults, Map(), Map(), Nil, "sbt") mustEqual expected
     }
 
     "render ignored paths on pull_request and push" in {
@@ -314,7 +322,7 @@ class GenerativePluginSpec extends Specification {
         |${" " * 2}
         |""".stripMargin
 
-      compileWorkflow("test", List("main"), Nil, Paths.Ignore(List("docs/**")), PREventType.Defaults, Map(), Nil, "sbt") mustEqual expected
+      compileWorkflow("test", List("main"), Nil, Paths.Ignore(List("docs/**")), PREventType.Defaults, Map(), Map(), Nil, "sbt") mustEqual expected
     }
   }
 
@@ -537,7 +545,7 @@ class GenerativePluginSpec extends Specification {
         java: java8"""
     }
 
-    "compile a job with environment variables, conditional, and needs with an sbt step" in {
+    "compile a job with environment variables, permissions, conditional, and needs with an sbt step" in {
       val results = compileJob(
         WorkflowJob(
           "nada",
@@ -545,6 +553,7 @@ class GenerativePluginSpec extends Specification {
           List(
             WorkflowStep.Sbt(List("+compile"))),
           env = Map("not" -> "now"),
+          permissions = Map("actions" -> "write"),
           cond = Some("boy != girl"),
           needs = List("unmet")),
         "csbt")
@@ -553,6 +562,8 @@ class GenerativePluginSpec extends Specification {
   name: Moooo
   needs: [unmet]
   if: boy != girl
+  permissions:
+    actions: write
   strategy:
     matrix:
       os: [ubuntu-latest]
@@ -660,6 +671,16 @@ class GenerativePluginSpec extends Specification {
   runs-on: [ "${{ matrix.os }}", runner-label, runner-group ]
   steps:
     - run: echo hello"""
+    }
+
+    "produce an error when compiling a job with invalid value in permissions" in {
+      compileJob(
+        WorkflowJob(
+          "bippy",
+          "Bippity Bop Around the Clock",
+          List(),
+          permissions = Map("actions" -> "many")),
+      "") must throwA[RuntimeException]
     }
 
     "produce an error when compiling a job with `include` key in matrix" in {
