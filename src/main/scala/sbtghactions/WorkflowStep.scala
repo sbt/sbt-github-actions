@@ -16,11 +16,14 @@
 
 package sbtghactions
 
+import scala.concurrent.duration.FiniteDuration
+
 sealed trait WorkflowStep extends Product with Serializable {
   def id: Option[String]
   def name: Option[String]
   def cond: Option[String]
   def env: Map[String, String]
+  def timeout: Option[FiniteDuration]
 }
 
 object WorkflowStep {
@@ -65,7 +68,7 @@ object WorkflowStep {
       List("echo \"$(" + cmd + ")\" >> $GITHUB_PATH"),
       name = Some(s"Prepend $$PATH using $cmd"))
 
-  final case class Run(commands: List[String], id: Option[String] = None, name: Option[String] = None, cond: Option[String] = None, env: Map[String, String] = Map(), params: Map[String, String] = Map()) extends WorkflowStep
-  final case class Sbt(commands: List[String], id: Option[String] = None, name: Option[String] = None, cond: Option[String] = None, env: Map[String, String] = Map(), params: Map[String, String] = Map()) extends WorkflowStep
-  final case class Use(ref: UseRef, params: Map[String, String] = Map(), id: Option[String] = None, name: Option[String] = None, cond: Option[String] = None, env: Map[String, String] = Map()) extends WorkflowStep
+  final case class Run(commands: List[String], id: Option[String] = None, name: Option[String] = None, cond: Option[String] = None, env: Map[String, String] = Map(), params: Map[String, String] = Map(), timeout: Option[FiniteDuration] = None) extends WorkflowStep
+  final case class Sbt(commands: List[String], id: Option[String] = None, name: Option[String] = None, cond: Option[String] = None, env: Map[String, String] = Map(), params: Map[String, String] = Map(), timeout: Option[FiniteDuration] = None) extends WorkflowStep
+  final case class Use(ref: UseRef, params: Map[String, String] = Map(), id: Option[String] = None, name: Option[String] = None, cond: Option[String] = None, env: Map[String, String] = Map(), timeout: Option[FiniteDuration] = None) extends WorkflowStep
 }

@@ -1,3 +1,5 @@
+import scala.concurrent.duration._
+
 organization := "com.codecommit"
 version := "0.0.1"
 
@@ -19,4 +21,7 @@ ThisBuild / githubWorkflowBuildMatrixExclusions +=
   MatrixExclude(Map("scala" -> "2.12.15", "test" -> "is"))
 
 ThisBuild / githubWorkflowBuild += WorkflowStep.Run(List("echo yo"))
+ThisBuild / githubWorkflowBuildTimeout := Some(2.hours)
+
 ThisBuild / githubWorkflowPublish += WorkflowStep.Run(List("echo sup"))
+ThisBuild / githubWorkflowPublishTimeout := Some(1.hour)

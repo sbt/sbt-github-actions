@@ -18,6 +18,8 @@ package sbtghactions
 
 import sbt._
 
+import scala.concurrent.duration.FiniteDuration
+
 trait GenerativeKeys {
 
   lazy val githubWorkflowGenerate = taskKey[Unit]("Generates (and overwrites if extant) a ci.yml and clean.yml actions description according to configuration")
@@ -40,6 +42,7 @@ trait GenerativeKeys {
 
   lazy val githubWorkflowBuildPreamble = settingKey[Seq[WorkflowStep]]("A list of steps to insert after base setup but before compiling and testing (default: [])")
   lazy val githubWorkflowBuildPostamble = settingKey[Seq[WorkflowStep]]("A list of steps to insert after comping and testing but before the end of the build job (default: [])")
+  lazy val githubWorkflowBuildTimeout = settingKey[Option[FiniteDuration]]("The maximum duration to let the build job run before GitHub automatically cancels it. (default: None)")
   lazy val githubWorkflowBuild = settingKey[Seq[WorkflowStep]]("A sequence of workflow steps which compile and test the project (default: [Sbt(List(\"test\"))])")
 
   lazy val githubWorkflowPublishPreamble = settingKey[Seq[WorkflowStep]]("A list of steps to insert after base setup but before publishing (default: [])")
@@ -47,6 +50,7 @@ trait GenerativeKeys {
   lazy val githubWorkflowPublish = settingKey[Seq[WorkflowStep]]("A sequence workflow steps which publishes the project (default: [Sbt(List(\"+publish\"))])")
   lazy val githubWorkflowPublishTargetBranches = settingKey[Seq[RefPredicate]]("A set of branch predicates which will be applied to determine whether the current branch gets a publication stage; if empty, publish will be skipped entirely (default: [== main])")
   lazy val githubWorkflowPublishCond = settingKey[Option[String]]("A set of conditionals to apply to the publish job to further restrict its run (default: [])")
+  lazy val githubWorkflowPublishTimeout = settingKey[Option[FiniteDuration]]("The maximum duration to let the publish job run before GitHub automatically cancels it. (default: None)")
 
   lazy val githubWorkflowJavaVersions = settingKey[Seq[JavaSpec]]("A list of Java versions to be used for the build job. The publish job will use the *first* of these versions. (default: [temurin@11])")
   lazy val githubWorkflowScalaVersions = settingKey[Seq[String]]("A list of Scala versions on which to build the project (default: crossScalaVersions.value)")
