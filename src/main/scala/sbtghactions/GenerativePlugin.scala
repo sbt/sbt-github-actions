@@ -384,8 +384,7 @@ ${indent(rendered.mkString("\n"), 1)}"""
 
     val body = s"""name: ${wrap(job.name)}${renderedNeeds}${renderedCond}
 strategy:${renderedFailFast}
-  matrix:${if (job.oses.isEmpty) "" else s"\n    os:${compileList(job.oses, 3)}"}
-    scala:${compileList(job.scalas, 3)}
+  matrix:${if (job.oses.isEmpty) "" else s"\n    os:${compileList(job.oses, 3)}"} ${if (job.scalas.nonEmpty) s"\n    scala:${compileList(job.scalas, 3)}" else ""}
     java:${compileList(job.javas, 3)}${renderedMatrices}
 runs-on: ${runsOn}${renderedEnvironment}${renderedContainer}${renderedEnv}
 steps:
