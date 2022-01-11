@@ -794,7 +794,8 @@ ${indent(workflow.jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
         IO.write(ciYml, ciContents)
       }
 
-      if (targets(GenerationTarget.Clean)) {
+      // TODO think about migration
+      if (targets(GenerationTarget.Clean) || includeClean) {
         IO.write(cleanYml, cleanContents)
       }
 

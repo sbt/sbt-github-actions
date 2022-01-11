@@ -16,8 +16,6 @@
 
 package sbtghactions
 
-import sbtghactions.GenerativePlugin.{indent, isSafeString, wrap}
-
 object RenderFunctions {
 
   def renderBranches(branches: Seq[String]): String =
