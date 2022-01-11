@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Daniel Spiewak
+ * Copyright 2020-2021 Daniel Spiewak
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ class TriggerEventSpec extends Specification with AllExpectations {
   "pull request" should {
     "render without branches, tags, paths or types" in {
       val expected = "pull_request:"
-      WebhookEvent.PullRequest(Nil, Nil, Nil, Nil).render mustEqual expected
+      WebhookEvent.PullRequest(Nil, Nil, Paths.None, Nil).render mustEqual expected
     }
 
     "render without branches, tags, paths, but with types" in {
@@ -78,7 +78,7 @@ class TriggerEventSpec extends Specification with AllExpectations {
         """|pull_request:
            |  types: [edited, ready_for_review]""".stripMargin
       WebhookEvent
-        .PullRequest(Nil, Nil, Nil, List(PREventType.Edited, PREventType.ReadyForReview))
+        .PullRequest(Nil, Nil, Paths.None, List(PREventType.Edited, PREventType.ReadyForReview))
         .render mustEqual expected
     }
 
@@ -92,7 +92,7 @@ class TriggerEventSpec extends Specification with AllExpectations {
         .PullRequest(
           Nil,
           List("v1*", "v2*"),
-          List("src/main/**"),
+          Paths.Include(List("src/main/**")),
           List(PREventType.Edited, PREventType.ReadyForReview)
         )
         .render mustEqual expected
@@ -109,7 +109,7 @@ class TriggerEventSpec extends Specification with AllExpectations {
         .PullRequest(
           List("master"),
           List("v1*", "v2*"),
-          List("src/main/**"),
+          Paths.Include(List("src/main/**")),
           List(PREventType.Edited, PREventType.ReadyForReview)
         )
         .render mustEqual expected
@@ -122,7 +122,7 @@ class TriggerEventSpec extends Specification with AllExpectations {
            |  tags: [v1*, v2*]
            |  paths: [src/main/**]""".stripMargin
       WebhookEvent
-        .PullRequest(List("master"), List("v1*", "v2*"), List("src/main/**"), Nil)
+        .PullRequest(List("master"), List("v1*", "v2*"), Paths.Include(List("src/main/**")), Nil)
         .render mustEqual expected
     }
 
@@ -132,21 +132,21 @@ class TriggerEventSpec extends Specification with AllExpectations {
            |  branches: [master]
            |  types: [edited, ready_for_review]""".stripMargin
       WebhookEvent
-        .PullRequest(List("master"), Nil, Nil, List(PREventType.Edited, PREventType.ReadyForReview))
+        .PullRequest(List("master"), Nil, Paths.None, List(PREventType.Edited, PREventType.ReadyForReview))
         .render mustEqual expected
     }
     "render only with paths" in {
       val expected =
         """|pull_request:
            |  paths: [src/main/**]""".stripMargin
-      WebhookEvent.PullRequest(Nil, Nil, List("src/main/**"), Nil).render mustEqual expected
+      WebhookEvent.PullRequest(Nil, Nil, Paths.Include(List("src/main/**")), Nil).render mustEqual expected
     }
   }
 
   "push" should {
     "render without branches, tags or paths" in {
       val expected = "push:"
-      WebhookEvent.Push(Nil, Nil, Nil).render mustEqual expected
+      WebhookEvent.Push(Nil, Nil, Paths.None).render mustEqual expected
     }
 
     "render without branches, but with tags and paths" in {
@@ -154,14 +154,14 @@ class TriggerEventSpec extends Specification with AllExpectations {
         """|push:
            |  tags: [v1*, v2*]
            |  paths: [src/main/**]""".stripMargin
-      WebhookEvent.Push(Nil, List("v1*", "v2*"), List("src/main/**")).render mustEqual expected
+      WebhookEvent.Push(Nil, List("v1*", "v2*"), Paths.Include(List("src/main/**"))).render mustEqual expected
     }
 
     "render only with paths" in {
       val expected =
         """|push:
            |  paths: [src/main/**]""".stripMargin
-      WebhookEvent.Push(Nil, Nil, List("src/main/**")).render mustEqual expected
+      WebhookEvent.Push(Nil, Nil, Paths.Include(List("src/main/**"))).render mustEqual expected
     }
 
     "render with branches and tags" in {
@@ -169,14 +169,14 @@ class TriggerEventSpec extends Specification with AllExpectations {
         """|push:
            |  branches: [master]
            |  tags: [v1*, v2*]""".stripMargin
-      WebhookEvent.Push(List("master"), List("v1*", "v2*"), Nil).render mustEqual expected
+      WebhookEvent.Push(List("master"), List("v1*", "v2*"), Paths.None).render mustEqual expected
     }
 
     "render without tags, but with branches" in {
       val expected =
         """|push:
            |  branches: [master]""".stripMargin
-      WebhookEvent.Push(List("master"), Nil, Nil).render mustEqual expected
+      WebhookEvent.Push(List("master"), Nil, Paths.None).render mustEqual expected
     }
   }
 

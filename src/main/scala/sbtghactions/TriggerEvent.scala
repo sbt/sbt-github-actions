@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Daniel Spiewak
+ * Copyright 2020-2021 Daniel Spiewak
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,7 +118,7 @@ object WebhookEvent {
   final case class PullRequest(
       branches: Seq[String],
       tags: Seq[String],
-      paths: Seq[String],
+      paths: Paths,
       types: Seq[PREventType])
       extends WebhookEvent {
 
@@ -127,7 +127,12 @@ object WebhookEvent {
         indentOnce { renderBranches(branches) + renderTags + renderPaths + renderTypes }
 
     private def renderTags          = renderParamWithList("tags", tags)
-    private def renderPaths: String = if (paths.isEmpty) "" else renderParamWithList("paths", paths)
+    private def renderPaths: String =
+      paths match {
+        case Paths.None => ""
+        case Paths.Include(paths) => renderParamWithList("paths", paths)
+        case Paths.Ignore(paths) => renderParamWithList("paths-ignore", paths)
+      }
 
     private def renderTypes =
       if (types == PREventType.Defaults) ""
@@ -141,15 +146,20 @@ object WebhookEvent {
 
   final case class PullRequestTarget(types: Seq[PRTargetEventType]) extends TypedEvent
 
-  final case class Push(branches: Seq[String], tags: Seq[String], paths: Seq[String])
+  final case class Push(branches: Seq[String], tags: Seq[String], paths: Paths)
       extends WebhookEvent {
 
     override def render: String =
       s"$name:" +
         indentOnce { renderBranches(branches) + renderTags + renderPaths }
 
-    def renderTags: String  = if (tags.isEmpty) "" else renderParamWithList("tags", tags)
-    def renderPaths: String = if (paths.isEmpty) "" else renderParamWithList("paths", paths)
+    private def renderTags: String  = if (tags.isEmpty) "" else renderParamWithList("tags", tags)
+    private def renderPaths: String =
+      paths match {
+        case Paths.None => ""
+        case Paths.Include(paths) => renderParamWithList("paths", paths)
+        case Paths.Ignore(paths) => renderParamWithList("paths-ignore", paths)
+      }
 
   }
 

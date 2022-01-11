@@ -50,8 +50,8 @@ class GenerativePluginSpec extends Specification {
         Workflow(
           "test",
           List(
-            WebhookEvent.PullRequest(List("main"), Nil, Nil, Paths.None, PREventType.Defaults),
-            WebhookEvent.Push(List("main"), Nil, Nil)
+            WebhookEvent.PullRequest(List("main"), Nil, Paths.None, PREventType.Defaults),
+            WebhookEvent.Push(List("main"), Nil, Paths.None)
             ),
           Nil,
           Map(),
@@ -78,8 +78,8 @@ class GenerativePluginSpec extends Specification {
         Workflow(
           "test",
           List(
-            WebhookEvent.PullRequest(List("main"), Nil, Nil, Paths.None, PREventType.Defaults),
-            WebhookEvent.Push(List("main"), List("howdy"), Nil)
+            WebhookEvent.PullRequest(List("main"), Nil, Paths.None, PREventType.Defaults),
+            WebhookEvent.Push(List("main"), List("howdy"), Paths.None)
             ),
           Nil,
           Map(),
@@ -109,9 +109,9 @@ class GenerativePluginSpec extends Specification {
             WebhookEvent.PullRequest(
               List("main"),
               Nil,
-              Nil,
+              Paths.None,
               List(PREventType.ReadyForReview, PREventType.ReviewRequested, PREventType.Opened)),
-            WebhookEvent.Push(List("main"), Nil, Nil)),
+            WebhookEvent.Push(List("main"), Nil, Paths.None)),
           Nil,
           Map(),
           ),
@@ -134,12 +134,13 @@ class GenerativePluginSpec extends Specification {
           |    name: Build and Test
           |    runs-on: [ runner-label ]
           |    steps:
-          |      - run: echo Hello World""".stripMargin
+          |      - run: echo Hello World
+          |""".stripMargin
 
       compileWorkflow(
         Workflow(
           "test2",
-          List(WebhookEvent.Push(List("main"), Nil, Nil)),
+          List(WebhookEvent.Push(List("main"), Nil, Paths.None)),
           List(
             WorkflowJob(
               "build",
@@ -187,9 +188,8 @@ class GenerativePluginSpec extends Specification {
         Workflow(
           "test2",
           List(
-            WebhookEvent.PullRequest(List("main", "backport/v*"), Nil, Nil,Paths.None,
-        PREventType.Defaults),
-            WebhookEvent.Push(List("main", "backport/v*"), Nil, Nil)
+            WebhookEvent.PullRequest(List("main", "backport/v*"), Nil, Paths.None, PREventType.Defaults),
+            WebhookEvent.Push(List("main", "backport/v*"), Nil, Paths.None)
             ),
           List(
             WorkflowJob(
@@ -241,8 +241,8 @@ class GenerativePluginSpec extends Specification {
         Workflow(
           "test3",
           List(
-            WebhookEvent.PullRequest(List("main"), Nil, Nil, PREventType.Defaults),
-            WebhookEvent.Push(List("main"), Nil, Nil)
+            WebhookEvent.PullRequest(List("main"), Nil, Paths.None, PREventType.Defaults),
+            WebhookEvent.Push(List("main"), Nil, Paths.None)
             ),
           List(
             WorkflowJob(
@@ -287,8 +287,8 @@ class GenerativePluginSpec extends Specification {
         Workflow(
           "test4",
           List(
-            WebhookEvent.PullRequest(List("main"), Nil, Nil, PREventType.Defaults),
-            WebhookEvent.Push(List("main"), Nil, Nil)
+            WebhookEvent.PullRequest(List("main"), Nil, Paths.None, PREventType.Defaults),
+            WebhookEvent.Push(List("main"), Nil, Paths.None)
             ),
           List(
             WorkflowJob(
@@ -340,8 +340,8 @@ class GenerativePluginSpec extends Specification {
         Workflow(
           "test4",
           List(
-            WebhookEvent.PullRequest(List("main"), Nil, Nil, PREventType.Defaults),
-            WebhookEvent.Push(List("main"), Nil, Nil)
+            WebhookEvent.PullRequest(List("main"), Nil, Paths.None, PREventType.Defaults),
+            WebhookEvent.Push(List("main"), Nil, Paths.None)
             ),
           List(
             WorkflowJob(
@@ -377,7 +377,26 @@ class GenerativePluginSpec extends Specification {
         |${" " * 2}
         |""".stripMargin
 
-      compileWorkflow("test", List("main"), Nil, Paths.Include(List("**.scala", "**.sbt")), PREventType.Defaults, Map(), Nil, "sbt") mustEqual expected
+      compileWorkflow(
+        Workflow(
+          "test",
+          Seq(
+            WebhookEvent.PullRequest(
+              List("main"),
+              Nil,
+              Paths.Include(List("**.scala", "**.sbt")),
+              PREventType.Defaults
+            ),
+            WebhookEvent.Push(
+              List("main"),
+              Nil,
+              Paths.Include(List("**.scala", "**.sbt"))
+            )
+          ),
+          Nil,
+          Map()
+          ),
+        "sbt") mustEqual expected
     }
 
     "render ignored paths on pull_request and push" in {
@@ -396,7 +415,24 @@ class GenerativePluginSpec extends Specification {
         |${" " * 2}
         |""".stripMargin
 
-      compileWorkflow("test", List("main"), Nil, Paths.Ignore(List("docs/**")), PREventType.Defaults, Map(), Nil, "sbt") mustEqual expected
+      compileWorkflow(        Workflow(
+        "test",
+        Seq(
+          WebhookEvent.PullRequest(
+            List("main"),
+            Nil,
+            Paths.Ignore(List("docs/**")),
+            PREventType.Defaults
+            ),
+          WebhookEvent.Push(
+            List("main"),
+            Nil,
+            Paths.Ignore(List("docs/**"))
+            )
+          ),
+        Nil,
+        Map()
+        ), "sbt") mustEqual expected
     }
   }
 
@@ -757,8 +793,8 @@ class GenerativePluginSpec extends Specification {
   name: my-name
   strategy:
     matrix:
-      scala: [2.13.4]
-      java: [adopt@1.8]
+      scala: [2.13.6]
+      java: [temurin@11]
   runs-on: [ runner-label, runner-group ]
   steps:
     - run: echo hello"""
