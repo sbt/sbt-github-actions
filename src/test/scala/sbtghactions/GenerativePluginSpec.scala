@@ -115,6 +115,45 @@ class GenerativePluginSpec extends Specification {
         "sbt") mustEqual expected
     }
 
+    "render a job without a strategy" in {
+      val expected = header + """
+          |name: test2
+          |
+          |on:
+          |  push:
+          |    branches: [main]
+          |
+          |env:
+          |  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          |
+          |jobs:
+          |  build:
+          |    name: Build and Test
+          |    runs-on: [ runner-label ]
+          |    steps:
+          |      - run: echo Hello World""".stripMargin
+
+      compileWorkflow(
+        Workflow(
+          "test2",
+          List(WebhookEvent.Push(List("main"), Nil, Nil)),
+          List(
+            WorkflowJob(
+              "build",
+              "Build and Test",
+              List(WorkflowStep.Run(List("echo Hello World"))),
+              scalas = Nil,
+              javas= Nil,
+              oses = Nil,
+              runsOnExtraLabels = List("runner-label")
+            )
+          ),
+          Map(
+            "GITHUB_TOKEN" -> s"$${{ secrets.GITHUB_TOKEN }}"),
+          ),
+        "sbt") mustEqual expected
+    }
+
     "compile a one-job workflow targeting multiple branch patterns with a environment variables" in {
       val expected = header + s"""
         |name: test2

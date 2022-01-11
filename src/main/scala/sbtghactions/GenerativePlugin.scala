@@ -181,7 +181,7 @@ s"""$prefix:
 ${indent(rendered.mkString("\n"), 1)}"""
     }
 
-  def compileStep(step: WorkflowStep, sbt: String, declareShell: Boolean = false): String = {
+  def compileStep(step: WorkflowStep, sbt: String, declareShell: Boolean = false, scalaMatrixBuild: Boolean = true): String = {
     import WorkflowStep._
 
     val renderedName = step.name.map(wrap).map("name: " + _ + "\n").getOrElse("")
@@ -207,7 +207,7 @@ ${indent(rendered.mkString("\n"), 1)}"""
         renderedShell + "run: " + wrap(commands.mkString("\n"))
 
       case Sbt(commands, _, _, _, _) =>
-        val version = "++${{ matrix.scala }}"
+        val version = if (scalaMatrixBuild) "++${{ matrix.scala }}" else ""
         val sbtClientMode = sbt.matches("""sbt.* --client($| .*)""")
         val safeCommands = if (sbtClientMode)
           s"'${(version :: commands).mkString("; ")}'"
@@ -382,13 +382,31 @@ ${indent(rendered.mkString("\n"), 1)}"""
 
     val renderedFailFast = job.matrixFailFast.fold("")("\n  fail-fast: " + _)
 
-    val body = s"""name: ${wrap(job.name)}${renderedNeeds}${renderedCond}
-strategy:${renderedFailFast}
-  matrix:${if (job.oses.isEmpty) "" else s"\n    os:${compileList(job.oses, 3)}"} ${if (job.scalas.nonEmpty) s"\n    scala:${compileList(job.scalas, 3)}" else ""}
-    java:${compileList(job.javas, 3)}${renderedMatrices}
+    val renderedOses =
+      if (job.oses.isEmpty) "" else s"\n    os:${compileList(job.oses, 3)}"
+    val renderedScalas =
+      if (job.scalas.isEmpty) "" else s"\n    scala:${compileList(job.scalas, 3)}"
+    val renderedJavas =
+      if (job.javas.isEmpty) "" else s"\n    java:${compileList(job.javas, 3)}"
+    val renderedMatrix =
+      if(renderedOses.nonEmpty || renderedScalas.nonEmpty || renderedJavas.nonEmpty) {
+        s"\n  matrix:$renderedOses$renderedScalas$renderedJavas$renderedMatrices"
+      } else {
+        ""
+      }
+
+    val renderedStrategy =
+      if(renderedFailFast.nonEmpty || renderedMatrix.nonEmpty) {
+        s"\nstrategy:$renderedFailFast$renderedMatrix"
+      } else {
+        ""
+      }
+
+    val body = s"""name: ${wrap(job.name)}${renderedNeeds}${renderedCond}${renderedStrategy}
 runs-on: ${runsOn}${renderedEnvironment}${renderedContainer}${renderedEnv}
 steps:
-${indent(job.steps.map(compileStep(_, sbt, declareShell = declareShell)).mkString("\n\n"), 1)}"""
+${indent(
+      job.steps.map(compileStep(_, sbt, declareShell = declareShell, scalaMatrixBuild = job.scalas.nonEmpty)).mkString("\n\n"), 1)}"""
 
     s"${job.id}:\n${indent(body, 1)}"
   }
