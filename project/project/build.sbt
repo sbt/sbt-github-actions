@@ -14,11 +14,7 @@
  * limitations under the License.
  */
 
-package sbtghactions
-
-sealed trait Ref extends Product with Serializable
-
-object Ref {
-  final case class Branch(name: String) extends Ref
-  final case class Tag(name: String) extends Ref
-}
+// Compile an SbtPlugin from the symlinked sources of `sbt-github-actions`.
+lazy val sbtGithubActionsSources = project
+  .in(file("."))
+  .enablePlugins(SbtPlugin)

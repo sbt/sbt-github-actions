@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Daniel Spiewak
+ * Copyright 2020-2021 Daniel Spiewak
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,8 @@ final case class WorkflowJob(
     cond: Option[String] = None,
     env: Map[String, String] = Map(),
     oses: List[String] = List("ubuntu-latest"),
-    scalas: List[String] = List("2.13.4"),
-    javas: List[String] = List("adopt@1.8"),
+    scalas: List[String] = List("2.13.6"),
+    javas: List[JavaSpec] = List(JavaSpec.temurin("11")),
     needs: List[String] = List(),
     matrixFailFast: Option[Boolean] = None,
     matrixAdds: Map[String, List[String]] = Map(),

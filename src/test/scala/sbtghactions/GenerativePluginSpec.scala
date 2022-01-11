@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Daniel Spiewak
+ * Copyright 2020-2021 Daniel Spiewak
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ class GenerativePluginSpec extends Specification {
 
   "workflow compilation" should {
     "produce the appropriate skeleton around a zero-job workflow" in {
-      val expected = header + """
+      val expected = header + s"""
         |name: test
         |
         |on:
@@ -43,13 +43,14 @@ class GenerativePluginSpec extends Specification {
         |    branches: [main]
         |
         |jobs:
-        |  """.stripMargin
+        |${" " * 2}
+        |""".stripMargin
 
       compileWorkflow(
         Workflow(
           "test",
           List(
-            WebhookEvent.PullRequest(List("main"), Nil, Nil, PREventType.Defaults),
+            WebhookEvent.PullRequest(List("main"), Nil, Nil, Paths.None, PREventType.Defaults),
             WebhookEvent.Push(List("main"), Nil, Nil)
             ),
           Nil,
@@ -59,7 +60,7 @@ class GenerativePluginSpec extends Specification {
     }
 
     "produce the appropriate skeleton around a zero-job workflow with non-empty tags" in {
-      val expected = header + """
+      val expected = header + s"""
         |name: test
         |
         |on:
@@ -70,13 +71,14 @@ class GenerativePluginSpec extends Specification {
         |    tags: [howdy]
         |
         |jobs:
-        |  """.stripMargin
+        |${" " * 2}
+        |""".stripMargin
 
       compileWorkflow(
         Workflow(
           "test",
           List(
-            WebhookEvent.PullRequest(List("main"), Nil, Nil, PREventType.Defaults),
+            WebhookEvent.PullRequest(List("main"), Nil, Nil, Paths.None, PREventType.Defaults),
             WebhookEvent.Push(List("main"), List("howdy"), Nil)
             ),
           Nil,
@@ -86,7 +88,7 @@ class GenerativePluginSpec extends Specification {
     }
 
     "respect non-default pr types" in {
-      val expected = header + """
+      val expected = header + s"""
         |name: test
         |
         |on:
@@ -97,7 +99,8 @@ class GenerativePluginSpec extends Specification {
         |    branches: [main]
         |
         |jobs:
-        |  """.stripMargin
+        |${" " * 2}
+        |""".stripMargin
 
       compileWorkflow(
         Workflow(
@@ -173,17 +176,19 @@ class GenerativePluginSpec extends Specification {
         |    strategy:
         |      matrix:
         |        os: [ubuntu-latest]
-        |        scala: [2.13.4]
-        |        java: [adopt@1.8]
+        |        scala: [2.13.6]
+        |        java: [temurin@11]
         |    runs-on: $${{ matrix.os }}
         |    steps:
-        |      - run: echo Hello World""".stripMargin
+        |      - run: echo Hello World
+        |""".stripMargin
 
       compileWorkflow(
         Workflow(
           "test2",
           List(
-            WebhookEvent.PullRequest(List("main", "backport/v*"), Nil, Nil, PREventType.Defaults),
+            WebhookEvent.PullRequest(List("main", "backport/v*"), Nil, Nil,Paths.None,
+        PREventType.Defaults),
             WebhookEvent.Push(List("main", "backport/v*"), Nil, Nil)
             ),
           List(
@@ -213,8 +218,8 @@ class GenerativePluginSpec extends Specification {
         |    strategy:
         |      matrix:
         |        os: [ubuntu-latest]
-        |        scala: [2.13.4]
-        |        java: [adopt@1.8]
+        |        scala: [2.13.6]
+        |        java: [temurin@11]
         |    runs-on: $${{ matrix.os }}
         |    steps:
         |      - run: echo yikes
@@ -224,11 +229,12 @@ class GenerativePluginSpec extends Specification {
         |    strategy:
         |      matrix:
         |        os: [ubuntu-latest]
-        |        scala: [2.13.4]
-        |        java: [adopt@1.8]
+        |        scala: [2.13.6]
+        |        java: [temurin@11]
         |    runs-on: $${{ matrix.os }}
         |    steps:
-        |      - run: whoami""".stripMargin
+        |      - run: whoami
+        |""".stripMargin
 
 
       compileWorkflow(
@@ -269,12 +275,13 @@ class GenerativePluginSpec extends Specification {
         |    strategy:
         |      matrix:
         |        os: [ubuntu-latest]
-        |        scala: [2.13.4]
-        |        java: [adopt@1.8]
+        |        scala: [2.13.6]
+        |        java: [temurin@11]
         |    runs-on: $${{ matrix.os }}
         |    container: 'not:real-thing'
         |    steps:
-        |      - run: echo yikes""".stripMargin
+        |      - run: echo yikes
+        |""".stripMargin
 
       compileWorkflow(
         Workflow(
@@ -311,8 +318,8 @@ class GenerativePluginSpec extends Specification {
         |    strategy:
         |      matrix:
         |        os: [ubuntu-latest]
-        |        scala: [2.13.4]
-        |        java: [adopt@1.8]
+        |        scala: [2.13.6]
+        |        java: [temurin@11]
         |    runs-on: $${{ matrix.os }}
         |    container:
         |      image: 'also:not-real'
@@ -326,7 +333,8 @@ class GenerativePluginSpec extends Specification {
         |      ports: [80, 443]
         |      options: '--cpus 1'
         |    steps:
-        |      - run: echo yikes""".stripMargin
+        |      - run: echo yikes
+        |""".stripMargin
 
       compileWorkflow(
         Workflow(
@@ -351,6 +359,44 @@ class GenerativePluginSpec extends Specification {
           Map(),
           ),
         "") mustEqual expected
+    }
+
+    "render included paths on pull_request and push" in {
+      val expected = header + s"""
+        |name: test
+        |
+        |on:
+        |  pull_request:
+        |    branches: [main]
+        |    paths: ['**.scala', '**.sbt']
+        |  push:
+        |    branches: [main]
+        |    paths: ['**.scala', '**.sbt']
+        |
+        |jobs:
+        |${" " * 2}
+        |""".stripMargin
+
+      compileWorkflow("test", List("main"), Nil, Paths.Include(List("**.scala", "**.sbt")), PREventType.Defaults, Map(), Nil, "sbt") mustEqual expected
+    }
+
+    "render ignored paths on pull_request and push" in {
+      val expected = header + s"""
+        |name: test
+        |
+        |on:
+        |  pull_request:
+        |    branches: [main]
+        |    paths-ignore: [docs/**]
+        |  push:
+        |    branches: [main]
+        |    paths-ignore: [docs/**]
+        |
+        |jobs:
+        |${" " * 2}
+        |""".stripMargin
+
+      compileWorkflow("test", List("main"), Nil, Paths.Ignore(List("docs/**")), PREventType.Defaults, Map(), Nil, "sbt") mustEqual expected
     }
   }
 
@@ -407,11 +453,20 @@ class GenerativePluginSpec extends Specification {
         "$SBT") mustEqual s"- run: $$SBT ++$${{ matrix.scala }} 'show scalaVersion' compile test"
     }
 
+    "compile sbt with parameters" in {
+      compileStep(
+        Sbt(List("compile", "test"), params = Map("abc" -> "def", "cafe" -> "@42")),
+        "$SBT") mustEqual s"""- run: $$SBT ++$${{ matrix.scala }} compile test
+                         |  with:
+                         |    abc: def
+                         |    cafe: '@42'""".stripMargin
+    }
+
     "compile use without parameters" in {
       "public" >> {
         compileStep(
-          Use(UseRef.Public("olafurpg", "setup-scala", "v12")),
-          "") mustEqual "- uses: olafurpg/setup-scala@v12"
+          Use(UseRef.Public("olafurpg", "setup-scala", "v13")),
+          "") mustEqual "- uses: olafurpg/setup-scala@v13"
       }
 
       "directory" >> {
@@ -443,8 +498,8 @@ class GenerativePluginSpec extends Specification {
 
     "compile use with two parameters" in {
       compileStep(
-        Use(UseRef.Public("olafurpg", "setup-scala", "v12"), params = Map("abc" -> "def", "cafe" -> "@42")),
-        "") mustEqual "- uses: olafurpg/setup-scala@v12\n  with:\n    abc: def\n    cafe: '@42'"
+        Use(UseRef.Public("olafurpg", "setup-scala", "v13"), params = Map("abc" -> "def", "cafe" -> "@42")),
+        "") mustEqual "- uses: olafurpg/setup-scala@v13\n  with:\n    abc: def\n    cafe: '@42'"
     }
 
     "compile use with two parameters and environment variables" in {
@@ -468,6 +523,15 @@ class GenerativePluginSpec extends Specification {
         Run(List("users"), cond = Some("true")),
         "") mustEqual "- if: true\n  run: users"
     }
+
+    "compile a run with parameters" in {
+      compileStep(
+        Run(List("echo foo"), params = Map("abc" -> "def", "cafe" -> "@42")),
+        "") mustEqual """- run: echo foo
+                        |  with:
+                        |    abc: def
+                        |    cafe: '@42'""".stripMargin
+    }
   }
 
   "job compilation" should {
@@ -486,8 +550,8 @@ class GenerativePluginSpec extends Specification {
   strategy:
     matrix:
       os: [ubuntu-latest]
-      scala: [2.13.4]
-      java: [adopt@1.8]
+      scala: [2.13.6]
+      java: [temurin@11]
   runs-on: $${{ matrix.os }}
   steps:
     - run: echo hello
@@ -511,8 +575,8 @@ class GenerativePluginSpec extends Specification {
   strategy:
     matrix:
       os: [ubuntu-latest, windows-latest, macos-latest]
-      scala: [2.13.4]
-      java: [adopt@1.8]
+      scala: [2.13.6]
+      java: [temurin@11]
   runs-on: $${{ matrix.os }}
   steps:
     - shell: bash
@@ -520,14 +584,15 @@ class GenerativePluginSpec extends Specification {
     }
 
     "compile a job with java setup, two JVMs and two Scalas" in {
+      val javas = List(JavaSpec.temurin("11"), JavaSpec.graalvm("20.0.0", "8"))
+
       val results = compileJob(
         WorkflowJob(
           "abc",
           "How to get to...",
-          List(
-            WorkflowStep.SetupScala),
-          scalas = List("2.12.10", "2.13.4"),
-          javas = List("adopt@1.8", "graal@20.0.0")),
+          WorkflowStep.SetupJava(javas),
+          scalas = List("2.12.15", "2.13.6"),
+          javas = javas),
         "")
 
       results mustEqual s"""abc:
@@ -535,14 +600,23 @@ class GenerativePluginSpec extends Specification {
   strategy:
     matrix:
       os: [ubuntu-latest]
-      scala: [2.12.10, 2.13.4]
-      java: [adopt@1.8, graal@20.0.0]
+      scala: [2.12.15, 2.13.6]
+      java: [temurin@11, graal_20.0.0@8]
   runs-on: $${{ matrix.os }}
   steps:
-    - name: Setup Java and Scala
-      uses: olafurpg/setup-scala@v12
+    - name: Setup Java (temurin@11)
+      if: matrix.java == 'temurin@11'
+      uses: actions/setup-java@v2
       with:
-        java-version: $${{ matrix.java }}"""
+        distribution: temurin
+        java-version: 11
+
+    - name: Setup GraalVM (graal_20.0.0@8)
+      if: matrix.java == 'graal_20.0.0@8'
+      uses: DeLaGuardo/setup-graalvm@5.0
+      with:
+        graalvm: 20.0.0
+        java: java8"""
     }
 
     "compile a job with environment variables, conditional, and needs with an sbt step" in {
@@ -564,8 +638,8 @@ class GenerativePluginSpec extends Specification {
   strategy:
     matrix:
       os: [ubuntu-latest]
-      scala: [2.13.4]
-      java: [adopt@1.8]
+      scala: [2.13.6]
+      java: [temurin@11]
   runs-on: $${{ matrix.os }}
   env:
     not: now
@@ -588,8 +662,8 @@ class GenerativePluginSpec extends Specification {
   strategy:
     matrix:
       os: [ubuntu-latest]
-      scala: [2.13.4]
-      java: [adopt@1.8]
+      scala: [2.13.6]
+      java: [temurin@11]
   runs-on: $${{ matrix.os }}
   environment: release
   steps:
@@ -611,8 +685,8 @@ class GenerativePluginSpec extends Specification {
   strategy:
     matrix:
       os: [ubuntu-latest]
-      scala: [2.13.4]
-      java: [adopt@1.8]
+      scala: [2.13.6]
+      java: [temurin@11]
   runs-on: $${{ matrix.os }}
   environment:
     name: release
@@ -639,8 +713,8 @@ class GenerativePluginSpec extends Specification {
     fail-fast: true
     matrix:
       os: [ubuntu-latest]
-      scala: [2.13.4]
-      java: [adopt@1.8]
+      scala: [2.13.6]
+      java: [temurin@11]
       test: [1, 2]
   runs-on: $${{ matrix.os }}
   steps:
@@ -663,8 +737,8 @@ class GenerativePluginSpec extends Specification {
   strategy:
     matrix:
       os: [ubuntu-latest]
-      scala: [2.13.4]
-      java: [adopt@1.8]
+      scala: [2.13.6]
+      java: [temurin@11]
   runs-on: [ "${{ matrix.os }}", runner-label, runner-group ]
   steps:
     - run: echo hello"""
@@ -719,7 +793,7 @@ class GenerativePluginSpec extends Specification {
             WorkflowStep.Run(List("echo ${{ matrix.scala }}"))),
           matrixIncs = List(
             MatrixInclude(
-              Map("scala" -> "2.13.4"),
+              Map("scala" -> "2.13.6"),
               Map("foo" -> "bar")))),
         "")
 
@@ -728,10 +802,10 @@ class GenerativePluginSpec extends Specification {
   strategy:
     matrix:
       os: [ubuntu-latest]
-      scala: [2.13.4]
-      java: [adopt@1.8]
+      scala: [2.13.6]
+      java: [temurin@11]
       include:
-        - scala: 2.13.4
+        - scala: 2.13.6
           foo: bar
   runs-on: $${{ matrix.os }}
   steps:
@@ -747,7 +821,7 @@ class GenerativePluginSpec extends Specification {
             WorkflowStep.Run(List("echo ${{ matrix.scala }}"))),
           matrixIncs = List(
             MatrixInclude(
-              Map("scalanot" -> "2.13.4"),
+              Map("scalanot" -> "2.13.6"),
               Map("foo" -> "bar")))),
         "") must throwA[RuntimeException]
     }
@@ -775,7 +849,7 @@ class GenerativePluginSpec extends Specification {
             WorkflowStep.Run(List("echo ${{ matrix.scala }}"))),
           matrixExcs = List(
             MatrixExclude(
-              Map("scala" -> "2.13.4")))),
+              Map("scala" -> "2.13.6")))),
         "")
 
       results mustEqual s"""bippy:
@@ -783,10 +857,10 @@ class GenerativePluginSpec extends Specification {
   strategy:
     matrix:
       os: [ubuntu-latest]
-      scala: [2.13.4]
-      java: [adopt@1.8]
+      scala: [2.13.6]
+      java: [temurin@11]
       exclude:
-        - scala: 2.13.4
+        - scala: 2.13.6
   runs-on: $${{ matrix.os }}
   steps:
     - run: echo $${{ matrix.scala }}"""
@@ -801,7 +875,7 @@ class GenerativePluginSpec extends Specification {
             WorkflowStep.Run(List("echo ${{ matrix.scala }}"))),
           matrixExcs = List(
             MatrixExclude(
-              Map("scalanot" -> "2.13.4")))),
+              Map("scalanot" -> "2.13.6")))),
         "") must throwA[RuntimeException]
     }
 
@@ -818,30 +892,17 @@ class GenerativePluginSpec extends Specification {
         "") must throwA[RuntimeException]
     }
 
-    "compile a job with illegal characters in the JVM" in {
-      val results = compileJob(
+    "allow a matching JVM exclusion" in {
+      compileJob(
         WorkflowJob(
           "bippy",
           "Bippity Bop Around the Clock",
           List(
-            WorkflowStep.Run(List("echo hello")),
-            WorkflowStep.Checkout),
-          javas = List("this:is>#illegal")),
-        "")
-
-      results mustEqual s"""bippy:
-  name: Bippity Bop Around the Clock
-  strategy:
-    matrix:
-      os: [ubuntu-latest]
-      scala: [2.13.4]
-      java: ['this:is>#illegal']
-  runs-on: $${{ matrix.os }}
-  steps:
-    - run: echo hello
-
-    - name: Checkout current branch (fast)
-      uses: actions/checkout@v2"""
+            WorkflowStep.Run(List("echo ${{ matrix.scala }}"))),
+          matrixExcs = List(
+            MatrixExclude(
+              Map("java" -> JavaSpec.temurin("11").render)))),
+        "") must not(throwA[RuntimeException])
     }
 
     "compile a job with a long list of scala versions" in {
@@ -873,7 +934,7 @@ class GenerativePluginSpec extends Specification {
         - the
         - bounds
         - checking
-      java: [adopt@1.8]
+      java: [temurin@11]
   runs-on: $${{ matrix.os }}
   steps:
     - run: echo hello

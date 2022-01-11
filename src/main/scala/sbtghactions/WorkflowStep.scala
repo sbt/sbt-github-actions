@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Daniel Spiewak
+ * Copyright 2020-2021 Daniel Spiewak
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,26 @@ object WorkflowStep {
 
   val Checkout: WorkflowStep = Use(UseRef.Public("actions", "checkout", "v2"), name = Some("Checkout current branch (fast)"))
 
-  val SetupScala: WorkflowStep = Use(UseRef.Public("olafurpg", "setup-scala", "v12"), name = Some("Setup Java and Scala"), params = Map("java-version" -> s"$${{ matrix.java }}"))
+  def SetupJava(versions: List[JavaSpec]): List[WorkflowStep] =
+    versions map {
+      case jv @ JavaSpec(JavaSpec.Distribution.GraalVM(graalVersion), version) =>
+        WorkflowStep.Use(
+          UseRef.Public("DeLaGuardo", "setup-graalvm", "5.0"),
+          name = Some(s"Setup GraalVM (${jv.render})"),
+          cond = Some(s"matrix.java == '${jv.render}'"),
+          params = Map(
+            "graalvm" -> graalVersion,
+            "java" -> s"java$version"))
+
+      case jv @ JavaSpec(dist, version) =>
+        WorkflowStep.Use(
+          UseRef.Public("actions", "setup-java", "v2"),
+          name = Some(s"Setup Java (${jv.render})"),
+          cond = Some(s"matrix.java == '${jv.render}'"),
+          params = Map(
+            "distribution" -> dist.rendering,
+            "java-version" -> version))
+    }
 
   val Tmate: WorkflowStep = Use(UseRef.Public("mxschmitt", "action-tmate", "v2"), name = Some("Setup tmate session"))
 
@@ -46,7 +65,7 @@ object WorkflowStep {
       List("echo \"$(" + cmd + ")\" >> $GITHUB_PATH"),
       name = Some(s"Prepend $$PATH using $cmd"))
 
-  final case class Run(commands: List[String], id: Option[String] = None, name: Option[String] = None, cond: Option[String] = None, env: Map[String, String] = Map()) extends WorkflowStep
-  final case class Sbt(commands: List[String], id: Option[String] = None, name: Option[String] = None, cond: Option[String] = None, env: Map[String, String] = Map()) extends WorkflowStep
+  final case class Run(commands: List[String], id: Option[String] = None, name: Option[String] = None, cond: Option[String] = None, env: Map[String, String] = Map(), params: Map[String, String] = Map()) extends WorkflowStep
+  final case class Sbt(commands: List[String], id: Option[String] = None, name: Option[String] = None, cond: Option[String] = None, env: Map[String, String] = Map(), params: Map[String, String] = Map()) extends WorkflowStep
   final case class Use(ref: UseRef, params: Map[String, String] = Map(), id: Option[String] = None, name: Option[String] = None, cond: Option[String] = None, env: Map[String, String] = Map()) extends WorkflowStep
 }

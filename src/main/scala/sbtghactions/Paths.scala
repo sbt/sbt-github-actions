@@ -16,9 +16,12 @@
 
 package sbtghactions
 
-sealed trait Ref extends Product with Serializable
+sealed trait Paths extends Product with Serializable
 
-object Ref {
-  final case class Branch(name: String) extends Ref
-  final case class Tag(name: String) extends Ref
+object Paths {
+  final case class Include(paths: List[String]) extends Paths
+
+  final case class Ignore(path: List[String]) extends Paths
+
+  final case object None extends Paths
 }

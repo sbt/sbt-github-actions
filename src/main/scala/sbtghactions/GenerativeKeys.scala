@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Daniel Spiewak
+ * Copyright 2020-2021 Daniel Spiewak
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ trait GenerativeKeys {
 
   lazy val githubWorkflowSbtCommand = settingKey[String]("The command which invokes sbt (default: sbt)")
   lazy val githubWorkflowUseSbtThinClient = settingKey[Boolean]("Whether to use sbt's native thin client, default is false since this can cause issues (see https://github.com/sbt/sbt/issues/6468)")
+  lazy val githubWorkflowIncludeClean = settingKey[Boolean]("Whether to include the clean.yml file (default: true)")
 
   lazy val githubWorkflowBuildMatrixFailFast = settingKey[Option[Boolean]]("Whether or not to enable the fail-fast strategy (default: None/Enabled)")
   lazy val githubWorkflowBuildMatrixAdditions = settingKey[Map[String, List[String]]]("A map of additional matrix dimensions for the build job. Each list should be non-empty. (default: {})")
@@ -50,13 +51,14 @@ trait GenerativeKeys {
   lazy val githubWorkflowPublishTargetBranches = settingKey[Seq[RefPredicate]]("A set of branch predicates which will be applied to determine whether the current branch gets a publication stage; if empty, publish will be skipped entirely (default: [== main])")
   lazy val githubWorkflowPublishCond = settingKey[Option[String]]("A set of conditionals to apply to the publish job to further restrict its run (default: [])")
 
-  lazy val githubWorkflowJavaVersions = settingKey[Seq[String]]("A list of Java versions to be used for the build job. The publish job will use the *first* of these versions. (default: [adopt@1.8])")
+  lazy val githubWorkflowJavaVersions = settingKey[Seq[JavaSpec]]("A list of Java versions to be used for the build job. The publish job will use the *first* of these versions. (default: [temurin@11])")
   lazy val githubWorkflowScalaVersions = settingKey[Seq[String]]("A list of Scala versions on which to build the project (default: crossScalaVersions.value)")
   lazy val githubWorkflowOSes = settingKey[Seq[String]]("A list of OS names (default: [ubuntu-latest])")
 
   lazy val githubWorkflowDependencyPatterns = settingKey[Seq[String]]("A list of file globes within the project which affect dependency information (default: [**/*.sbt, project/build.properties])")
   lazy val githubWorkflowTargetBranches = settingKey[Seq[String]]("A list of branch patterns on which to trigger push and PR builds (default: [*])")
   lazy val githubWorkflowTargetTags = settingKey[Seq[String]]("A list of tag patterns on which to trigger push builds (default: [])")
+  lazy val githubWorkflowTargetPaths = settingKey[Paths]("Paths which will match modified files for `push` and `pull_request` event types to trigger the workflow. May be `Paths.None`, `Paths.Include(patterns)`, or `Paths.Ignore(patterns)`. `Paths.Include` may include negative patterns. Defaults to `Paths.None`.")
   lazy val githubWorkflowPREventTypes = settingKey[Seq[PREventType]]("A list of pull request event types which will be used to trigger builds (default: [opened, synchronize, reopened])")
 
   lazy val githubWorkflowArtifactUpload = settingKey[Boolean]("Controls whether or not to upload target directories in the event that multiple jobs are running sequentially. Can be set on a per-project basis (default: true)")

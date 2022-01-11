@@ -21,16 +21,11 @@ jobs:
     name: Build and Test
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        scala: [2.12.15]
-        java: [temurin@11, graal_20.3.1@11]
+        os: [ubuntu-latest]
+        scala: [2.13.6, 2.12.15]
+        java: [temurin@11]
     runs-on: ${{ matrix.os }}
     steps:
-      - name: Ignore line ending differences in git
-        if: contains(runner.os, 'windows')
-        shell: bash
-        run: git config --global core.autocrlf false
-
       - name: Checkout current branch (full)
         uses: actions/checkout@v2
         with:
@@ -42,13 +37,6 @@ jobs:
         with:
           distribution: temurin
           java-version: 11
-
-      - name: Setup GraalVM (graal_20.3.1@11)
-        if: matrix.java == 'graal_20.3.1@11'
-        uses: DeLaGuardo/setup-graalvm@5.0
-        with:
-          graalvm: 20.3.1
-          java: java11
 
       - name: Cache sbt
         uses: actions/cache@v2
@@ -63,14 +51,12 @@ jobs:
           key: ${{ runner.os }}-sbt-cache-v2-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('project/build.properties') }}
 
       - name: Check that workflows are up to date
-        shell: bash
         run: sbt ++${{ matrix.scala }} githubWorkflowCheck
 
-      - shell: bash
-        run: sbt ++${{ matrix.scala }} test scripted
+      - name: Build project
+        run: sbt ++${{ matrix.scala }} test
 
       - name: Compress target directories
-        shell: bash
         run: tar cf targets.tar target project/target
 
       - name: Upload target directories
@@ -86,14 +72,10 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        scala: [2.12.15]
+        scala: [2.13.6]
         java: [temurin@11]
     runs-on: ${{ matrix.os }}
     steps:
-      - name: Ignore line ending differences in git
-        if: contains(runner.os, 'windows')
-        run: git config --global core.autocrlf false
-
       - name: Checkout current branch (full)
         uses: actions/checkout@v2
         with:
@@ -105,13 +87,6 @@ jobs:
         with:
           distribution: temurin
           java-version: 11
-
-      - name: Setup GraalVM (graal_20.3.1@11)
-        if: matrix.java == 'graal_20.3.1@11'
-        uses: DeLaGuardo/setup-graalvm@5.0
-        with:
-          graalvm: 20.3.1
-          java: java11
 
       - name: Cache sbt
         uses: actions/cache@v2
@@ -125,6 +100,16 @@ jobs:
             ~/Library/Caches/Coursier/v1
           key: ${{ runner.os }}-sbt-cache-v2-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('project/build.properties') }}
 
+      - name: Download target directories (2.13.6)
+        uses: actions/download-artifact@v2
+        with:
+          name: target-${{ matrix.os }}-2.13.6-${{ matrix.java }}
+
+      - name: Inflate target directories (2.13.6)
+        run: |
+          tar xf targets.tar
+          rm targets.tar
+
       - name: Download target directories (2.12.15)
         uses: actions/download-artifact@v2
         with:
@@ -134,3 +119,6 @@ jobs:
         run: |
           tar xf targets.tar
           rm targets.tar
+
+      - name: Publish project
+        run: sbt ++${{ matrix.scala }} +publish
