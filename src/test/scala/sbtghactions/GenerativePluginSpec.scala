@@ -596,6 +596,37 @@ class GenerativePluginSpec extends Specification {
       uses: actions/checkout@v2"""
     }
 
+    "compile a simple job that references a reusable workflow" in {
+      val results = compileJob(
+        WorkflowJob(
+          "bippy",
+          "Bippity Bop Around the Clock",
+          Nil,
+          uses = Some(
+            WorkflowRef.apply(
+              "some/path/.github/workflow/file.yml",
+              "master",
+              Map("git-ref" -> "${{ github.head_ref }}"),
+              Map("MY_SECRET" -> "${{ secrets.SECRET }}")
+              )
+            )
+          ),
+        "")
+
+      results mustEqual s"""bippy:
+  name: Bippity Bop Around the Clock
+  strategy:
+    matrix:
+      os: [ubuntu-latest]
+      scala: [2.13.6]
+      java: [temurin@11]
+  runs-on: $${{ matrix.os }}
+  uses: some/path/.github/workflow/file.yml@masterwith:
+    git-ref: $${{ github.head_ref }}secrets:
+    MY_SECRET: $${{ secrets.SECRET }}"""
+    }
+
+
     "compile a job with one step and three oses" in {
       val results = compileJob(
         WorkflowJob(

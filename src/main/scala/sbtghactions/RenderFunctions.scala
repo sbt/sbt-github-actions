@@ -16,6 +16,8 @@
 
 package sbtghactions
 
+import sbtghactions.GenerativePlugin.{indent, isSafeString, wrap}
+
 object RenderFunctions {
 
   def renderBranches(branches: Seq[String]): String =
@@ -70,6 +72,22 @@ object RenderFunctions {
     else if (rendered.map(_.length).sum < 40) rendered.mkString(s"\n$paramName: [", ", ", "]")
     else rendered.map("- " + _).map(indentOnce).mkString(s"\n$paramName:\n", "\n", "\n")
   }
+
+  def renderMap(env: Map[String, String], prefix: String): String =
+    if (env.isEmpty) {
+      ""
+    } else {
+      val rendered = env map {
+        case (key, value) =>
+          if (!isSafeString(key) || key.indexOf(' ') >= 0)
+            sys.error(s"'$key' is not a valid variable name")
+
+          s"""$key: ${wrap(value)}"""
+      }
+      s"""$prefix:
+${indent(rendered.mkString("\n"), 1)}"""
+    }
+
 
   object SnakeCase {
     private val re = "[A-Z]+".r
