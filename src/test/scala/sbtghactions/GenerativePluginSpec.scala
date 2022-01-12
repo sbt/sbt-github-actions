@@ -621,8 +621,10 @@ class GenerativePluginSpec extends Specification {
       scala: [2.13.6]
       java: [temurin@11]
   runs-on: $${{ matrix.os }}
-  uses: some/path/.github/workflow/file.yml@masterwith:
-    git-ref: $${{ github.head_ref }}secrets:
+  uses: "some/path/.github/workflow/file.yml@master"
+  with:
+    git-ref: $${{ github.head_ref }}
+  secrets:
     MY_SECRET: $${{ secrets.SECRET }}"""
     }
 

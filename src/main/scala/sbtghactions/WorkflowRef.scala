@@ -23,7 +23,7 @@ case class WorkflowRef(
   secrets: Map[String, String]
 ) {
   lazy val render: String =
-    s"uses: $workflowPath@$ref$renderInputs$renderSecrets"
+    s"""uses: "$workflowPath@$ref"$renderInputs$renderSecrets"""
 
   private def renderInputs = RenderFunctions.renderMap(inputs, "with")
   private def renderSecrets = RenderFunctions.renderMap(secrets, "secrets")

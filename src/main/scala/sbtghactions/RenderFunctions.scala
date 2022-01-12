@@ -82,7 +82,7 @@ object RenderFunctions {
 
           s"""$key: ${wrap(value)}"""
       }
-      s"""$prefix:
+      s"""\n$prefix:
 ${indent(rendered.mkString("\n"), 1)}"""
     }
 
