@@ -273,11 +273,21 @@ ${indent(rendered.mkString("\n"), 1)}"""
   }
 
 
-  def compileJob(job: WorkflowJob, sbt: String): String = {
-    //TODO better job data structure to avoid runtime errors
-    if(job.steps.nonEmpty && job.uses.nonEmpty)
-      sys.error(s"A job can either uses a reusable workflow or define steps. Please edit ${job.id}")
+  def compileJob(job: WorkflowJobBase, sbt: String): String =
+  job match {
+    case ReusableWorkflowJob(id, name, uses, cond, needs) =>
+      val renderedNeeds = if (needs.isEmpty)
+        ""
+      else
+        s"\nneeds: [${needs.mkString(", ")}]"
 
+      val renderedCond = cond.map(wrap).map("\nif: " + _).getOrElse("")
+      val body =
+        s"""|name: ${wrap(name)}$renderedNeeds$renderedCond
+            |${uses.render}""".stripMargin
+
+      s"$id:\n${indent(body, 1)}"
+    case job: WorkflowJob =>
     val renderedNeeds = if (job.needs.isEmpty)
       ""
     else
@@ -440,15 +450,9 @@ ${indent(rendered.mkString("\n"), 1)}"""
         ""
       }
 
-    val renderedUses =
-      job.uses match {
-        case Some(value) => value.render
-        case None => ""
-      }
-
     val body = s"""name: ${wrap(job.name)}${renderedNeeds}${renderedCond}${renderedStrategy}
 runs-on: ${runsOn}${renderedEnvironment}${renderedContainer}${renderedEnv}
-$renderedSteps$renderedUses"""
+$renderedSteps"""
 
     s"${job.id}:\n${indent(body, 1)}"
   }

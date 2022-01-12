@@ -21,7 +21,7 @@ import sbtghactions.RenderFunctions.{indentOnce, wrap}
 final case class Workflow(
     name: String,
     ons: Seq[TriggerEvent],
-    jobs: Seq[WorkflowJob],
+    jobs: Seq[WorkflowJobBase],
     env: Map[String, String]) {
 
   def render: String =
