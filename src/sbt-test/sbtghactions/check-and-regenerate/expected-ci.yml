@@ -112,7 +112,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           cache: sbt
 
-      - name: Download target directories (2.13.10,2.12.17,this)
+      - name: Download target directories (2.13.10, 2.12.17, this)
         uses: actions/download-artifact@v3
         with:
           name: target-${{ matrix.os }}-${{ matrix.java }}-2.13.10-2.12.17-this

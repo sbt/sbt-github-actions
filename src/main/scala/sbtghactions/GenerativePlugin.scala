@@ -703,7 +703,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
               "actions",
               "download-artifact",
               "v3"),
-            name = Some(s"Download target directories (${v.mkString(",")})"),
+            name = Some(s"Download target directories (${v.mkString(", ")})"),
             params = Map(
               "name" -> s"target-$${{ matrix.os }}-$${{ matrix.java }}${v.mkString("-", "-", "")}"))
 
