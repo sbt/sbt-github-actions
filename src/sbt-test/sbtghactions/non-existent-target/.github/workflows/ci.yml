@@ -50,7 +50,7 @@ jobs:
       - name: Upload target directories
         uses: actions/upload-artifact@v3
         with:
-          name: target-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
+          name: target-${{ matrix.os }}-${{ matrix.java }}-${{ matrix.scala }}-
           path: targets.tar
 
   publish:
@@ -80,9 +80,9 @@ jobs:
       - name: Download target directories (2.13.10)
         uses: actions/download-artifact@v3
         with:
-          name: target-${{ matrix.os }}-2.13.10-${{ matrix.java }}
+          name: target-${{ matrix.os }}-${{ matrix.java }}-2.13.10
 
-      - name: Inflate target directories (2.13.10)
+      - name: Inflate target directories (List(2.13.10))
         run: |
           tar xf targets.tar
           rm targets.tar

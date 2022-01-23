@@ -622,7 +622,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
 
   override def buildSettings = settingDefaults ++ Seq(
     githubWorkflowPREventTypes := PREventType.Defaults,
-
+    githubWorkflowArtifactDownloadExtraKeys := Set.empty,
     githubWorkflowGeneratedUploadSteps := {
       if (githubWorkflowArtifactUpload.value) {
         val sanitized = pathStrs.value map { str =>
@@ -636,6 +636,14 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
           List(s"tar cf targets.tar ${sanitized.mkString(" ")} project/target"),
           name = Some("Compress target directories"))
 
+        val keys = githubWorkflowBuildMatrixAdditions
+          .value
+          .keys
+          .toList
+          .sorted
+          .map(k => s"$${{ matrix.$k }}")
+          .mkString("-", "-", "")
+
         val upload = WorkflowStep.Use(
           UseRef.Public(
             "actions",
@@ -643,7 +651,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
             "v3"),
           name = Some(s"Upload target directories"),
           params = Map(
-            "name" -> s"target-$${{ matrix.os }}-$${{ matrix.scala }}-$${{ matrix.java }}",
+            "name" -> s"target-$${{ matrix.os }}-$${{ matrix.java }}-$${{ matrix.scala }}$keys",
             "path" -> "targets.tar"))
 
         Seq(tar, upload)
@@ -653,18 +661,48 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
     },
 
     githubWorkflowGeneratedDownloadSteps := {
-      val scalas = githubWorkflowScalaVersions.value
+      val extraKeys = githubWorkflowArtifactDownloadExtraKeys.value
+      val additions = githubWorkflowBuildMatrixAdditions.value
+      val matrix = additions.map {
+        case (key, values) =>
+          if (extraKeys(key))
+            key -> values // we want to iterate over all values
+          else
+            key -> values.take(1) // we only want the primary value
+      }
+
+      val keys = "scala" :: additions.keys.toList.sorted
+      val scalas = githubWorkflowScalaVersions.value.toList
+      val exclusions = githubWorkflowBuildMatrixExclusions.value
+
+      // we build the list of artifacts, by iterating over all combinations of keys
+      val artifacts = matrix
+        .toList
+        .sortBy(_._1)
+        .map(_._2)
+        .foldLeft(List(scalas)) { (artifacts, values) =>
+          for {
+            artifact <- artifacts
+            value <- values
+          } yield artifact :+ value
+        } // then, we filter artifacts for keys that are excluded from the matrix
+        .filterNot { artifact =>
+          val job = keys.zip(artifact).toMap
+          exclusions.exists { // there is an exclude that matches the current job
+            case MatrixExclude(matching) => matching.toSet.subsetOf(job.toSet)
+          }
+        }
 
       if (githubWorkflowArtifactUpload.value) {
-        scalas flatMap { v =>
+        artifacts flatMap { v =>
           val download = WorkflowStep.Use(
             UseRef.Public(
               "actions",
               "download-artifact",
               "v3"),
-            name = Some(s"Download target directories ($v)"),
+            name = Some(s"Download target directories (${v.mkString(",")})"),
             params = Map(
-              "name" -> s"target-$${{ matrix.os }}-$v-$${{ matrix.java }}"))
+              "name" -> s"target-$${{ matrix.os }}-$${{ matrix.java }}${v.mkString("-", "-", "")}"))
 
           val untar = WorkflowStep.Run(
             List(
