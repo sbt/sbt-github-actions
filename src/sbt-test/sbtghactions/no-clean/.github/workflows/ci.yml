@@ -83,7 +83,7 @@ jobs:
         with:
           name: target-${{ matrix.os }}-${{ matrix.java }}-2.13.10-2.12.17
 
-      - name: Inflate target directories (List(2.13.10, 2.12.17))
+      - name: Inflate target directories (2.13.10, 2.12.17)
         run: |
           tar xf targets.tar
           rm targets.tar
