@@ -666,7 +666,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
     githubWorkflowGeneratedDownloadSteps := {
       val extraKeys = githubWorkflowArtifactDownloadExtraKeys.value
       val additions = githubWorkflowBuildMatrixAdditions.value
-      val matrix = additions.map {
+      val matrixAdds = additions.map {
         case (key, values) =>
           if (extraKeys(key))
             key -> values // we want to iterate over all values
@@ -675,25 +675,23 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
       }
 
       val keys = "scala" :: additions.keys.toList.sorted
+      val oses = githubWorkflowOSes.value.toList
       val scalas = githubWorkflowScalaVersions.value.toList
-      val exclusions = githubWorkflowBuildMatrixExclusions.value
+      val javas = githubWorkflowJavaVersions.value.toList
+      val exclusions = githubWorkflowBuildMatrixExclusions.value.toList
 
       // we build the list of artifacts, by iterating over all combinations of keys
-      val artifacts = matrix
-        .toList
-        .sortBy(_._1)
-        .map(_._2)
-        .foldLeft(List(scalas)) { (artifacts, values) =>
-          for {
-            artifact <- artifacts
-            value <- values
-          } yield artifact :+ value
-        } // then, we filter artifacts for keys that are excluded from the matrix
-        .filterNot { artifact =>
-          val job = keys.zip(artifact).toMap
-          exclusions.exists { // there is an exclude that matches the current job
-            case MatrixExclude(matching) => matching.toSet.subsetOf(job.toSet)
-          }
+      val artifacts =
+        expandMatrix(
+          oses,
+          scalas,
+          javas,
+          matrixAdds,
+          Nil,
+          exclusions
+        ).map {
+          case _ :: scala :: _ :: tail => scala :: tail
+          case _ => sys.error("Bug generating artifact download steps") // shouldn't happen
         }
 
       if (githubWorkflowArtifactUpload.value) {
@@ -974,7 +972,37 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
     },
     githubWorkflowDir := baseDirectory.value / ".github")
 
-  private[sbtghactions] def diff(expected: String, actual: String): String = {
+  private def expandMatrix(
+      oses: List[String],
+      scalas: List[String],
+      javas: List[JavaSpec],
+      matrixAdds: Map[String, List[String]],
+      includes: List[MatrixInclude],
+      excludes: List[MatrixExclude]
+  ): List[List[String]] = {
+    val keys = "os" :: "scala" :: "java" :: matrixAdds.keys.toList.sorted
+    val matrix =
+      matrixAdds + ("os" -> oses) + ("scala" -> scalas) + ("java" -> javas.map(_.render))
+
+    // expand the matrix
+    keys
+      .foldLeft(List(List.empty[String])) { (cells, key) =>
+        val values = matrix.getOrElse(key, Nil)
+        cells.flatMap { cell => values.map(v => cell ::: v :: Nil) }
+      }
+      .filterNot { cell => // remove the excludes
+        val job = keys.zip(cell).toMap
+        excludes.exists { // there is an exclude that matches the current job
+          case MatrixExclude(matching) => matching.toSet.subsetOf(job.toSet)
+        }
+      } ::: includes.map { // add the includes
+      case MatrixInclude(matching, additions) =>
+        // yoloing here, but let's wait for the bug report
+        keys.map(matching) ::: additions.values.toList
+    }
+  }
+
+  private def diff(expected: String, actual: String): String = {
     val expectedLines = expected.split("\n", -1)
     val actualLines = actual.split("\n", -1)
     val (lines, _) = expectedLines.zipAll(actualLines, "", "").foldLeft((Vector.empty[String], false)) {
