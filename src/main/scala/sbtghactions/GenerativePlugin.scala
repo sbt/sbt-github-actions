@@ -601,7 +601,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
           UseRef.Public(
             "actions",
             "cache",
-            "v2"),
+            "v3"),
           name = Some("Cache sbt"),
           params = Map(
             "path" -> Seq(

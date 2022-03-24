@@ -475,7 +475,7 @@ class GenerativePluginSpec extends Specification {
     - run: echo hello
 
     - name: Checkout current branch (fast)
-      uses: actions/checkout@v2"""
+      uses: actions/checkout@v3"""
     }
 
     "compile a job with one step and three oses" in {
@@ -524,7 +524,7 @@ class GenerativePluginSpec extends Specification {
   steps:
     - name: Setup Java (temurin@11)
       if: matrix.java == 'temurin@11'
-      uses: actions/setup-java@v2
+      uses: actions/setup-java@v3
       with:
         distribution: temurin
         java-version: 11
@@ -639,7 +639,7 @@ class GenerativePluginSpec extends Specification {
     - run: echo $${{ matrix.test }}
 
     - name: Checkout current branch (fast)
-      uses: actions/checkout@v2"""
+      uses: actions/checkout@v3"""
     }
 
     "compile a job with extra runs-on labels" in {
@@ -838,7 +838,7 @@ class GenerativePluginSpec extends Specification {
     - run: echo hello
 
     - name: Checkout current branch (fast)
-      uses: actions/checkout@v2"""
+      uses: actions/checkout@v3"""
     }
   }
 
