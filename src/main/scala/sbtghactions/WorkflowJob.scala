@@ -21,6 +21,7 @@ final case class WorkflowJob(
     name: String,
     steps: List[WorkflowStep],
     cond: Option[String] = None,
+    permissions: Option[Permissions] = None,
     env: Map[String, String] = Map(),
     oses: List[String] = List("ubuntu-latest"),
     scalas: List[String] = List("2.13.6"),
