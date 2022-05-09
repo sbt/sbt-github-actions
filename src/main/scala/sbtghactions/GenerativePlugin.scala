@@ -504,7 +504,10 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
     githubWorkflowTargetPaths := Paths.None,
 
     githubWorkflowEnv := Map("GITHUB_TOKEN" -> s"$${{ secrets.GITHUB_TOKEN }}"),
-    githubWorkflowAddedJobs := Seq())
+    githubWorkflowAddedJobs := Seq(),
+
+    githubWorkflowToken := s"$${{ secrets.GITHUB_TOKEN }}"
+  )
 
   private lazy val internalTargetAggregation = settingKey[Seq[File]]("Aggregates target directories from all subprojects")
 
@@ -630,7 +633,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
       }
 
       autoCrlfOpt :::
-        List(WorkflowStep.CheckoutFull) :::
+        List(WorkflowStep.CheckoutFull(githubWorkflowToken.value)) :::
         WorkflowStep.SetupJava(githubWorkflowJavaVersions.value.toList) :::
         githubWorkflowGeneratedCacheSteps.value.toList
     },
