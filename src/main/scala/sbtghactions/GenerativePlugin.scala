@@ -506,7 +506,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
     githubWorkflowEnv := Map("GITHUB_TOKEN" -> s"$${{ secrets.GITHUB_TOKEN }}"),
     githubWorkflowAddedJobs := Seq(),
 
-    githubWorkflowCacheActionVersion := "v2")
+    githubWorkflowCacheActionVersion := "v3")
 
   private lazy val internalTargetAggregation = settingKey[Seq[File]]("Aggregates target directories from all subprojects")
 
