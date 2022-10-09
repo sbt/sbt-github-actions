@@ -504,7 +504,9 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
     githubWorkflowTargetPaths := Paths.None,
 
     githubWorkflowEnv := Map("GITHUB_TOKEN" -> s"$${{ secrets.GITHUB_TOKEN }}"),
-    githubWorkflowAddedJobs := Seq())
+    githubWorkflowAddedJobs := Seq(),
+
+    githubWorkflowCacheActionVersion := "v2")
 
   private lazy val internalTargetAggregation = settingKey[Seq[File]]("Aggregates target directories from all subprojects")
 
@@ -601,7 +603,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
           UseRef.Public(
             "actions",
             "cache",
-            "v2"),
+            githubWorkflowCacheActionVersion.value),
           name = Some("Cache sbt"),
           params = Map(
             "path" -> Seq(
