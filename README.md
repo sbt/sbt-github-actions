@@ -49,8 +49,11 @@ ThisBuild / githubWorkflowPublish := Seq(WorkflowStep.Sbt(List("ci-release")))
 This is assuming that you *only* wish to publish tags. If you also wish to publish snapshots upon successful main builds, use the following `githubWorkflowPublishTargetBranches` declaration:
 
 ```scala
-ThisBuild / githubWorkflowPublishTargetBranches +=
-  RefPredicate.StartsWith(Ref.Tag("v"))
+ThisBuild / githubWorkflowPublishTargetBranches :=
+  Seq(
+    RefPredicate.StartsWith(Ref.Tag("v")),
+    RefPredicate.Equals(Ref.Branch("main"))
+  )
 ```
 
 Note the use of `+=` rather than `:=`.
