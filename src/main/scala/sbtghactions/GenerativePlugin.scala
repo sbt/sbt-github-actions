@@ -712,12 +712,18 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
   }
 
   private val workflowsDirTask = Def task {
-    val githubDir = baseDirectory.value / ".github"
+    val log = streams.value.log
+    val baseDir = baseDirectory.value
+    log.info(s"baseDir folder exists ${baseDir.exists()} and baseDir is directory: ${baseDir.isDirectory}")
+    val githubDir = baseDir / ".github"
+    log.info(s".github folder exists ${githubDir.exists()} and .github is directory: ${githubDir.isDirectory}")
     val workflowsDir = githubDir / "workflows"
 
     if (!githubDir.exists()) {
       githubDir.mkdir()
     }
+
+    log.info(s"workflowsDir folder exists ${workflowsDir.exists()} and workflowsDir is directory: ${workflowsDir.isDirectory}")
 
     if (!workflowsDir.exists()) {
       workflowsDir.mkdir()
@@ -727,7 +733,15 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
   }
 
   private val ciYmlFile = Def task {
-    workflowsDirTask.value / "ci.yml"
+    val log = streams.value.log
+    val workflowsDir = workflowsDirTask.value
+    log.info(s"workflowsDir folder before ciTask exists ${workflowsDir.exists()} and workflowsDir before ciTask is directory: ${workflowsDir.isDirectory}")
+    workflowsDir.listFiles().foreach(file =>
+      println(file.getPath)
+    )
+    val value = workflowsDir / "ci.yml"
+    log.info(s"ci.yml file exists ${value.exists()} and ci.yml is file: ${value.isFile}")
+    value
   }
 
   private val cleanYmlFile = Def task {
