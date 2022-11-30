@@ -26,11 +26,6 @@ jobs:
         java: [temurin@11, graal_20.3.1@11]
     runs-on: ${{ matrix.os }}
     steps:
-      - name: Ignore line ending differences in git
-        if: contains(runner.os, 'windows')
-        shell: bash
-        run: git config --global core.autocrlf false
-
       - name: Checkout current branch (full)
         uses: actions/checkout@v2
         with:
@@ -90,10 +85,6 @@ jobs:
         java: [temurin@11]
     runs-on: ${{ matrix.os }}
     steps:
-      - name: Ignore line ending differences in git
-        if: contains(runner.os, 'windows')
-        run: git config --global core.autocrlf false
-
       - name: Checkout current branch (full)
         uses: actions/checkout@v2
         with:
