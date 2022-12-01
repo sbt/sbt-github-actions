@@ -498,6 +498,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
     githubWorkflowJavaVersions := Seq(JavaSpec.temurin("11")),
     githubWorkflowScalaVersions := crossScalaVersions.value,
     githubWorkflowOSes := Seq("ubuntu-latest"),
+    githubWorkflowAutoCrlfWindows := true,
     githubWorkflowDependencyPatterns := Seq("**/*.sbt", "project/build.properties"),
     githubWorkflowTargetBranches := Seq("**"),
     githubWorkflowTargetTags := Seq(),
@@ -619,7 +620,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
     },
 
     githubWorkflowJobSetup := {
-      val autoCrlfOpt = if (githubWorkflowOSes.value.exists(_.contains("windows"))) {
+      val autoCrlfOpt = if (githubWorkflowAutoCrlfWindows.value && githubWorkflowOSes.value.exists(_.contains("windows"))) {
         List(
           WorkflowStep.Run(
             List("git config --global core.autocrlf false"),
@@ -777,7 +778,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
 
       def compare(file: File, expected: String): Unit = {
         val actual = IO.read(file)
-        if (expected != actual) {
+        if (removeWindowsLineEndings(expected) != removeWindowsLineEndings(actual)) {
           reportMismatch(file, expected, actual)
         }
       }
@@ -789,8 +790,8 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
     })
 
   private[sbtghactions] def diff(expected: String, actual: String): String = {
-    val expectedLines = expected.split("\n", -1)
-    val actualLines = actual.split("\n", -1)
+    val expectedLines = removeWindowsLineEndings(expected).split("\n", -1)
+    val actualLines = removeWindowsLineEndings(actual).split("\n", -1)
     val (lines, _) = expectedLines.zipAll(actualLines, "", "").foldLeft((Vector.empty[String], false)) {
       case ((acc, foundDifference), (expectedLine, actualLine)) if expectedLine == actualLine =>
         (acc :+ actualLine, foundDifference)
@@ -816,4 +817,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
     }
     lines.mkString("\n")
   }
+
+  private[sbtghactions] def removeWindowsLineEndings(string: String): String =
+    string.replaceAll("\\r\\n?","\n")
 }

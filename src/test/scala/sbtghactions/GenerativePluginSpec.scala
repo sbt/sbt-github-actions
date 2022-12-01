@@ -82,7 +82,7 @@ class GenerativePluginSpec extends Specification {
         |${" " * 2}
         |""".stripMargin
 
-      compileWorkflow("test", List("main"), Nil, Paths.None, List(PREventType.ReadyForReview, PREventType.ReviewRequested, PREventType.Opened), Map(), Nil, "sbt") mustEqual expected
+      removeWindowsLineEndings(compileWorkflow("test", List("main"), Nil, Paths.None, List(PREventType.ReadyForReview, PREventType.ReviewRequested, PREventType.Opened), Map(), Nil, "sbt")) mustEqual removeWindowsLineEndings(expected)
     }
 
     "compile a one-job workflow targeting multiple branch patterns with a environment variables" in {
@@ -111,7 +111,7 @@ class GenerativePluginSpec extends Specification {
         |      - run: echo Hello World
         |""".stripMargin
 
-      compileWorkflow(
+      removeWindowsLineEndings(compileWorkflow(
         "test2",
         List("main", "backport/v*"),
         Nil,
@@ -124,7 +124,7 @@ class GenerativePluginSpec extends Specification {
             "build",
             "Build and Test",
             List(WorkflowStep.Run(List("echo Hello World"))))),
-        "sbt") mustEqual expected
+        "sbt")) mustEqual removeWindowsLineEndings(expected)
     }
 
     "compile a workflow with two jobs" in {
@@ -161,7 +161,7 @@ class GenerativePluginSpec extends Specification {
         |      - run: whoami
         |""".stripMargin
 
-      compileWorkflow(
+      removeWindowsLineEndings(compileWorkflow(
         "test3",
         List("main"),
         Nil,
@@ -178,7 +178,7 @@ class GenerativePluginSpec extends Specification {
             "what",
             "If we just didn't",
             List(WorkflowStep.Run(List("whoami"))))),
-        "") mustEqual expected
+        "")) mustEqual removeWindowsLineEndings(expected)
     }
 
     "render a simple container image" in {
@@ -205,7 +205,7 @@ class GenerativePluginSpec extends Specification {
         |      - run: echo yikes
         |""".stripMargin
 
-      compileWorkflow(
+      removeWindowsLineEndings(compileWorkflow(
         "test4",
         List("main"),
         Nil,
@@ -219,7 +219,7 @@ class GenerativePluginSpec extends Specification {
             List(WorkflowStep.Run(List("echo yikes"))),
             container = Some(
               JobContainer("not:real-thing")))),
-        "") mustEqual expected
+        "")) mustEqual removeWindowsLineEndings(expected)
     }
 
     "render a container with all the trimmings" in {
@@ -256,7 +256,7 @@ class GenerativePluginSpec extends Specification {
         |      - run: echo yikes
         |""".stripMargin
 
-      compileWorkflow(
+      removeWindowsLineEndings(compileWorkflow(
         "test4",
         List("main"),
         Nil,
@@ -276,7 +276,7 @@ class GenerativePluginSpec extends Specification {
                 volumes = Map("/source" -> "/dest/ination"),
                 ports = List(80, 443),
                 options = List("--cpus", "1"))))),
-        "") mustEqual expected
+        "")) mustEqual removeWindowsLineEndings(expected)
     }
 
     "render included paths on pull_request and push" in {
@@ -295,7 +295,7 @@ class GenerativePluginSpec extends Specification {
         |${" " * 2}
         |""".stripMargin
 
-      compileWorkflow("test", List("main"), Nil, Paths.Include(List("**.scala", "**.sbt")), PREventType.Defaults, Map(), Nil, "sbt") mustEqual expected
+      removeWindowsLineEndings(compileWorkflow("test", List("main"), Nil, Paths.Include(List("**.scala", "**.sbt")), PREventType.Defaults, Map(), Nil, "sbt")) mustEqual removeWindowsLineEndings(expected)
     }
 
     "render ignored paths on pull_request and push" in {
@@ -314,7 +314,7 @@ class GenerativePluginSpec extends Specification {
         |${" " * 2}
         |""".stripMargin
 
-      compileWorkflow("test", List("main"), Nil, Paths.Ignore(List("docs/**")), PREventType.Defaults, Map(), Nil, "sbt") mustEqual expected
+      removeWindowsLineEndings(compileWorkflow("test", List("main"), Nil, Paths.Ignore(List("docs/**")), PREventType.Defaults, Map(), Nil, "sbt")) mustEqual removeWindowsLineEndings(expected)
     }
   }
 
@@ -372,12 +372,12 @@ class GenerativePluginSpec extends Specification {
     }
 
     "compile sbt with parameters" in {
-      compileStep(
+      removeWindowsLineEndings(compileStep(
         Sbt(List("compile", "test"), params = Map("abc" -> "def", "cafe" -> "@42")),
-        "$SBT") mustEqual s"""- run: $$SBT ++$${{ matrix.scala }} compile test
+        "$SBT")) mustEqual removeWindowsLineEndings(s"""- run: $$SBT ++$${{ matrix.scala }} compile test
                          |  with:
                          |    abc: def
-                         |    cafe: '@42'""".stripMargin
+                         |    cafe: '@42'""".stripMargin)
     }
 
     "compile use without parameters" in {
@@ -415,13 +415,13 @@ class GenerativePluginSpec extends Specification {
     }
 
     "compile use with two parameters" in {
-      compileStep(
+      removeWindowsLineEndings(compileStep(
         Use(UseRef.Public("olafurpg", "setup-scala", "v13"), params = Map("abc" -> "def", "cafe" -> "@42")),
-        "") mustEqual "- uses: olafurpg/setup-scala@v13\n  with:\n    abc: def\n    cafe: '@42'"
+        "")) mustEqual removeWindowsLineEndings("- uses: olafurpg/setup-scala@v13\n  with:\n    abc: def\n    cafe: '@42'")
     }
 
     "compile use with two parameters and environment variables" in {
-      compileStep(
+      removeWindowsLineEndings(compileStep(
         Use(
           UseRef.Public(
             "derp",
@@ -429,7 +429,7 @@ class GenerativePluginSpec extends Specification {
             "v0"),
           params = Map("teh" -> "schizzle", "think" -> "positive"),
           env = Map("hi" -> "there")),
-        "") mustEqual "- env:\n    hi: there\n  uses: derp/nope@v0\n  with:\n    teh: schizzle\n    think: positive"
+        "")) mustEqual removeWindowsLineEndings("- env:\n    hi: there\n  uses: derp/nope@v0\n  with:\n    teh: schizzle\n    think: positive")
     }
 
     "compile a run step with multiple commands" in {
@@ -443,12 +443,12 @@ class GenerativePluginSpec extends Specification {
     }
 
     "compile a run with parameters" in {
-      compileStep(
+      removeWindowsLineEndings(compileStep(
         Run(List("echo foo"), params = Map("abc" -> "def", "cafe" -> "@42")),
-        "") mustEqual """- run: echo foo
+        "")) mustEqual removeWindowsLineEndings("""- run: echo foo
                         |  with:
                         |    abc: def
-                        |    cafe: '@42'""".stripMargin
+                        |    cafe: '@42'""".stripMargin)
     }
   }
 
@@ -463,7 +463,7 @@ class GenerativePluginSpec extends Specification {
             WorkflowStep.Checkout)),
         "")
 
-      results mustEqual s"""bippy:
+      removeWindowsLineEndings(results) mustEqual removeWindowsLineEndings(s"""bippy:
   name: Bippity Bop Around the Clock
   strategy:
     matrix:
@@ -475,7 +475,7 @@ class GenerativePluginSpec extends Specification {
     - run: echo hello
 
     - name: Checkout current branch (fast)
-      uses: actions/checkout@v2"""
+      uses: actions/checkout@v2""")
     }
 
     "compile a job with one step and three oses" in {
@@ -488,7 +488,7 @@ class GenerativePluginSpec extends Specification {
           oses = List("ubuntu-latest", "windows-latest", "macos-latest")),
         "")
 
-      results mustEqual s"""derp:
+      removeWindowsLineEndings(results) mustEqual removeWindowsLineEndings(s"""derp:
   name: Derples
   strategy:
     matrix:
@@ -498,7 +498,7 @@ class GenerativePluginSpec extends Specification {
   runs-on: $${{ matrix.os }}
   steps:
     - shell: bash
-      run: echo hello"""
+      run: echo hello""")
     }
 
     "compile a job with java setup, two JVMs and two Scalas" in {
@@ -513,7 +513,7 @@ class GenerativePluginSpec extends Specification {
           javas = javas),
         "")
 
-      results mustEqual s"""abc:
+      removeWindowsLineEndings(results) mustEqual removeWindowsLineEndings(s"""abc:
   name: How to get to...
   strategy:
     matrix:
@@ -534,7 +534,7 @@ class GenerativePluginSpec extends Specification {
       uses: DeLaGuardo/setup-graalvm@5.0
       with:
         graalvm: 20.0.0
-        java: java8"""
+        java: java8""")
     }
 
     "compile a job with environment variables, conditional, and needs with an sbt step" in {
@@ -549,7 +549,7 @@ class GenerativePluginSpec extends Specification {
           needs = List("unmet")),
         "csbt")
 
-      results mustEqual s"""nada:
+      removeWindowsLineEndings(results) mustEqual removeWindowsLineEndings(s"""nada:
   name: Moooo
   needs: [unmet]
   if: boy != girl
@@ -562,7 +562,7 @@ class GenerativePluginSpec extends Specification {
   env:
     not: now
   steps:
-    - run: csbt ++$${{ matrix.scala }} +compile"""
+    - run: csbt ++$${{ matrix.scala }} +compile""")
     }
 
     "compile a job with an environment" in {
@@ -575,7 +575,7 @@ class GenerativePluginSpec extends Specification {
           environment = Some(JobEnvironment("release"))),
         "csbt")
 
-      results mustEqual s"""publish:
+      removeWindowsLineEndings(results) mustEqual removeWindowsLineEndings(s"""publish:
   name: Publish Release
   strategy:
     matrix:
@@ -585,7 +585,7 @@ class GenerativePluginSpec extends Specification {
   runs-on: $${{ matrix.os }}
   environment: release
   steps:
-    - run: csbt ++$${{ matrix.scala }} ci-release"""
+    - run: csbt ++$${{ matrix.scala }} ci-release""")
     }
 
     "compile a job with an environment containing a url" in {
@@ -598,7 +598,7 @@ class GenerativePluginSpec extends Specification {
           environment = Some(JobEnvironment("release", Some(new URL("https://github.com"))))),
         "csbt")
 
-      results mustEqual s"""publish:
+      removeWindowsLineEndings(results) mustEqual removeWindowsLineEndings(s"""publish:
   name: Publish Release
   strategy:
     matrix:
@@ -610,7 +610,7 @@ class GenerativePluginSpec extends Specification {
     name: release
     url: 'https://github.com'
   steps:
-    - run: csbt ++$${{ matrix.scala }} ci-release"""
+    - run: csbt ++$${{ matrix.scala }} ci-release""")
     }
 
     "compile a job with additional matrix components" in {
@@ -625,7 +625,7 @@ class GenerativePluginSpec extends Specification {
           matrixFailFast = Some(true)),
         "")
 
-      results mustEqual s"""bippy:
+      removeWindowsLineEndings(results) mustEqual removeWindowsLineEndings(s"""bippy:
   name: Bippity Bop Around the Clock
   strategy:
     fail-fast: true
@@ -639,18 +639,18 @@ class GenerativePluginSpec extends Specification {
     - run: echo $${{ matrix.test }}
 
     - name: Checkout current branch (fast)
-      uses: actions/checkout@v2"""
+      uses: actions/checkout@v2""")
     }
 
     "compile a job with extra runs-on labels" in {
-      compileJob(
+      removeWindowsLineEndings(compileJob(
         WorkflowJob(
           "job",
           "my-name",
           List(
             WorkflowStep.Run(List("echo hello"))),
           runsOnExtraLabels = List("runner-label", "runner-group"),
-        ), "") mustEqual """job:
+        ), "")) mustEqual removeWindowsLineEndings("""job:
   name: my-name
   strategy:
     matrix:
@@ -659,7 +659,7 @@ class GenerativePluginSpec extends Specification {
       java: [temurin@11]
   runs-on: [ "${{ matrix.os }}", runner-label, runner-group ]
   steps:
-    - run: echo hello"""
+    - run: echo hello""")
     }
 
     "produce an error when compiling a job with `include` key in matrix" in {
@@ -695,7 +695,7 @@ class GenerativePluginSpec extends Specification {
               Map("foo" -> "bar")))),
         "")
 
-      results mustEqual s"""bippy:
+      removeWindowsLineEndings(results) mustEqual removeWindowsLineEndings(s"""bippy:
   name: Bippity Bop Around the Clock
   strategy:
     matrix:
@@ -707,7 +707,7 @@ class GenerativePluginSpec extends Specification {
           foo: bar
   runs-on: $${{ matrix.os }}
   steps:
-    - run: echo $${{ matrix.scala }}"""
+    - run: echo $${{ matrix.scala }}""")
     }
 
     "produce an error with a non-matching inclusion key" in {
@@ -750,7 +750,7 @@ class GenerativePluginSpec extends Specification {
               Map("scala" -> "2.13.6")))),
         "")
 
-      results mustEqual s"""bippy:
+      removeWindowsLineEndings(results) mustEqual removeWindowsLineEndings(s"""bippy:
   name: Bippity Bop Around the Clock
   strategy:
     matrix:
@@ -761,7 +761,7 @@ class GenerativePluginSpec extends Specification {
         - scala: 2.13.6
   runs-on: $${{ matrix.os }}
   steps:
-    - run: echo $${{ matrix.scala }}"""
+    - run: echo $${{ matrix.scala }}""")
     }
 
     "produce an error with a non-matching exclusion key" in {
@@ -814,7 +814,7 @@ class GenerativePluginSpec extends Specification {
           scalas = List("this", "is", "a", "lot", "of", "versions", "meant", "to", "overflow", "the", "bounds", "checking")),
         "")
 
-      results mustEqual s"""bippy:
+      removeWindowsLineEndings(results) mustEqual removeWindowsLineEndings(s"""bippy:
   name: Bippity Bop Around the Clock
   strategy:
     matrix:
@@ -838,7 +838,7 @@ class GenerativePluginSpec extends Specification {
     - run: echo hello
 
     - name: Checkout current branch (fast)
-      uses: actions/checkout@v2"""
+      uses: actions/checkout@v2""")
     }
   }
 
@@ -904,7 +904,7 @@ class GenerativePluginSpec extends Specification {
           |
           |ghi""".stripMargin
       val actualDiff = GenerativePlugin.diff(expected, actual)
-      expectedDiff mustEqual actualDiff
+      removeWindowsLineEndings(expectedDiff) mustEqual actualDiff
     }
     "highlight the missing lines" in {
       val expected =
@@ -919,7 +919,7 @@ class GenerativePluginSpec extends Specification {
           |def
           |   ^ (missing lines)""".stripMargin
       val actualDiff = GenerativePlugin.diff(expected, actual)
-      expectedDiff mustEqual actualDiff
+      removeWindowsLineEndings(expectedDiff) mustEqual actualDiff
     }
     "highlight the additionl lines" in {
       val expected =
@@ -938,7 +938,7 @@ class GenerativePluginSpec extends Specification {
           |   ^ (additional lines)
           |jkl""".stripMargin
       val actualDiff = GenerativePlugin.diff(expected, actual)
-      expectedDiff mustEqual actualDiff
+      removeWindowsLineEndings(expectedDiff) mustEqual actualDiff
     }
   }
 }
