@@ -39,7 +39,7 @@ ThisBuild / githubWorkflowPublishTargetBranches :=
 ThisBuild / githubWorkflowPublish := Seq()
 
 sbtPlugin := true
-sbtVersion := "1.5.5"
+pluginCrossBuild / sbtVersion := "1.5.5"
 
 publishMavenStyle := true
 
