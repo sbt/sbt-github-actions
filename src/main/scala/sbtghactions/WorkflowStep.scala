@@ -25,12 +25,18 @@ sealed trait WorkflowStep extends Product with Serializable {
 
 object WorkflowStep {
 
-  val CheckoutFull: WorkflowStep = Use(
-    UseRef.Public("actions", "checkout", "v2"),
-    name = Some("Checkout current branch (full)"),
-    params = Map("fetch-depth" -> "0"))
+  def CheckoutFull(token: String): WorkflowStep = {
+    Use(
+      UseRef.Public("actions", "checkout", "v3"),
+      name = Some("Checkout current branch (full)"),
+      params = Map(
+        "fetch-depth" -> "0",
+        "token" -> token
+      )
+    )
+  }
 
-  val Checkout: WorkflowStep = Use(UseRef.Public("actions", "checkout", "v2"), name = Some("Checkout current branch (fast)"))
+  val Checkout: WorkflowStep = Use(UseRef.Public("actions", "checkout", "v3"), name = Some("Checkout current branch (fast)"))
 
   def SetupJava(versions: List[JavaSpec]): List[WorkflowStep] =
     versions map {
