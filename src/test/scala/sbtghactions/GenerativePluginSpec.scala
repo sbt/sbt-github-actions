@@ -46,7 +46,7 @@ class GenerativePluginSpec extends Specification {
         |${" " * 2}
         |""".stripMargin
 
-      compileWorkflow("test", List("main"), Nil, Paths.None, PREventType.Defaults, Map(), Nil, "sbt") mustEqual expected
+      compileWorkflow("test", List("main"), Nil, Paths.None, PREventType.Defaults, None, Map(), Nil, "sbt") mustEqual expected
     }
 
     "produce the appropriate skeleton around a zero-job workflow with non-empty tags" in {
@@ -64,7 +64,7 @@ class GenerativePluginSpec extends Specification {
         |${" " * 2}
         |""".stripMargin
 
-      compileWorkflow("test", List("main"), List("howdy"), Paths.None, PREventType.Defaults, Map(), Nil, "sbt") mustEqual expected
+      compileWorkflow("test", List("main"), List("howdy"), Paths.None, PREventType.Defaults, None, Map(), Nil, "sbt") mustEqual expected
     }
 
     "respect non-default pr types" in {
@@ -82,7 +82,7 @@ class GenerativePluginSpec extends Specification {
         |${" " * 2}
         |""".stripMargin
 
-      compileWorkflow("test", List("main"), Nil, Paths.None, List(PREventType.ReadyForReview, PREventType.ReviewRequested, PREventType.Opened), Map(), Nil, "sbt") mustEqual expected
+      compileWorkflow("test", List("main"), Nil, Paths.None, List(PREventType.ReadyForReview, PREventType.ReviewRequested, PREventType.Opened), None, Map(), Nil, "sbt") mustEqual expected
     }
 
     "compile a one-job workflow targeting multiple branch patterns with a environment variables" in {
@@ -94,6 +94,9 @@ class GenerativePluginSpec extends Specification {
         |    branches: [main, backport/v*]
         |  push:
         |    branches: [main, backport/v*]
+        |
+        |permissions:
+        |  id-token: write
         |
         |env:
         |  GITHUB_TOKEN: $${{ secrets.GITHUB_TOKEN }}
@@ -117,6 +120,9 @@ class GenerativePluginSpec extends Specification {
         Nil,
         Paths.None,
         PREventType.Defaults,
+        Some(Permissions.Specify(Map(
+          PermissionScope.IdToken -> PermissionValue.Write
+        ))),
         Map(
           "GITHUB_TOKEN" -> s"$${{ secrets.GITHUB_TOKEN }}"),
         List(
@@ -167,6 +173,7 @@ class GenerativePluginSpec extends Specification {
         Nil,
         Paths.None,
         PREventType.Defaults,
+        None,
         Map(),
         List(
           WorkflowJob(
@@ -211,6 +218,7 @@ class GenerativePluginSpec extends Specification {
         Nil,
         Paths.None,
         PREventType.Defaults,
+        None,
         Map(),
         List(
           WorkflowJob(
@@ -262,6 +270,7 @@ class GenerativePluginSpec extends Specification {
         Nil,
         Paths.None,
         PREventType.Defaults,
+        None,
         Map(),
         List(
           WorkflowJob(
@@ -295,7 +304,7 @@ class GenerativePluginSpec extends Specification {
         |${" " * 2}
         |""".stripMargin
 
-      compileWorkflow("test", List("main"), Nil, Paths.Include(List("**.scala", "**.sbt")), PREventType.Defaults, Map(), Nil, "sbt") mustEqual expected
+      compileWorkflow("test", List("main"), Nil, Paths.Include(List("**.scala", "**.sbt")), PREventType.Defaults, None, Map(), Nil, "sbt") mustEqual expected
     }
 
     "render ignored paths on pull_request and push" in {
@@ -314,7 +323,7 @@ class GenerativePluginSpec extends Specification {
         |${" " * 2}
         |""".stripMargin
 
-      compileWorkflow("test", List("main"), Nil, Paths.Ignore(List("docs/**")), PREventType.Defaults, Map(), Nil, "sbt") mustEqual expected
+      compileWorkflow("test", List("main"), Nil, Paths.Ignore(List("docs/**")), PREventType.Defaults, None, Map(), Nil, "sbt") mustEqual expected
     }
   }
 
@@ -584,6 +593,58 @@ class GenerativePluginSpec extends Specification {
       java: [temurin@11]
   runs-on: $${{ matrix.os }}
   environment: release
+  steps:
+    - run: csbt ++$${{ matrix.scala }} ci-release"""
+    }
+
+    "compile a job with specific permissions" in {
+      val results = compileJob(
+        WorkflowJob(
+          "publish",
+          "Publish Release",
+          List(
+            WorkflowStep.Sbt(List("ci-release"))),
+          permissions = Some(
+            Permissions.Specify(Map(
+              PermissionScope.IdToken -> PermissionValue.Write
+            ))
+          )),
+        "csbt")
+
+      results mustEqual s"""publish:
+  name: Publish Release
+  strategy:
+    matrix:
+      os: [ubuntu-latest]
+      scala: [2.13.6]
+      java: [temurin@11]
+  runs-on: $${{ matrix.os }}
+  permissions:
+    id-token: write
+  steps:
+    - run: csbt ++$${{ matrix.scala }} ci-release"""
+    }
+
+    "compile a job with read-all permissions" in {
+      val results = compileJob(
+        WorkflowJob(
+          "publish",
+          "Publish Release",
+          List(
+            WorkflowStep.Sbt(List("ci-release"))),
+          permissions = Some(Permissions.ReadAll)
+        ),
+        "csbt")
+
+      results mustEqual s"""publish:
+  name: Publish Release
+  strategy:
+    matrix:
+      os: [ubuntu-latest]
+      scala: [2.13.6]
+      java: [temurin@11]
+  runs-on: $${{ matrix.os }}
+  permissions: read-all
   steps:
     - run: csbt ++$${{ matrix.scala }} ci-release"""
     }

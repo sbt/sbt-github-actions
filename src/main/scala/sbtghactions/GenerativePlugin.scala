@@ -186,6 +186,48 @@ s"""$prefix:
 ${indent(rendered.mkString("\n"), 1)}"""
     }
 
+  def compilePermissionScope(permissionScope: PermissionScope): String = permissionScope match {
+    case PermissionScope.Actions => "actions"
+    case PermissionScope.Checks => "checks"
+    case PermissionScope.Contents => "contents"
+    case PermissionScope.Deployments => "deployments"
+    case PermissionScope.IdToken => "id-token"
+    case PermissionScope.Issues => "issues"
+    case PermissionScope.Discussions => "discussions"
+    case PermissionScope.Packages => "packages"
+    case PermissionScope.Pages => "pages"
+    case PermissionScope.PullRequests => "pull-requests"
+    case PermissionScope.RepositoryProjects => "repository-projects"
+    case PermissionScope.SecurityEvents => "security-events"
+    case PermissionScope.Statuses => "statuses"
+  }
+
+  def compilePermissionsValue(permissionValue: PermissionValue): String = permissionValue match {
+    case PermissionValue.Read => "read"
+    case PermissionValue.Write => "write"
+    case PermissionValue.None => "none"
+  }
+
+  def compilePermissions(permissions: Option[Permissions]): String = {
+    permissions match {
+      case Some(perms) =>
+        val rendered = perms match {
+          case Permissions.ReadAll => " read-all"
+          case Permissions.WriteAll => " write-all"
+          case Permissions.None => " {}"
+          case Permissions.Specify(permMap) =>
+            val map = permMap.map{
+              case (key, value) =>
+                s"${compilePermissionScope(key)}: ${compilePermissionsValue(value)}"
+            }
+            "\n" + indent(map.mkString("\n"), 1)
+        }
+        s"permissions:$rendered"
+
+      case None => ""
+    }
+  }
+
   def compileStep(step: WorkflowStep, sbt: String, declareShell: Boolean = false): String = {
     import WorkflowStep._
 
@@ -331,6 +373,12 @@ ${indent(rendered.mkString("\n"), 1)}"""
     else
       "\n" + renderedEnvPre
 
+    val renderedPermPre = compilePermissions(job.permissions)
+    val renderedPerm = if (renderedPermPre.isEmpty)
+      ""
+    else
+      "\n" + renderedPermPre
+
     List("include", "exclude") foreach { key =>
       if (job.matrixAdds.contains(key)) {
         sys.error(s"key `$key` is reserved and cannot be used in an Actions matrix definition")
@@ -407,7 +455,7 @@ strategy:${renderedFailFast}
     os:${compileList(job.oses, 3)}
     scala:${compileList(job.scalas, 3)}
     java:${compileList(job.javas.map(_.render), 3)}${renderedMatrices}
-runs-on: ${runsOn}${renderedEnvironment}${renderedContainer}${renderedEnv}
+runs-on: ${runsOn}${renderedEnvironment}${renderedContainer}${renderedPerm}${renderedEnv}
 steps:
 ${indent(job.steps.map(compileStep(_, sbt, declareShell = declareShell)).mkString("\n\n"), 1)}"""
 
@@ -420,16 +468,22 @@ ${indent(job.steps.map(compileStep(_, sbt, declareShell = declareShell)).mkStrin
       tags: List[String],
       paths: Paths,
       prEventTypes: List[PREventType],
+      permissions: Option[Permissions],
       env: Map[String, String],
       jobs: List[WorkflowJob],
       sbt: String)
       : String = {
 
+    val renderedPermissionsPre = compilePermissions(permissions)
     val renderedEnvPre = compileEnv(env)
     val renderedEnv = if (renderedEnvPre.isEmpty)
       ""
     else
       renderedEnvPre + "\n\n"
+    val renderedPerm = if (renderedPermissionsPre.isEmpty)
+      ""
+    else
+      renderedPermissionsPre + "\n\n"
 
     val renderedTypesPre = prEventTypes.map(compilePREventType).mkString("[", ", ", "]")
     val renderedTypes = if (prEventTypes.sortBy(_.toString) == PREventType.Defaults)
@@ -467,7 +521,7 @@ on:
   push:
     branches: [${branches.map(wrap).mkString(", ")}]$renderedTags$renderedPaths
 
-${renderedEnv}jobs:
+${renderedPerm}${renderedEnv}jobs:
 ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
 """
 }
@@ -504,6 +558,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
     githubWorkflowTargetPaths := Paths.None,
 
     githubWorkflowEnv := Map("GITHUB_TOKEN" -> s"$${{ secrets.GITHUB_TOKEN }}"),
+    githubWorkflowPermissions := None,
     githubWorkflowAddedJobs := Seq())
 
   private lazy val internalTargetAggregation = settingKey[Seq[File]]("Aggregates target directories from all subprojects")
@@ -697,6 +752,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
       githubWorkflowTargetTags.value.toList,
       githubWorkflowTargetPaths.value,
       githubWorkflowPREventTypes.value.toList,
+      githubWorkflowPermissions.value,
       githubWorkflowEnv.value,
       githubWorkflowGeneratedCI.value.toList,
       sbt)
