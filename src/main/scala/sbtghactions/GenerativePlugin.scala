@@ -607,7 +607,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
           UseRef.Public(
             "actions",
             "upload-artifact",
-            "v2"),
+            "v3"),
           name = Some(s"Upload target directories"),
           params = Map(
             "name" -> s"target-$${{ matrix.os }}-$${{ matrix.scala }}-$${{ matrix.java }}",
@@ -628,7 +628,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
             UseRef.Public(
               "actions",
               "download-artifact",
-              "v2"),
+              "v3"),
             name = Some(s"Download target directories ($v)"),
             params = Map(
               "name" -> s"target-$${{ matrix.os }}-$v-$${{ matrix.java }}"))
@@ -656,7 +656,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
           UseRef.Public(
             "actions",
             "cache",
-            "v2"),
+            "v3"),
           name = Some("Cache sbt"),
           params = Map(
             "path" -> Seq(
@@ -667,7 +667,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
               "~/AppData/Local/Coursier/Cache/v1",
               "~/Library/Caches/Coursier/v1"
             ).mkString("\n"),
-            "key" -> s"$${{ runner.os }}-sbt-cache-v2-${hashes.mkString("-")}"
+            "key" -> s"$${{ runner.os }}-sbt-cache-v3-${hashes.mkString("-")}"
           )
         )
       )
