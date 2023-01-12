@@ -537,13 +537,16 @@ class GenerativePluginSpec extends Specification {
       with:
         distribution: temurin
         java-version: 11
+        cache: sbt
 
     - name: Setup GraalVM (graal_20.0.0@8)
       if: matrix.java == 'graal_20.0.0@8'
-      uses: DeLaGuardo/setup-graalvm@5.0
+      uses: graalvm/setup-graalvm@v1
       with:
-        graalvm: 20.0.0
-        java: java8"""
+        version: 20.0.0
+        java-version: 8
+        components: native-image
+        cache: sbt"""
     }
 
     "compile a job with environment variables, conditional, and needs with an sbt step" in {
