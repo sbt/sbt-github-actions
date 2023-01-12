@@ -16,14 +16,19 @@
 
 name := "sbt-github-actions"
 
+lazy val scala212 = "2.12.15"
 ThisBuild / organization := "com.github.sbt"
-ThisBuild / crossScalaVersions := Seq("2.12.15")
+ThisBuild / crossScalaVersions := Seq(scala212)
+ThisBuild / scalaVersion := scala212
 
 // Add windows-latest when https://github.com/sbt/sbt/issues/7082 is resolved
 ThisBuild / githubWorkflowOSes := Seq("ubuntu-latest", "macos-latest")
 ThisBuild / githubWorkflowBuild := Seq(WorkflowStep.Sbt(List("test", "scripted")))
-ThisBuild / githubWorkflowJavaVersions += JavaSpec.graalvm("20.3.1", "11")
-
+ThisBuild / githubWorkflowJavaVersions :=
+  Seq(
+    JavaSpec.temurin("8"),
+    JavaSpec.graalvm("20.3.1", "11"),
+  )
 
 ThisBuild / githubWorkflowTargetTags ++= Seq("v*")
 ThisBuild / githubWorkflowPublishTargetBranches :=
