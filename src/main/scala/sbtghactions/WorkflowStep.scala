@@ -45,8 +45,7 @@ object WorkflowStep {
             "version" -> graalVersion,
             "java-version" -> s"$version",
             "components" -> "native-image",
-            // TODO: https://github.com/marketplace/actions/github-action-for-graalvm
-            // "github-token" -> s"$${{ secrets.GITHUB_TOKEN }}",
+            "github-token" -> s"$${{ secrets.GITHUB_TOKEN }}",
             "cache" -> "sbt"))
 
       case jv @ JavaSpec(dist, version) =>

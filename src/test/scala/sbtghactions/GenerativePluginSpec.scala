@@ -546,6 +546,7 @@ class GenerativePluginSpec extends Specification {
         version: 20.0.0
         java-version: 8
         components: native-image
+        github-token: $${{ secrets.GITHUB_TOKEN }}
         cache: sbt"""
     }
 
