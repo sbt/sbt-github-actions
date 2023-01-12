@@ -16,6 +16,8 @@
 
 package sbtghactions
 
+import scala.collection.immutable.ListMap
+
 sealed trait WorkflowStep extends Product with Serializable {
   def id: Option[String]
   def name: Option[String]
@@ -36,21 +38,26 @@ object WorkflowStep {
     versions map {
       case jv @ JavaSpec(JavaSpec.Distribution.GraalVM(graalVersion), version) =>
         WorkflowStep.Use(
-          UseRef.Public("DeLaGuardo", "setup-graalvm", "5.0"),
+          UseRef.Public("graalvm", "setup-graalvm", "v1"),
           name = Some(s"Setup GraalVM (${jv.render})"),
           cond = Some(s"matrix.java == '${jv.render}'"),
-          params = Map(
-            "graalvm" -> graalVersion,
-            "java" -> s"java$version"))
+          params = ListMap(
+            "version" -> graalVersion,
+            "java-version" -> s"$version",
+            "components" -> "native-image",
+            // TODO: https://github.com/marketplace/actions/github-action-for-graalvm
+            // "github-token" -> s"$${{ secrets.GITHUB_TOKEN }}",
+            "cache" -> "sbt"))
 
       case jv @ JavaSpec(dist, version) =>
         WorkflowStep.Use(
           UseRef.Public("actions", "setup-java", "v3"),
           name = Some(s"Setup Java (${jv.render})"),
           cond = Some(s"matrix.java == '${jv.render}'"),
-          params = Map(
+          params = ListMap(
             "distribution" -> dist.rendering,
-            "java-version" -> version))
+            "java-version" -> version,
+            "cache" -> "sbt"))
     }
 
   val Tmate: WorkflowStep = Use(UseRef.Public("mxschmitt", "action-tmate", "v2"), name = Some("Setup tmate session"))
