@@ -38,7 +38,8 @@ ThisBuild / githubWorkflowPublishTargetBranches :=
   )
 ThisBuild / githubWorkflowPublish := Seq(
   WorkflowStep.Sbt(
-    List("ci-release"),
+    commands = List("ci-release"),
+    name = Some("Publish project"),
     env = Map(
       "PGP_PASSPHRASE" -> "${{ secrets.PGP_PASSPHRASE }}",
       "PGP_SECRET" -> "${{ secrets.PGP_SECRET }}",

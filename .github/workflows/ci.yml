@@ -51,9 +51,9 @@ jobs:
           cache: sbt
 
       - name: Check that workflows are up to date
-        run: sbt ++${{ matrix.scala }} githubWorkflowCheck
+        run: sbt '++${{ matrix.scala }}' githubWorkflowCheck
 
-      - run: sbt ++${{ matrix.scala }} test scripted
+      - run: sbt '++${{ matrix.scala }}' test scripted
 
       - name: Compress target directories
         run: tar cf targets.tar target project/target
@@ -108,9 +108,10 @@ jobs:
           tar xf targets.tar
           rm targets.tar
 
-      - env:
+      - name: Publish project
+        env:
           PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
           PGP_SECRET: ${{ secrets.PGP_SECRET }}
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
-        run: sbt ++${{ matrix.scala }} ci-release
+        run: sbt ci-release

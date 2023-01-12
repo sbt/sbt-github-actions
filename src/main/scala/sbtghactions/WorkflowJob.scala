@@ -20,6 +20,7 @@ final case class WorkflowJob(
     id: String,
     name: String,
     steps: List[WorkflowStep],
+    sbtStepPreamble: List[String] = List(),
     cond: Option[String] = None,
     permissions: Option[Permissions] = None,
     env: Map[String, String] = Map(),
