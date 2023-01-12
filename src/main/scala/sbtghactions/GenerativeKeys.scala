@@ -40,10 +40,12 @@ trait GenerativeKeys {
 
   lazy val githubWorkflowBuildPreamble = settingKey[Seq[WorkflowStep]]("A list of steps to insert after base setup but before compiling and testing (default: [])")
   lazy val githubWorkflowBuildPostamble = settingKey[Seq[WorkflowStep]]("A list of steps to insert after comping and testing but before the end of the build job (default: [])")
+  lazy val githubWorkflowBuildSbtStepPreamble =settingKey[Seq[String]](s"Commands automatically prepended to a WorkflowStep.Sbt (default: ['++$${{ matrix.scala }}'])")
   lazy val githubWorkflowBuild = settingKey[Seq[WorkflowStep]]("A sequence of workflow steps which compile and test the project (default: [Sbt(List(\"test\"))])")
 
   lazy val githubWorkflowPublishPreamble = settingKey[Seq[WorkflowStep]]("A list of steps to insert after base setup but before publishing (default: [])")
   lazy val githubWorkflowPublishPostamble = settingKey[Seq[WorkflowStep]]("A list of steps to insert after publication but before the end of the publish job (default: [])")
+  lazy val githubWorkflowPublishSbtStepPreamble =settingKey[Seq[String]]("Commands automatically prepended to a WorkflowStep.Sbt during publishing (default: [''])")
   lazy val githubWorkflowPublish = settingKey[Seq[WorkflowStep]]("A sequence workflow steps which publishes the project (default: [Sbt(List(\"+publish\"))])")
   lazy val githubWorkflowPublishTargetBranches = settingKey[Seq[RefPredicate]]("A set of branch predicates which will be applied to determine whether the current branch gets a publication stage; if empty, publish will be skipped entirely (default: [== main])")
   lazy val githubWorkflowPublishCond = settingKey[Option[String]]("A set of conditionals to apply to the publish job to further restrict its run (default: [])")

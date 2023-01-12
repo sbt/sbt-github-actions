@@ -127,4 +127,4 @@ jobs:
           rm targets.tar
 
       - name: Publish project
-        run: sbt --client '++${{ matrix.scala }}; +publish'
+        run: sbt --client '+publish'

@@ -228,7 +228,12 @@ ${indent(rendered.mkString("\n"), 1)}"""
     }
   }
 
-  def compileStep(step: WorkflowStep, sbt: String, declareShell: Boolean = false): String = {
+  def compileStep(
+    step: WorkflowStep,
+    sbt: String,
+    sbtStepPreamble: List[String] = WorkflowStep.DefaultSbtStepPreamble,
+    declareShell: Boolean = false
+  ): String = {
     import WorkflowStep._
 
     val renderedName = step.name.map(wrap).map("name: " + _ + "\n").getOrElse("")
@@ -256,16 +261,15 @@ ${indent(rendered.mkString("\n"), 1)}"""
       case sbtStep: Sbt =>
         import sbtStep.commands
 
-        val version = "++${{ matrix.scala }}"
         val sbtClientMode = sbt.matches("""sbt.* --client($| .*)""")
         val safeCommands = if (sbtClientMode)
-          s"'${(version :: commands).mkString("; ")}'"
-        else commands.map { c =>
+          s"'${(sbtStepPreamble ::: commands).mkString("; ")}'"
+        else (sbtStepPreamble ::: commands).map { c =>
           if (c.indexOf(' ') >= 0)
             s"'$c'"
           else
             c
-        }.mkString(version + " ", " ", "")
+        }.mkString(" ")
 
         renderRunBody(
           commands = List(s"$sbt $safeCommands"),
@@ -457,7 +461,7 @@ strategy:${renderedFailFast}
     java:${compileList(job.javas.map(_.render), 3)}${renderedMatrices}
 runs-on: ${runsOn}${renderedEnvironment}${renderedContainer}${renderedPerm}${renderedEnv}
 steps:
-${indent(job.steps.map(compileStep(_, sbt, declareShell = declareShell)).mkString("\n\n"), 1)}"""
+${indent(job.steps.map(compileStep(_, sbt, job.sbtStepPreamble, declareShell = declareShell)).mkString("\n\n"), 1)}"""
 
     s"${job.id}:\n${indent(body, 1)}"
   }
@@ -541,10 +545,12 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
 
     githubWorkflowBuildPreamble := Seq(),
     githubWorkflowBuildPostamble := Seq(),
+    githubWorkflowBuildSbtStepPreamble := WorkflowStep.DefaultSbtStepPreamble,
     githubWorkflowBuild := Seq(WorkflowStep.Sbt(List("test"), name = Some("Build project"))),
 
     githubWorkflowPublishPreamble := Seq(),
     githubWorkflowPublishPostamble := Seq(),
+    githubWorkflowPublishSbtStepPreamble := Seq(),
     githubWorkflowPublish := Seq(WorkflowStep.Sbt(List("+publish"), name = Some("Publish project"))),
     githubWorkflowPublishTargetBranches := Seq(RefPredicate.Equals(Ref.Branch("main"))),
     githubWorkflowPublishCond := None,
@@ -713,6 +719,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
             githubWorkflowPublishPreamble.value.toList :::
             githubWorkflowPublish.value.toList :::
             githubWorkflowPublishPostamble.value.toList,
+          sbtStepPreamble = githubWorkflowPublishSbtStepPreamble.value.toList,
           cond = Some(s"github.event_name != 'pull_request' && $publicationCond"),
           scalas = List(scalaVersion.value),
           javas = List(githubWorkflowJavaVersions.value.head),
@@ -730,6 +737,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
             githubWorkflowBuild.value.toList :::
             githubWorkflowBuildPostamble.value.toList :::
             uploadStepsOpt,
+          sbtStepPreamble = githubWorkflowBuildSbtStepPreamble.value.toList,
           oses = githubWorkflowOSes.value.toList,
           scalas = githubWorkflowScalaVersions.value.toList,
           javas = githubWorkflowJavaVersions.value.toList,

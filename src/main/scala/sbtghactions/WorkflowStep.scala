@@ -25,6 +25,8 @@ sealed trait WorkflowStep extends Product with Serializable {
 
 object WorkflowStep {
 
+  val DefaultSbtStepPreamble: List[String] = List(s"++$${{ matrix.scala }}")
+
   val CheckoutFull: WorkflowStep = Use(
     UseRef.Public("actions", "checkout", "v3"),
     name = Some("Checkout current branch (full)"),

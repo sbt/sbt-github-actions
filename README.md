@@ -43,7 +43,12 @@ ThisBuild / githubWorkflowTargetTags ++= Seq("v*")
 ThisBuild / githubWorkflowPublishTargetBranches :=
   Seq(RefPredicate.StartsWith(Ref.Tag("v")))
 
-ThisBuild / githubWorkflowPublish := Seq(WorkflowStep.Sbt(List("ci-release")))
+ThisBuild / githubWorkflowPublish := Seq(
+  WorkflowStep.Sbt(
+    commands = List("ci-release"),
+    name = Some("Publish project"),
+  )
+)
 ```
 
 This is assuming that you *only* wish to publish tags. If you also wish to publish snapshots upon successful main builds, use the following `githubWorkflowPublishTargetBranches` declaration:
@@ -61,7 +66,8 @@ Note the use of `+=` rather than `:=`.
 ```scala
 ThisBuild / githubWorkflowPublish := Seq(
   WorkflowStep.Sbt(
-    List("ci-release"),
+    commands = List("ci-release"),
+    name = Some("Publish project"),
     env = Map(
       "PGP_PASSPHRASE" -> "${{ secrets.PGP_PASSPHRASE }}",
       "PGP_SECRET" -> "${{ secrets.PGP_SECRET }}",
@@ -118,7 +124,8 @@ Any and all settings which affect the behavior of the generative plugin should b
 - `githubWorkflowBuildMatrixExclusions` : `Seq[MatrixExclude]` – A list of [matrix *exclusions*](https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions#example-excluding-configurations-from-a-matrix). This is useful for when there is a matrix expansion (or set of expansions) which you wish to filter out of the set. Note that exclusions are applied *before* inclusions, allowing you to subtract jobs before re-adding them. Also – and the documentation isn't clear on this point – it is possible that the matching must cover the full set of matrix keys and cannot contain partial values. Defaults to empty.
 - `githubWorkflowBuildPreamble` : `Seq[WorkflowStep]` – Contains a list of steps which will be inserted into the `build` job in the **ci.yml** workflow *after* setup but *before* the `sbt test` invocation. Defaults to empty.
 - `githubWorkflowBuildPostamble` : `Seq[WorkflowStep]` – Similar to the `Preamble` variant, this contains a list of steps which will be added to the `build` job *after* the `sbt test` invocation but before cleanup. Defaults to empty.
-- `githubWorkflowBuild` : `Seq[WorkflowStep]` – The steps which invoke sbt (or whatever else you want) to build and test your project. This defaults to just `[sbt test]`, but can be overridden to anything. For example, sbt plugin projects probably want to redefine this to be `Seq(WorkflowStep.Sbt(List("test", "scripted")))`, which would run the `test` and `scripted` sbt tasks, in order. Note that all uses of `WorkflowStep.Sbt` are compiled using the configured `githubWorkflowSbtCommand` invocation, and properly configured with respect to the build matrix-selected Scala version.
+- `githubWorkflowBuildSbtStepPreamble` : `Seq[String]` - See below.
+- `githubWorkflowBuild` : `Seq[WorkflowStep]` – The steps which invoke sbt (or whatever else you want) to build and test your project. This defaults to just `[sbt test]`, but can be overridden to anything. For example, sbt plugin projects probably want to redefine this to be `Seq(WorkflowStep.Sbt(List("test", "scripted")))`, which would run the `test` and `scripted` sbt tasks, in order. Note that all uses of `WorkflowStep.Sbt` are compiled using the configured `githubWorkflowSbtCommand` invocation, and prepended with `githubWorkflowBuildSbtStepPreamble` (default: `[++{matrix.scala}]`).
 - `githubWorkflowJavaVersions` : `Seq[JavaSpec]` – A list of Java versions to be used for the build job. The publish job will use the *first* of these versions. Defaults to `JavaSpec.temurin("11")`).
 - `githubWorkflowScalaVersions` : `Seq[String]` – A list of Scala versions which will be used to `build` your project. Defaults to `crossScalaVersions` in `build`, and simply `scalaVersion` in `publish`.
 - `githubWorkflowOSes` : `Seq[String]` – A list of operating systems, which will be ultimately passed to [the `runs-on:` directive](https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idruns-on), on which to `build` your project. Defaults to `ubuntu-latest`. Note that, regardless of the value of this setting, only `ubuntu-latest` will be used for the `publish` job. This setting only affects `build`.
@@ -128,6 +135,7 @@ Any and all settings which affect the behavior of the generative plugin should b
 
 - `githubWorkflowPublishPreamble` : `Seq[WorkflowStep]` – Similar to `githubWorkflowBuildPreamble`, this contains a series of steps which will be inserted into the `publish` job *after* setup but *before* the publication step. Defaults to empty.
 - `githubWorkflowPublishPostamble` : `Seq[WorkflowStep]` – Similar to the `Preamble` variant, this contains a series of steps which will be inserted into the `publish` job after publication has completed, but before cleanup. Defaults to empty.
+- `githubWorkflowPublishSbtStepPreamble` : `Seq[String]` - Defaults to `Nil`. This opts out of `++{matrix.scala}` preamble during publishing since publishing step typically includes cross building.
 - `githubWorkflowPublish` : `Seq[WorkflowStep]` – The steps which will be invoked to publish your project. This defaults to `[sbt +publish]`.
 - `githubWorkflowPublishTargetBranches` : `Seq[RefPredicate]` – A list of branch predicates which will be applied to determine whether the `publish` job will run. Defaults to just `== main`. The supports all of the predicate types currently [allowed by GitHub Actions](https://help.github.com/en/actions/reference/context-and-expression-syntax-for-github-actions#functions). This exists because, while you usually want to run the `build` job on *every* branch, `publish` is obviously much more limited in applicability. If this list is empty, then the `publish` job will be omitted entirely from the workflow.
 - `githubWorkflowPublishCond` : `Option[String]` – This is an optional added conditional check on the publish branch, which must be defined using [GitHub Actions expression syntax](https://help.github.com/en/actions/reference/context-and-expression-syntax-for-github-actions#about-contexts-and-expressions), which will be conjoined to determine the `if:` predicate on the `publish` job. Defaults to `None`.
