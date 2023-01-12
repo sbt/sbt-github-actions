@@ -54,6 +54,7 @@ jobs:
           version: 21.1.0
           java-version: 8
           components: native-image
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           cache: sbt
 
       - name: Check that workflows are up to date
@@ -104,6 +105,7 @@ jobs:
           version: 21.1.0
           java-version: 8
           components: native-image
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           cache: sbt
 
       - name: Download target directories (2.13.6)
