@@ -62,7 +62,7 @@ enablePlugins(SbtPlugin)
 scriptedLaunchOpts ++= Seq("-Dplugin.version=" + version.value)
 scriptedBufferLog := true
 
-ThisBuild / homepage := Some(url("https://github.com/djspiewak/sbt-github-actions"))
+ThisBuild / homepage := Some(url("https://github.com/sbt/sbt-github-actions"))
 ThisBuild / startYear := Some(2020)
 ThisBuild / dynverSonatypeSnapshots := true
 ThisBuild / developers := List(
