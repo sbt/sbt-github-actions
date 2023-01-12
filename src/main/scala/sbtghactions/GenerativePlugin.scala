@@ -564,7 +564,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
     githubWorkflowPublishCond := None,
     githubWorkflowPublishTimeout := None,
 
-    githubWorkflowJavaVersions := Seq(JavaSpec.temurin("11")),
+    githubWorkflowJavaVersions := Seq(JavaSpec.temurin("8")),
     githubWorkflowScalaVersions := crossScalaVersions.value,
     githubWorkflowOSes := Seq("ubuntu-latest"),
     githubWorkflowDependencyPatterns := Seq("**/*.sbt", "project/build.properties"),

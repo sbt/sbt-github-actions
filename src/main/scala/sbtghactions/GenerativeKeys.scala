@@ -54,7 +54,7 @@ trait GenerativeKeys {
   lazy val githubWorkflowPublishCond = settingKey[Option[String]]("A set of conditionals to apply to the publish job to further restrict its run (default: [])")
   lazy val githubWorkflowPublishTimeout = settingKey[Option[FiniteDuration]]("The maximum duration to let the publish job run before GitHub automatically cancels it. (default: None)")
 
-  lazy val githubWorkflowJavaVersions = settingKey[Seq[JavaSpec]]("A list of Java versions to be used for the build job. The publish job will use the *first* of these versions. (default: [temurin@11])")
+  lazy val githubWorkflowJavaVersions = settingKey[Seq[JavaSpec]]("A list of Java versions to be used for the build job. The publish job will use the *first* of these versions. (default: [temurin@8])")
   lazy val githubWorkflowScalaVersions = settingKey[Seq[String]]("A list of Scala versions on which to build the project (default: crossScalaVersions.value)")
   lazy val githubWorkflowOSes = settingKey[Seq[String]]("A list of OS names (default: [ubuntu-latest])")
 
