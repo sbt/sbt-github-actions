@@ -22,7 +22,7 @@ ThisBuild / crossScalaVersions := Seq("2.12.15")
 // Add windows-latest when https://github.com/sbt/sbt/issues/7082 is resolved
 ThisBuild / githubWorkflowOSes := Seq("ubuntu-latest", "macos-latest")
 ThisBuild / githubWorkflowBuild := Seq(WorkflowStep.Sbt(List("test", "scripted")))
-ThisBuild / githubWorkflowJavaVersions += JavaSpec.graalvm("20.3.1", "11")
+ThisBuild / githubWorkflowJavaVersions := List(JavaSpec.temurin("17"), JavaSpec.graalvm("22.3.0", "17"))
 
 
 ThisBuild / githubWorkflowTargetTags ++= Seq("v*")
