@@ -631,16 +631,16 @@ ${indentOnce(workflow.jobs.map(compileJob(_, sbt)).mkString("\n\n"))}
       Workflow(
       "Continuous Integration",
         List(
-          WebhookEvent.Push(
-            githubWorkflowTargetBranches.value.toList,
-            githubWorkflowTargetTags.value.toList,
-            githubWorkflowTargetPaths.value
-            ),
           WebhookEvent.PullRequest(
             githubWorkflowTargetBranches.value.toList,
             Nil,
             githubWorkflowTargetPaths.value,
             githubWorkflowPREventTypes.value.toList
+            ),
+          WebhookEvent.Push(
+            githubWorkflowTargetBranches.value.toList,
+            githubWorkflowTargetTags.value.toList,
+            githubWorkflowTargetPaths.value
             )
           ),
         githubWorkflowGeneratedCI.value.toList,
