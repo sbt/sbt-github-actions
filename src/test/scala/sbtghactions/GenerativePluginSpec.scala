@@ -168,6 +168,9 @@ class GenerativePluginSpec extends Specification {
         |  push:
         |    branches: [main, backport/v*]
         |
+        |permissions:
+        |  id-token: write
+        |
         |env:
         |  GITHUB_TOKEN: $${{ secrets.GITHUB_TOKEN }}
         |
@@ -461,7 +464,8 @@ class GenerativePluginSpec extends Specification {
           List("echo hi"),
           name = Some("nomenclature")),
         "",
-        true) mustEqual "- name: nomenclature\n  shell: bash\n  run: echo hi"
+        Nil,
+        declareShell = true) mustEqual "- name: nomenclature\n  shell: bash\n  run: echo hi"
     }
 
     "omit shell declaration on Use step" in {
@@ -472,27 +476,35 @@ class GenerativePluginSpec extends Specification {
             "slug",
             "v0")),
         "",
-        true) mustEqual "- uses: repo/slug@v0"
+        Nil,
+        declareShell = true) mustEqual "- uses: repo/slug@v0"
     }
 
     "preserve wonky version in Use" in {
-      compileStep(Use(UseRef.Public("hello", "world", "v4.0.0")), "", true) mustEqual "- uses: hello/world@v4.0.0"
+      compileStep(Use(UseRef.Public("hello", "world", "v4.0.0")), "", Nil, declareShell = true) mustEqual "- uses: hello/world@v4.0.0"
     }
 
     "drop Use version prefix on anything that doesn't start with a number" in {
-      compileStep(Use(UseRef.Public("hello", "world", "main")), "", true) mustEqual "- uses: hello/world@main"
+      compileStep(Use(UseRef.Public("hello", "world", "main")), "", Nil, declareShell = true) mustEqual "- uses: hello/world@main"
     }
 
     "compile sbt using the command provided" in {
       compileStep(
         Sbt(List("show scalaVersion", "compile", "test")),
-        "$SBT") mustEqual s"- run: $$SBT ++$${{ matrix.scala }} 'show scalaVersion' compile test"
+        "$SBT") mustEqual s"- run: $$SBT '++$${{ matrix.scala }}' 'show scalaVersion' compile test"
+    }
+
+    "compile sbt without switch command" in {
+      compileStep(
+        Sbt(List("ci-release")),
+        "$SBT",
+        sbtStepPreamble = Nil) mustEqual s"- run: $$SBT ci-release"
     }
 
     "compile sbt with parameters" in {
       compileStep(
         Sbt(List("compile", "test"), params = Map("abc" -> "def", "cafe" -> "@42")),
-        "$SBT") mustEqual s"""- run: $$SBT ++$${{ matrix.scala }} compile test
+        "$SBT") mustEqual s"""- run: $$SBT '++$${{ matrix.scala }}' compile test
                          |  with:
                          |    abc: def
                          |    cafe: '@42'""".stripMargin
@@ -593,7 +605,7 @@ class GenerativePluginSpec extends Specification {
     - run: echo hello
 
     - name: Checkout current branch (fast)
-      uses: actions/checkout@v2"""
+      uses: actions/checkout@v3"""
     }
 
     "compile a simple job that references a reusable workflow" in {
@@ -667,17 +679,21 @@ class GenerativePluginSpec extends Specification {
   steps:
     - name: Setup Java (temurin@11)
       if: matrix.java == 'temurin@11'
-      uses: actions/setup-java@v2
+      uses: actions/setup-java@v3
       with:
         distribution: temurin
         java-version: 11
+        cache: sbt
 
     - name: Setup GraalVM (graal_20.0.0@8)
       if: matrix.java == 'graal_20.0.0@8'
-      uses: DeLaGuardo/setup-graalvm@5.0
+      uses: graalvm/setup-graalvm@v1
       with:
-        graalvm: 20.0.0
-        java: java8"""
+        version: 20.0.0
+        java-version: 8
+        components: native-image
+        github-token: $${{ secrets.GITHUB_TOKEN }}
+        cache: sbt"""
     }
 
     "compile a job with environment variables, conditional, and needs with an sbt step" in {
@@ -687,6 +703,7 @@ class GenerativePluginSpec extends Specification {
           "Moooo",
           List(
             WorkflowStep.Sbt(List("+compile"))),
+          sbtStepPreamble = WorkflowStep.DefaultSbtStepPreamble,
           env = Map("not" -> "now"),
           cond = Some("boy != girl"),
           needs = List("unmet")),
@@ -705,7 +722,7 @@ class GenerativePluginSpec extends Specification {
   env:
     not: now
   steps:
-    - run: csbt ++$${{ matrix.scala }} +compile"""
+    - run: csbt '++$${{ matrix.scala }}' +compile"""
     }
 
     "compile a job with an environment" in {
@@ -728,7 +745,59 @@ class GenerativePluginSpec extends Specification {
   runs-on: $${{ matrix.os }}
   environment: release
   steps:
-    - run: csbt ++$${{ matrix.scala }} ci-release"""
+    - run: csbt ci-release"""
+    }
+
+    "compile a job with specific permissions" in {
+      val results = compileJob(
+        WorkflowJob(
+          "publish",
+          "Publish Release",
+          List(
+            WorkflowStep.Sbt(List("ci-release"))),
+          permissions = Some(
+            Permissions.Specify(Map(
+              PermissionScope.IdToken -> PermissionValue.Write
+            ))
+          )),
+        "csbt")
+
+      results mustEqual s"""publish:
+  name: Publish Release
+  strategy:
+    matrix:
+      os: [ubuntu-latest]
+      scala: [2.13.6]
+      java: [temurin@11]
+  runs-on: $${{ matrix.os }}
+  permissions:
+    id-token: write
+  steps:
+    - run: csbt ci-release"""
+    }
+
+    "compile a job with read-all permissions" in {
+      val results = compileJob(
+        WorkflowJob(
+          "publish",
+          "Publish Release",
+          List(
+            WorkflowStep.Sbt(List("ci-release"))),
+          permissions = Some(Permissions.ReadAll)
+        ),
+        "csbt")
+
+      results mustEqual s"""publish:
+  name: Publish Release
+  strategy:
+    matrix:
+      os: [ubuntu-latest]
+      scala: [2.13.6]
+      java: [temurin@11]
+  runs-on: $${{ matrix.os }}
+  permissions: read-all
+  steps:
+    - run: csbt ci-release"""
     }
 
     "compile a job with an environment containing a url" in {
@@ -753,7 +822,7 @@ class GenerativePluginSpec extends Specification {
     name: release
     url: 'https://github.com'
   steps:
-    - run: csbt ++$${{ matrix.scala }} ci-release"""
+    - run: csbt ci-release"""
     }
 
     "compile a job with additional matrix components" in {
@@ -782,7 +851,7 @@ class GenerativePluginSpec extends Specification {
     - run: echo $${{ matrix.test }}
 
     - name: Checkout current branch (fast)
-      uses: actions/checkout@v2"""
+      uses: actions/checkout@v3"""
     }
 
     "compile a job with extra runs-on labels" in {
@@ -1001,7 +1070,7 @@ class GenerativePluginSpec extends Specification {
     - run: echo hello
 
     - name: Checkout current branch (fast)
-      uses: actions/checkout@v2"""
+      uses: actions/checkout@v3"""
     }
   }
 

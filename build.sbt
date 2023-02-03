@@ -16,29 +16,46 @@
 
 name := "sbt-github-actions"
 
-ThisBuild / baseVersion := "0.14"
+lazy val scala212 = "2.12.15"
+ThisBuild / organization := "com.github.sbt"
+ThisBuild / crossScalaVersions := Seq(scala212)
+ThisBuild / scalaVersion := scala212
 
-ThisBuild / organization := "com.codecommit"
-ThisBuild / publishGithubUser := "djspiewak"
-ThisBuild / publishFullName := "Daniel Spiewak"
-ThisBuild / homepage := Some(url("https://github.com/djspiewak/sbt-github-actions"))
-ThisBuild / startYear := Some(2020)
-ThisBuild / endYear := Some(2021)
-
-ThisBuild / crossScalaVersions := Seq("2.12.15")
-
-ThisBuild / githubWorkflowOSes := Seq("ubuntu-latest", "macos-latest", "windows-latest")
+// Add windows-latest when https://github.com/sbt/sbt/issues/7082 is resolved
+ThisBuild / githubWorkflowOSes := Seq("ubuntu-latest", "macos-latest")
 ThisBuild / githubWorkflowBuild := Seq(WorkflowStep.Sbt(List("test", "scripted")))
-ThisBuild / githubWorkflowJavaVersions += JavaSpec.graalvm("20.3.1", "11")
+ThisBuild / githubWorkflowJavaVersions :=
+  Seq(
+    JavaSpec.temurin("8"),
+    JavaSpec.graalvm("20.3.1", "11"),
+  )
 
-// dummy publication just to test that setup works
+ThisBuild / githubWorkflowTargetTags ++= Seq("v*")
 ThisBuild / githubWorkflowPublishTargetBranches :=
-  Seq(RefPredicate.Equals(Ref.Branch("main")))
-
-ThisBuild / githubWorkflowPublish := Seq()
+  Seq(
+    RefPredicate.StartsWith(Ref.Tag("v")),
+    RefPredicate.Equals(Ref.Branch("main"))
+  )
+ThisBuild / githubWorkflowPublish := Seq(
+  WorkflowStep.Sbt(
+    commands = List("ci-release"),
+    name = Some("Publish project"),
+    env = Map(
+      "PGP_PASSPHRASE" -> "${{ secrets.PGP_PASSPHRASE }}",
+      "PGP_SECRET" -> "${{ secrets.PGP_SECRET }}",
+      "SONATYPE_PASSWORD" -> "${{ secrets.SONATYPE_PASSWORD }}",
+      "SONATYPE_USERNAME" -> "${{ secrets.SONATYPE_USERNAME }}"
+    )
+  )
+)
+ThisBuild / version := {
+  val orig = (ThisBuild / version).value
+  if (orig.endsWith("-SNAPSHOT")) orig.split("""\+""").head + "-SNAPSHOT"
+  else orig
+}
 
 sbtPlugin := true
-sbtVersion := "1.5.5"
+pluginCrossBuild / sbtVersion := "1.5.5"
 
 publishMavenStyle := true
 
@@ -50,3 +67,27 @@ enablePlugins(SbtPlugin)
 
 scriptedLaunchOpts ++= Seq("-Dplugin.version=" + version.value)
 scriptedBufferLog := true
+
+ThisBuild / homepage := Some(url("https://github.com/sbt/sbt-github-actions"))
+ThisBuild / startYear := Some(2020)
+ThisBuild / dynverSonatypeSnapshots := true
+ThisBuild / developers := List(
+  Developer(
+    id = "djspiewak",
+    name = "Daniel Spiewak",
+    email = "@djspiewak",
+    url = url("https://github.com/djspiewak")
+  ),
+)
+ThisBuild / description := "An sbt plugin which makes it easier to build with GitHub Actions"
+ThisBuild / licenses := List("Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0"))
+ThisBuild / pomIncludeRepository := { _ =>
+  false
+}
+ThisBuild / publishTo := {
+  val nexus = "https://oss.sonatype.org/"
+  if (isSnapshot.value) Some("snapshots" at nexus + "content/repositories/snapshots")
+  else Some("releases" at nexus + "service/local/staging/deploy/maven2")
+}
+ThisBuild / publishMavenStyle := true
+Global / excludeLintKeys ++= Set(pomIncludeRepository, publishMavenStyle)

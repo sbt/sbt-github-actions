@@ -186,7 +186,54 @@ s"""$prefix:
 ${indent(rendered.mkString("\n"), 1)}"""
     }
 
-  def compileStep(step: WorkflowStep, sbt: String, declareShell: Boolean = false, scalaMatrixBuild: Boolean = true): String = {
+  def compilePermissionScope(permissionScope: PermissionScope): String = permissionScope match {
+    case PermissionScope.Actions => "actions"
+    case PermissionScope.Checks => "checks"
+    case PermissionScope.Contents => "contents"
+    case PermissionScope.Deployments => "deployments"
+    case PermissionScope.IdToken => "id-token"
+    case PermissionScope.Issues => "issues"
+    case PermissionScope.Discussions => "discussions"
+    case PermissionScope.Packages => "packages"
+    case PermissionScope.Pages => "pages"
+    case PermissionScope.PullRequests => "pull-requests"
+    case PermissionScope.RepositoryProjects => "repository-projects"
+    case PermissionScope.SecurityEvents => "security-events"
+    case PermissionScope.Statuses => "statuses"
+  }
+
+  def compilePermissionsValue(permissionValue: PermissionValue): String = permissionValue match {
+    case PermissionValue.Read => "read"
+    case PermissionValue.Write => "write"
+    case PermissionValue.None => "none"
+  }
+
+  def compilePermissions(permissions: Option[Permissions]): String = {
+    permissions match {
+      case Some(perms) =>
+        val rendered = perms match {
+          case Permissions.ReadAll => " read-all"
+          case Permissions.WriteAll => " write-all"
+          case Permissions.None => " {}"
+          case Permissions.Specify(permMap) =>
+            val map = permMap.map{
+              case (key, value) =>
+                s"${compilePermissionScope(key)}: ${compilePermissionsValue(value)}"
+            }
+            "\n" + indent(map.mkString("\n"), 1)
+        }
+        s"permissions:$rendered"
+
+      case None => ""
+    }
+  }
+
+  def compileStep(
+    step: WorkflowStep,
+    sbt: String,
+    sbtStepPreamble: List[String] = WorkflowStep.DefaultSbtStepPreamble,
+    declareShell: Boolean = false
+  , scalaMatrixBuild: Boolean = true): String = {
     import WorkflowStep._
 
     val renderedName = step.name.map(wrap).map("name: " + _ + "\n").getOrElse("")
@@ -217,13 +264,13 @@ ${indent(rendered.mkString("\n"), 1)}"""
         val version = if (scalaMatrixBuild) "++${{ matrix.scala }}" else ""
         val sbtClientMode = sbt.matches("""sbt.* --client($| .*)""")
         val safeCommands = if (sbtClientMode)
-          s"'${(version :: commands).mkString("; ")}'"
-        else commands.map { c =>
+          s"'${(sbtStepPreamble ::: commands).mkString("; ")}'"
+        else (sbtStepPreamble ::: commands).map { c =>
           if (c.indexOf(' ') >= 0)
             s"'$c'"
           else
             c
-        }.mkString(version + " ", " ", "")
+        }.mkString(" ")
 
         renderRunBody(
           commands = List(s"$sbt $safeCommands"),
@@ -345,6 +392,12 @@ ${indent(rendered.mkString("\n"), 1)}"""
     else
       "\n" + renderedEnvPre
 
+    val renderedPermPre = compilePermissions(job.permissions)
+    val renderedPerm = if (renderedPermPre.isEmpty)
+      ""
+    else
+      "\n" + renderedPermPre
+
     List("include", "exclude") foreach { key =>
       if (job.matrixAdds.contains(key)) {
         sys.error(s"key `$key` is reserved and cannot be used in an Actions matrix definition")
@@ -417,6 +470,18 @@ ${indent(rendered.mkString("\n"), 1)}"""
 
     val renderedFailFast = job.matrixFailFast.fold("")("\n  fail-fast: " + _)
 
+      //val body = s"""name: ${wrap(job.name)}${renderedNeeds}${renderedCond}
+      //strategy:${renderedFailFast}
+      //  matrix:
+      //    os:${compileList(job.oses, 3)}
+      //    scala:${compileList(job.scalas, 3)}
+      //    java:${compileList(job.javas.map(_.render), 3)}${renderedMatrices}
+      //runs-on: ${runsOn}${renderedEnvironment}${renderedContainer}${renderedPerm}${renderedEnv}
+      //steps:
+      //${indent(job.steps.map(compileStep(_, sbt, job.sbtStepPreamble, declareShell = declareShell)).mkString("\n\n"), 1)}"""
+      //
+      //    s"${job.id}:\n${indent(body, 1)}"
+
     val renderedOses =
       if (job.oses.isEmpty) "" else s"\n    os:${compileList(job.oses, 3)}"
     val renderedScalas =
@@ -457,13 +522,28 @@ $renderedSteps"""
     s"${job.id}:\n${indent(body, 1)}"
   }
 
+//compileWorkflow(
+//      "Continuous Integration",
+//      githubWorkflowTargetBranches.value.toList,
+//      githubWorkflowTargetTags.value.toList,
+//      githubWorkflowTargetPaths.value,
+//      githubWorkflowPREventTypes.value.toList,
+//      githubWorkflowPermissions.value,
+//      githubWorkflowEnv.value,
+//      githubWorkflowGeneratedCI.value.toList,
+//      sbt)
   def compileWorkflow(workflow: Workflow, sbt: String): String = {
 
+    val renderedPermissionsPre = compilePermissions(permissions)
     val renderedEnvPre = compileEnv(workflow.env)
     val renderedEnv = if (renderedEnvPre.isEmpty)
       ""
     else
       renderedEnvPre + "\n\n"
+    val renderedPerm = if (renderedPermissionsPre.isEmpty)
+      ""
+    else
+      renderedPermissionsPre + "\n\n"
 
 
     s"""# This file was automatically generated by sbt-github-actions using the
@@ -475,7 +555,7 @@ $renderedSteps"""
 
 ${workflow.render}
 
-${renderedEnv}jobs:
+${renderedPerm}${renderedEnv}jobs:
 ${indent(workflow.jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
 """
 }
@@ -495,10 +575,12 @@ ${indent(workflow.jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
 
     githubWorkflowBuildPreamble := Seq(),
     githubWorkflowBuildPostamble := Seq(),
+    githubWorkflowBuildSbtStepPreamble := WorkflowStep.DefaultSbtStepPreamble,
     githubWorkflowBuild := Seq(WorkflowStep.Sbt(List("test"), name = Some("Build project"))),
 
     githubWorkflowPublishPreamble := Seq(),
     githubWorkflowPublishPostamble := Seq(),
+    githubWorkflowPublishSbtStepPreamble := Seq(),
     githubWorkflowPublish := Seq(WorkflowStep.Sbt(List("+publish"), name = Some("Publish project"))),
     githubWorkflowPublishTargetBranches := Seq(RefPredicate.Equals(Ref.Branch("main"))),
     githubWorkflowPublishCond := None,
@@ -512,6 +594,7 @@ ${indent(workflow.jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
     githubWorkflowTargetPaths := Paths.None,
 
     githubWorkflowEnv := Map("GITHUB_TOKEN" -> s"$${{ secrets.GITHUB_TOKEN }}"),
+    githubWorkflowPermissions := None,
     githubWorkflowAddedJobs := Seq())
 
   private lazy val internalTargetAggregation = settingKey[Seq[File]]("Aggregates target directories from all subprojects")
@@ -560,7 +643,7 @@ ${indent(workflow.jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
           UseRef.Public(
             "actions",
             "upload-artifact",
-            "v2"),
+            "v3"),
           name = Some(s"Upload target directories"),
           params = Map(
             "name" -> s"target-$${{ matrix.os }}-$${{ matrix.scala }}-$${{ matrix.java }}",
@@ -581,7 +664,7 @@ ${indent(workflow.jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
             UseRef.Public(
               "actions",
               "download-artifact",
-              "v2"),
+              "v3"),
             name = Some(s"Download target directories ($v)"),
             params = Map(
               "name" -> s"target-$${{ matrix.os }}-$v-$${{ matrix.java }}"))
@@ -599,32 +682,7 @@ ${indent(workflow.jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
       }
     },
 
-    githubWorkflowGeneratedCacheSteps := {
-      val hashes = githubWorkflowDependencyPatterns.value map { glob =>
-        s"$${{ hashFiles('$glob') }}"
-      }
-
-      Seq(
-        WorkflowStep.Use(
-          UseRef.Public(
-            "actions",
-            "cache",
-            "v2"),
-          name = Some("Cache sbt"),
-          params = Map(
-            "path" -> Seq(
-              "~/.sbt",
-              "~/.ivy2/cache",
-              "~/.coursier/cache/v1",
-              "~/.cache/coursier/v1",
-              "~/AppData/Local/Coursier/Cache/v1",
-              "~/Library/Caches/Coursier/v1"
-            ).mkString("\n"),
-            "key" -> s"$${{ runner.os }}-sbt-cache-v2-${hashes.mkString("-")}"
-          )
-        )
-      )
-    },
+    githubWorkflowGeneratedCacheSteps := Nil,
 
     githubWorkflowJobSetup := {
       val autoCrlfOpt = if (githubWorkflowOSes.value.exists(_.contains("windows"))) {
@@ -669,6 +727,7 @@ ${indent(workflow.jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
             githubWorkflowPublishPreamble.value.toList :::
             githubWorkflowPublish.value.toList :::
             githubWorkflowPublishPostamble.value.toList,
+          sbtStepPreamble = githubWorkflowPublishSbtStepPreamble.value.toList,
           cond = Some(s"github.event_name != 'pull_request' && $publicationCond"),
           scalas = List(scalaVersion.value),
           javas = List(githubWorkflowJavaVersions.value.head),
@@ -686,6 +745,7 @@ ${indent(workflow.jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
             githubWorkflowBuild.value.toList :::
             githubWorkflowBuildPostamble.value.toList :::
             uploadStepsOpt,
+          sbtStepPreamble = githubWorkflowBuildSbtStepPreamble.value.toList,
           oses = githubWorkflowOSes.value.toList,
           scalas = githubWorkflowScalaVersions.value.toList,
           javas = githubWorkflowJavaVersions.value.toList,
@@ -702,6 +762,16 @@ ${indent(workflow.jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
     } else {
       githubWorkflowSbtCommand.value
     }
+    //compileWorkflow(
+    //      "Continuous Integration",
+    //      githubWorkflowTargetBranches.value.toList,
+    //      githubWorkflowTargetTags.value.toList,
+    //      githubWorkflowTargetPaths.value,
+    //      githubWorkflowPREventTypes.value.toList,
+    //      githubWorkflowPermissions.value,
+    //      githubWorkflowEnv.value,
+    //      githubWorkflowGeneratedCI.value.toList,
+    //      sbt)
     compileWorkflow(
       Workflow(
       "Continuous Integration",
