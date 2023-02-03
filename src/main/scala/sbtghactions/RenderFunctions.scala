@@ -82,8 +82,9 @@ object RenderFunctions {
 
           s"""$key: ${wrap(value)}"""
       }
-      s"""\n$prefix:
-${indent(rendered.mkString("\n"), 1)}"""
+      s"""
+$prefix:
+${indentOnce(rendered.mkString("\n"))}"""
     }
 
 
@@ -92,6 +93,13 @@ ${indent(rendered.mkString("\n"), 1)}"""
 
     def apply(property: String): String =
       re.replaceAllIn(property.head.toLower +: property.tail, { m => s"_${m.matched.toLowerCase}" })
+  }
+
+  object KebabCase {
+    private val re = "[A-Z]+".r
+
+    def apply(property: String): String =
+      re.replaceAllIn(property.head.toLower +: property.tail, { m => s"-${m.matched.toLowerCase}" })
   }
 
 }

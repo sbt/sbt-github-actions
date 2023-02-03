@@ -16,16 +16,28 @@
 
 package sbtghactions
 
-import sbtghactions.RenderFunctions.{indentOnce, wrap}
+import sbtghactions.RenderFunctions.*
 
 final case class Workflow(
     name: String,
     ons: Seq[TriggerEvent],
     jobs: Seq[WorkflowJobBase],
-    env: Map[String, String]) {
+    env: Map[String, String],
+    permissions: Option[Permissions],
+) {
 
   def render: String =
     s"""|name: ${wrap(name)}
         |
-        |on:\n${ons.map(_.render).map(indentOnce).mkString("\n")}""".stripMargin
+        |on:\n$renderOns$renderPermissions$renderEnv""".stripMargin
+
+  private def renderOns =
+    ons.map(_.render).map(indentOnce).mkString("\n")
+
+  private def renderPermissions =
+    permissions.map(_.render).mkString
+
+  private def renderEnv: String =
+    renderMap(env, "env")
+
 }

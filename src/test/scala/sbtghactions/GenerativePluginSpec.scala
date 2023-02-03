@@ -41,9 +41,8 @@ class GenerativePluginSpec extends Specification {
         |    branches: [main]
         |  push:
         |    branches: [main]
-        |
         |jobs:
-        |${" " * 2}
+        |
         |""".stripMargin
 
       compileWorkflow(
@@ -55,6 +54,7 @@ class GenerativePluginSpec extends Specification {
             ),
           Nil,
           Map(),
+          None,
           ),
         "sbt") mustEqual expected
     }
@@ -69,9 +69,8 @@ class GenerativePluginSpec extends Specification {
         |  push:
         |    branches: [main]
         |    tags: [howdy]
-        |
         |jobs:
-        |${" " * 2}
+        |
         |""".stripMargin
 
       compileWorkflow(
@@ -83,6 +82,7 @@ class GenerativePluginSpec extends Specification {
             ),
           Nil,
           Map(),
+          None,
           ),
         "sbt") mustEqual expected
     }
@@ -97,9 +97,8 @@ class GenerativePluginSpec extends Specification {
         |    types: [ready_for_review, review_requested, opened]
         |  push:
         |    branches: [main]
-        |
         |jobs:
-        |${" " * 2}
+        |
         |""".stripMargin
 
       compileWorkflow(
@@ -114,6 +113,7 @@ class GenerativePluginSpec extends Specification {
             WebhookEvent.Push(List("main"), Nil, Paths.None)),
           Nil,
           Map(),
+          None,
           ),
         "sbt") mustEqual expected
     }
@@ -125,10 +125,8 @@ class GenerativePluginSpec extends Specification {
           |on:
           |  push:
           |    branches: [main]
-          |
           |env:
           |  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          |
           |jobs:
           |  build:
           |    name: Build and Test
@@ -154,6 +152,7 @@ class GenerativePluginSpec extends Specification {
           ),
           Map(
             "GITHUB_TOKEN" -> s"$${{ secrets.GITHUB_TOKEN }}"),
+          None,
           ),
         "sbt") mustEqual expected
     }
@@ -167,13 +166,10 @@ class GenerativePluginSpec extends Specification {
         |    branches: [main, backport/v*]
         |  push:
         |    branches: [main, backport/v*]
-        |
         |permissions:
         |  id-token: write
-        |
         |env:
         |  GITHUB_TOKEN: $${{ secrets.GITHUB_TOKEN }}
-        |
         |jobs:
         |  build:
         |    name: Build and Test
@@ -201,6 +197,7 @@ class GenerativePluginSpec extends Specification {
               List(WorkflowStep.Run(List("echo Hello World"))))),
           Map(
             "GITHUB_TOKEN" -> s"$${{ secrets.GITHUB_TOKEN }}"),
+          Some(Permissions.specify(PermissionScope.IdToken -> PermissionValue.Write)),
           ),
         "sbt") mustEqual expected
     }
@@ -214,7 +211,6 @@ class GenerativePluginSpec extends Specification {
         |    branches: [main]
         |  push:
         |    branches: [main]
-        |
         |jobs:
         |  build:
         |    name: Build and Test
@@ -258,6 +254,7 @@ class GenerativePluginSpec extends Specification {
               "If we just didn't",
               List(WorkflowStep.Run(List("whoami"))))),
           Map(),
+          None,
           ),
         "") mustEqual expected
     }
@@ -271,7 +268,6 @@ class GenerativePluginSpec extends Specification {
         |    branches: [main]
         |  push:
         |    branches: [main]
-        |
         |jobs:
         |  build:
         |    name: Build and Test
@@ -301,6 +297,7 @@ class GenerativePluginSpec extends Specification {
               container = Some(
                 JobContainer("not:real-thing")))),
           Map(),
+          None,
           ),
         "") mustEqual expected
     }
@@ -314,7 +311,6 @@ class GenerativePluginSpec extends Specification {
         |    branches: [main]
         |  push:
         |    branches: [main]
-        |
         |jobs:
         |  build:
         |    name: Build and Test
@@ -360,6 +356,7 @@ class GenerativePluginSpec extends Specification {
                   ports = List(80, 443),
                   options = List("--cpus", "1"))))),
           Map(),
+          None,
           ),
         "") mustEqual expected
     }
@@ -375,9 +372,8 @@ class GenerativePluginSpec extends Specification {
         |  push:
         |    branches: [main]
         |    paths: ['**.scala', '**.sbt']
-        |
         |jobs:
-        |${" " * 2}
+        |
         |""".stripMargin
 
       compileWorkflow(
@@ -397,7 +393,8 @@ class GenerativePluginSpec extends Specification {
             )
           ),
           Nil,
-          Map()
+          Map(),
+          None,
           ),
         "sbt") mustEqual expected
     }
@@ -413,9 +410,8 @@ class GenerativePluginSpec extends Specification {
         |  push:
         |    branches: [main]
         |    paths-ignore: [docs/**]
-        |
         |jobs:
-        |${" " * 2}
+        |
         |""".stripMargin
 
       compileWorkflow(        Workflow(
@@ -434,7 +430,8 @@ class GenerativePluginSpec extends Specification {
             )
           ),
         Nil,
-        Map()
+        Map(),
+        None,
         ), "sbt") mustEqual expected
     }
   }
@@ -1075,8 +1072,8 @@ class GenerativePluginSpec extends Specification {
   }
 
   "predicate compilation" >> {
-    import Ref._
     import RefPredicate._
+    import Ref._
 
     "equals" >> {
       compileBranchPredicate("thingy", Equals(Branch("other"))) mustEqual "thingy == 'refs/heads/other'"

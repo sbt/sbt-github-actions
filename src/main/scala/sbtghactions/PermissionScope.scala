@@ -16,7 +16,30 @@
 
 package sbtghactions
 
-sealed trait Permissions extends Product with Serializable
+import sbtghactions.RenderFunctions.*
+
+sealed trait Permissions extends Product with Serializable {
+  def compilePermissionsValue(permissionValue: PermissionValue): String = permissionValue match {
+    case PermissionValue.Read => "read"
+    case PermissionValue.Write => "write"
+    case PermissionValue.None => "none"
+  }
+
+  def render: String = {
+    val rendered = this match {
+      case Permissions.ReadAll => " read-all"
+      case Permissions.WriteAll => " write-all"
+      case Permissions.None => " {}"
+      case Permissions.Specify(permMap) =>
+        val map = permMap.map {
+          case (key, value) =>
+            s"${key.render}: ${compilePermissionsValue(value)}"
+        }
+        "\n" + indent(map.mkString("\n"), 1)
+    }
+    s"\npermissions:$rendered"
+  }
+}
 
 /**
  * @see https://docs.github.com/en/actions/using-jobs/assigning-permissions-to-jobs#overview
@@ -26,9 +49,13 @@ object Permissions {
   case object WriteAll extends Permissions
   case object None extends Permissions
   final case class Specify(values: Map[PermissionScope, PermissionValue]) extends Permissions
+
+  def specify(values: (PermissionScope, PermissionValue)*): Specify = Specify(values.toMap)
 }
 
-sealed trait PermissionScope extends Product with Serializable
+sealed trait PermissionScope extends Product with Serializable{
+  def render: String = KebabCase(productPrefix)
+}
 
 object PermissionScope {
   case object Actions extends PermissionScope
