@@ -617,16 +617,6 @@ ${indentOnce(workflow.jobs.map(compileJob(_, sbt)).mkString("\n\n"))}
     } else {
       githubWorkflowSbtCommand.value
     }
-    //compileWorkflow(
-    //      "Continuous Integration",
-    //      githubWorkflowTargetBranches.value.toList,
-    //      githubWorkflowTargetTags.value.toList,
-    //      githubWorkflowTargetPaths.value,
-    //      githubWorkflowPREventTypes.value.toList,
-    //      githubWorkflowPermissions.value,
-    //      githubWorkflowEnv.value,
-    //      githubWorkflowGeneratedCI.value.toList,
-    //      sbt)
     compileWorkflow(
       Workflow(
       "Continuous Integration",
@@ -724,7 +714,6 @@ ${indentOnce(workflow.jobs.map(compileJob(_, sbt)).mkString("\n\n"))}
         IO.write(ciYml, ciContents)
       }
 
-      // TODO think about migration
       if (targets(GenerationTarget.Clean) || includeClean) {
         IO.write(cleanYml, cleanContents)
       }
