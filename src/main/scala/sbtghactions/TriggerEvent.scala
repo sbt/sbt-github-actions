@@ -18,6 +18,10 @@ package sbtghactions
 
 import sbtghactions.RenderFunctions._
 
+
+/**
+ * @see https://docs.github.com/en/actions/reference/events-that-trigger-workflows
+ */
 sealed trait TriggerEvent extends Product with Serializable {
   val name: String = SnakeCase(productPrefix)
   def render: String

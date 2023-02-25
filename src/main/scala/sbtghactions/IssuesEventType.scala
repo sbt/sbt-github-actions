@@ -16,6 +16,10 @@
 
 package sbtghactions
 
+/**
+ * @see https://docs.github.com/en/developers/webhooks-and-events/webhook-events-and-payloads#issues
+ */
+
 sealed trait IssuesEventType extends EventType
 
 object IssuesEventType {

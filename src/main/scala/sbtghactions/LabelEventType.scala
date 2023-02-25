@@ -16,6 +16,10 @@
 
 package sbtghactions
 
+/**
+ * @see https://docs.github.com/en/developers/webhooks-and-events/webhook-events-and-payloads#label
+ */
+
 sealed trait LabelEventType extends EventType
 
 object LabelEventType {

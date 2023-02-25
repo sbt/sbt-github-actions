@@ -16,6 +16,7 @@
 
 package sbtghactions
 
+
 sealed trait GenerationTarget extends Product with Serializable
 
 object GenerationTarget {

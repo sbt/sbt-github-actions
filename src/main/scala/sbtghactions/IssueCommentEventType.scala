@@ -16,6 +16,9 @@
 
 package sbtghactions
 
+/**
+ * @see https://docs.github.com/en/developers/webhooks-and-events/webhook-events-and-payloads#issue_comment
+ */
 sealed trait IssueCommentEventType extends EventType
 
 object IssueCommentEventType {

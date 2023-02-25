@@ -16,6 +16,9 @@
 
 package sbtghactions
 
+/**
+ * @see https://docs.github.com/en/developers/webhooks-and-events/webhook-events-and-payloads#check_run
+ */
 sealed trait CheckRunEventType extends EventType
 
 object CheckRunEventType {

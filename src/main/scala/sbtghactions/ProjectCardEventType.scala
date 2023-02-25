@@ -16,6 +16,10 @@
 
 package sbtghactions
 
+/**
+ * @see https://docs.github.com/webhooks-and-events/webhooks/webhook-events-and-payloads#project_card
+ */
+
 sealed trait ProjectCardEventType extends EventType
 
 object ProjectCardEventType {

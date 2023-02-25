@@ -16,6 +16,9 @@
 
 package sbtghactions
 
+/**
+ * @see https://docs.github.com/en/free-pro-team@latest/developers/webhooks-and-events/webhook-events-and-payloads#workflow_run
+ */
 sealed trait WorkflowRunEventType extends EventType
 
 object WorkflowRunEventType {

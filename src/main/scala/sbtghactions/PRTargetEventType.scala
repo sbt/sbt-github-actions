@@ -16,6 +16,9 @@
 
 package sbtghactions
 
+/**
+ * @see https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target
+ */
 sealed trait PRTargetEventType extends EventType
 
 object PRTargetEventType {

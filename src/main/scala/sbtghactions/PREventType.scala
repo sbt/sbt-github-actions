@@ -16,6 +16,10 @@
 
 package sbtghactions
 
+/**
+ * @see https://docs.github.com/webhooks-and-events/webhooks/webhook-events-and-payloads#pull_request
+ */
+
 sealed trait PREventType extends EventType
 
 object PREventType {

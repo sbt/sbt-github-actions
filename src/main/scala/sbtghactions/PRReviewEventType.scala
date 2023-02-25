@@ -16,6 +16,10 @@
 
 package sbtghactions
 
+
+/**
+ * @see https://docs.github.com/en/developers/webhooks-and-events/webhook-events-and-payloads#pull_request_review
+ */
 sealed trait PRReviewEventType extends EventType
 
 object PRReviewEventType {

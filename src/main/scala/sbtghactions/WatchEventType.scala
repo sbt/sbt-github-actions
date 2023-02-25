@@ -16,6 +16,10 @@
 
 package sbtghactions
 
+/**
+ * @see https://docs.github.com/en/actions/reference/events-that-trigger-workflows#watch
+ */
+
 sealed trait WatchEventType extends EventType
 
 object WatchEventType {
