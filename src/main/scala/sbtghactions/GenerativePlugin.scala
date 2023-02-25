@@ -16,8 +16,9 @@
 
 package sbtghactions
 
-import sbt.Keys._
-import sbt._
+import sbt.*
+import sbt.Keys.*
+import sbtghactions.RenderFunctions.*
 
 import java.nio.file.FileSystems
 import scala.io.Source
@@ -62,40 +63,12 @@ object GenerativePlugin extends AutoPlugin {
     val JavaSpec = sbtghactions.JavaSpec
   }
 
-  import autoImport._
+  import autoImport.*
 
   private def indent(output: String, level: Int): String = {
     val space = (0 until level * 2).map(_ => ' ').mkString
     (space + output.replace("\n", s"\n$space")).replaceAll("""\n[ ]+\n""", "\n\n")
   }
-
-  private def isSafeString(str: String): Boolean =
-    !(str.indexOf(':') >= 0 ||    // pretend colon is illegal everywhere for simplicity
-      str.indexOf('#') >= 0 ||    // same for comment
-      str.indexOf('!') == 0 ||
-      str.indexOf('*') == 0 ||
-      str.indexOf('-') == 0 ||
-      str.indexOf('?') == 0 ||
-      str.indexOf('{') == 0 ||
-      str.indexOf('}') == 0 ||
-      str.indexOf('[') == 0 ||
-      str.indexOf(']') == 0 ||
-      str.indexOf(',') == 0 ||
-      str.indexOf('|') == 0 ||
-      str.indexOf('>') == 0 ||
-      str.indexOf('@') == 0 ||
-      str.indexOf('`') == 0 ||
-      str.indexOf('"') == 0 ||
-      str.indexOf('\'') == 0 ||
-      str.indexOf('&') == 0)
-
-  private def wrap(str: String): String =
-    if (str.indexOf('\n') >= 0)
-      "|\n" + indent(str, 1)
-    else if (isSafeString(str))
-      str
-    else
-      s"'${str.replace("'", "''")}'"
 
   def compileList(items: List[String], level: Int): String = {
     val rendered = items.map(wrap)
@@ -115,7 +88,7 @@ object GenerativePlugin extends AutoPlugin {
     } mkString "\n"
 
   def compilePREventType(tpe: PREventType): String = {
-    import PREventType._
+    import PREventType.*
 
     tpe match {
       case Assigned => "assigned"
@@ -171,77 +144,20 @@ object GenerativePlugin extends AutoPlugin {
         s"environment: ${wrap(environment.name)}"
     }
 
-  def compileEnv(env: Map[String, String], prefix: String = "env"): String =
-    if (env.isEmpty) {
-      ""
-    } else {
-      val rendered = env map {
-        case (key, value) =>
-          if (!isSafeString(key) || key.indexOf(' ') >= 0)
-            sys.error(s"'$key' is not a valid environment variable name")
-
-          s"""$key: ${wrap(value)}"""
-      }
-s"""$prefix:
-${indent(rendered.mkString("\n"), 1)}"""
-    }
-
-  def compilePermissionScope(permissionScope: PermissionScope): String = permissionScope match {
-    case PermissionScope.Actions => "actions"
-    case PermissionScope.Checks => "checks"
-    case PermissionScope.Contents => "contents"
-    case PermissionScope.Deployments => "deployments"
-    case PermissionScope.IdToken => "id-token"
-    case PermissionScope.Issues => "issues"
-    case PermissionScope.Discussions => "discussions"
-    case PermissionScope.Packages => "packages"
-    case PermissionScope.Pages => "pages"
-    case PermissionScope.PullRequests => "pull-requests"
-    case PermissionScope.RepositoryProjects => "repository-projects"
-    case PermissionScope.SecurityEvents => "security-events"
-    case PermissionScope.Statuses => "statuses"
-  }
-
-  def compilePermissionsValue(permissionValue: PermissionValue): String = permissionValue match {
-    case PermissionValue.Read => "read"
-    case PermissionValue.Write => "write"
-    case PermissionValue.None => "none"
-  }
-
-  def compilePermissions(permissions: Option[Permissions]): String = {
-    permissions match {
-      case Some(perms) =>
-        val rendered = perms match {
-          case Permissions.ReadAll => " read-all"
-          case Permissions.WriteAll => " write-all"
-          case Permissions.None => " {}"
-          case Permissions.Specify(permMap) =>
-            val map = permMap.map{
-              case (key, value) =>
-                s"${compilePermissionScope(key)}: ${compilePermissionsValue(value)}"
-            }
-            "\n" + indent(map.mkString("\n"), 1)
-        }
-        s"permissions:$rendered"
-
-      case None => ""
-    }
-  }
 
   def compileStep(
     step: WorkflowStep,
     sbt: String,
     sbtStepPreamble: List[String] = WorkflowStep.DefaultSbtStepPreamble,
-    declareShell: Boolean = false
-  ): String = {
-    import WorkflowStep._
+    declareShell: Boolean = false): String = {
+    import WorkflowStep.*
 
     val renderedName = step.name.map(wrap).map("name: " + _ + "\n").getOrElse("")
     val renderedId = step.id.map(wrap).map("id: " + _ + "\n").getOrElse("")
     val renderedCond = step.cond.map(wrap).map("if: " + _ + "\n").getOrElse("")
     val renderedShell = if (declareShell) "shell: bash\n" else ""
 
-    val renderedEnvPre = compileEnv(step.env)
+    val renderedEnvPre = step.renderEnv
     val renderedEnv = if (renderedEnvPre.isEmpty)
       ""
     else
@@ -278,9 +194,7 @@ ${indent(rendered.mkString("\n"), 1)}"""
         )
 
       case use: Use =>
-        import use.{ref, params}
-
-        val decl = ref match {
+        val decl = use.ref match {
           case UseRef.Public(owner, repo, ref) =>
             s"uses: $owner/$repo@$ref"
 
@@ -299,27 +213,30 @@ ${indent(rendered.mkString("\n"), 1)}"""
             s"uses: docker://$image:$tag"
         }
 
-        decl + renderParams(params)
+        decl + use.renderParams
     }
 
-    indent(preamble + body, 1).updated(0, '-')
+    indentOnce(preamble + body).updated(0, '-')
   }
 
   def renderRunBody(commands: List[String], params: Map[String, String], renderedShell: String) =
-      renderedShell + "run: " + wrap(commands.mkString("\n")) + renderParams(params)
+      renderedShell + "run: " + wrap(commands.mkString("\n")) + renderMap(params, "with")
 
-  def renderParams(params: Map[String, String]): String = {
-    val renderedParamsPre = compileEnv(params, prefix = "with")
-    val renderedParams = if (renderedParamsPre.isEmpty)
-      ""
-    else
-      "\n" + renderedParamsPre
+  def compileJob(job: WorkflowJobBase, sbt: String): String =
+  job match {
+    case ReusableWorkflowJob(id, name, uses, cond, needs) =>
+      val renderedNeeds = if (needs.isEmpty)
+        ""
+      else
+        s"\nneeds: [${needs.mkString(", ")}]"
 
-    renderedParams
-  }
+      val renderedCond = cond.map(wrap).map("\nif: " + _).getOrElse("")
+      val body =
+        s"""|name: ${wrap(name)}$renderedNeeds$renderedCond
+            |${uses.render}""".stripMargin
 
-
-  def compileJob(job: WorkflowJob, sbt: String): String = {
+      s"$id:\n${indent(body, 1)}"
+    case job: WorkflowJob =>
     val renderedNeeds = if (job.needs.isEmpty)
       ""
     else
@@ -344,10 +261,7 @@ ${indent(rendered.mkString("\n"), 1)}"""
               ""
           }
 
-          val renderedEnv = if (!env.isEmpty)
-            "\n" + compileEnv(env)
-          else
-            ""
+          val renderedEnv = renderMap(env, "env")
 
           val renderedVolumes = if (!volumes.isEmpty)
             s"\nvolumes:${compileList(volumes.toList map { case (l, r) => s"$l:$r" }, 1)}"
@@ -371,17 +285,8 @@ ${indent(rendered.mkString("\n"), 1)}"""
         ""
     }
 
-    val renderedEnvPre = compileEnv(job.env)
-    val renderedEnv = if (renderedEnvPre.isEmpty)
-      ""
-    else
-      "\n" + renderedEnvPre
-
-    val renderedPermPre = compilePermissions(job.permissions)
-    val renderedPerm = if (renderedPermPre.isEmpty)
-      ""
-    else
-      "\n" + renderedPermPre
+    val renderedEnv = renderMap(job.env, "env")
+    val renderedPerm = job.permissions.map(_.render).mkString
 
     List("include", "exclude") foreach { key =>
       if (job.matrixAdds.contains(key)) {
@@ -446,69 +351,56 @@ ${indent(rendered.mkString("\n"), 1)}"""
 
     val declareShell = job.oses.exists(_.contains("windows"))
 
+    val matrixOs = if(job.oses.isEmpty) Nil else List("\"${{ matrix.os }}\"")
+
     val runsOn = if (job.runsOnExtraLabels.isEmpty)
       s"$${{ matrix.os }}"
     else
-      job.runsOnExtraLabels.mkString(s"""[ "$${{ matrix.os }}", """, ", ", " ]" )
+      (matrixOs ++ job.runsOnExtraLabels).mkString(s"""[ """, ", ", " ]" )
 
     val renderedFailFast = job.matrixFailFast.fold("")("\n  fail-fast: " + _)
 
-    val body = s"""name: ${wrap(job.name)}${renderedNeeds}${renderedCond}
-strategy:${renderedFailFast}
-  matrix:
-    os:${compileList(job.oses, 3)}
-    scala:${compileList(job.scalas, 3)}
-    java:${compileList(job.javas.map(_.render), 3)}${renderedMatrices}
-runs-on: ${runsOn}${renderedEnvironment}${renderedContainer}${renderedPerm}${renderedEnv}
-steps:
-${indent(job.steps.map(compileStep(_, sbt, job.sbtStepPreamble, declareShell = declareShell)).mkString("\n\n"), 1)}"""
+    val renderedOses =
+      if (job.oses.isEmpty) "" else s"\n    os:${compileList(job.oses, 3)}"
+    val renderedScalas =
+      if (job.scalas.isEmpty) "" else s"\n    scala:${compileList(job.scalas, 3)}"
+    val renderedJavas =
+      if (job.javas.isEmpty) "" else s"\n    java:${compileList(job.javas.map(_.render), 3)}"
+    val renderedMatrix =
+      if(renderedOses.nonEmpty || renderedScalas.nonEmpty || renderedJavas.nonEmpty) {
+        s"\n  matrix:$renderedOses$renderedScalas$renderedJavas$renderedMatrices"
+      } else {
+        ""
+      }
 
-    s"${job.id}:\n${indent(body, 1)}"
+    val renderedStrategy =
+      if(renderedFailFast.nonEmpty || renderedMatrix.nonEmpty) {
+        s"\nstrategy:$renderedFailFast$renderedMatrix"
+      } else {
+        ""
+      }
+
+    val renderedSteps =
+      if (job.steps.nonEmpty) {
+        s"""steps:
+         |${indent(
+            job.steps.map(
+              compileStep(_, sbt, job.sbtStepPreamble, declareShell)
+              ).mkString("\n\n"),
+            1)
+        }""".stripMargin
+      } else {
+        ""
+      }
+
+    val body = s"""name: ${wrap(job.name)}${renderedNeeds}${renderedCond}${renderedStrategy}
+runs-on: ${runsOn}${renderedEnvironment}${renderedContainer}${renderedEnv}${renderedPerm}
+$renderedSteps"""
+
+    s"${job.id}:\n${indentOnce(body)}"
   }
 
-  def compileWorkflow(
-      name: String,
-      branches: List[String],
-      tags: List[String],
-      paths: Paths,
-      prEventTypes: List[PREventType],
-      permissions: Option[Permissions],
-      env: Map[String, String],
-      jobs: List[WorkflowJob],
-      sbt: String)
-      : String = {
-
-    val renderedPermissionsPre = compilePermissions(permissions)
-    val renderedEnvPre = compileEnv(env)
-    val renderedEnv = if (renderedEnvPre.isEmpty)
-      ""
-    else
-      renderedEnvPre + "\n\n"
-    val renderedPerm = if (renderedPermissionsPre.isEmpty)
-      ""
-    else
-      renderedPermissionsPre + "\n\n"
-
-    val renderedTypesPre = prEventTypes.map(compilePREventType).mkString("[", ", ", "]")
-    val renderedTypes = if (prEventTypes.sortBy(_.toString) == PREventType.Defaults)
-      ""
-    else
-      "\n" + indent("types: " + renderedTypesPre, 2)
-
-    val renderedTags = if (tags.isEmpty)
-      ""
-    else
-s"""
-    tags: [${tags.map(wrap).mkString(", ")}]"""
-
-    val renderedPaths = paths match {
-      case Paths.None =>
-        ""
-      case Paths.Include(paths) =>
-        "\n" + indent(s"""paths: [${paths.map(wrap).mkString(", ")}]""", 2)
-      case Paths.Ignore(paths) =>
-        "\n" + indent(s"""paths-ignore: [${paths.map(wrap).mkString(", ")}]""", 2)
-    }
+  def compileWorkflow(workflow: Workflow, sbt: String): String = {
 
     s"""# This file was automatically generated by sbt-github-actions using the
 # githubWorkflowGenerate task. You should add and commit this file to
@@ -517,16 +409,9 @@ s"""
 # change your sbt build configuration to revise the workflow description
 # to meet your needs, then regenerate this file.
 
-name: ${wrap(name)}
-
-on:
-  pull_request:
-    branches: [${branches.map(wrap).mkString(", ")}]$renderedTypes$renderedPaths
-  push:
-    branches: [${branches.map(wrap).mkString(", ")}]$renderedTags$renderedPaths
-
-${renderedPerm}${renderedEnv}jobs:
-${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
+${workflow.render}
+jobs:
+${indentOnce(workflow.jobs.map(compileJob(_, sbt)).mkString("\n\n"))}
 """
 }
 
@@ -671,6 +556,9 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
         githubWorkflowGeneratedCacheSteps.value.toList
     },
 
+    githubWorkflowCustomWorkflows := Map.empty,
+    githubWorkflowGenerationTargets := GenerationTarget.all,
+
     githubWorkflowGeneratedCI := {
       val publicationCondPre =
         githubWorkflowPublishTargetBranches.value.map(compileBranchPredicate("github.ref", _)).mkString("(", " || ", ")")
@@ -730,14 +618,25 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
       githubWorkflowSbtCommand.value
     }
     compileWorkflow(
+      Workflow(
       "Continuous Integration",
-      githubWorkflowTargetBranches.value.toList,
-      githubWorkflowTargetTags.value.toList,
-      githubWorkflowTargetPaths.value,
-      githubWorkflowPREventTypes.value.toList,
-      githubWorkflowPermissions.value,
-      githubWorkflowEnv.value,
-      githubWorkflowGeneratedCI.value.toList,
+        List(
+          WebhookEvent.PullRequest(
+            githubWorkflowTargetBranches.value.toList,
+            Nil,
+            githubWorkflowTargetPaths.value,
+            githubWorkflowPREventTypes.value.toList
+            ),
+          WebhookEvent.Push(
+            githubWorkflowTargetBranches.value.toList,
+            githubWorkflowTargetTags.value.toList,
+            githubWorkflowTargetPaths.value
+            )
+          ),
+        githubWorkflowGeneratedCI.value.toList,
+        githubWorkflowEnv.value,
+        githubWorkflowPermissions.value,
+        ),
       sbt)
   }
 
@@ -747,6 +646,21 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
       src.mkString
     } finally {
       src.close()
+    }
+  }
+
+  private val customWorkflowContents = Def task {
+    val sbt = if (githubWorkflowUseSbtThinClient.value) {
+      githubWorkflowSbtCommand.value + " --client"
+    } else {
+      githubWorkflowSbtCommand.value
+    }
+
+    githubWorkflowCustomWorkflows.value.map {
+      case (file, workflow) if file.endsWith(".yml") || file.endsWith(".yaml") =>
+        file -> compileWorkflow(workflow, sbt)
+      case (file, workflow) =>
+        (file + ".yml") -> compileWorkflow(workflow, sbt)
     }
   }
 
@@ -789,13 +703,24 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
       val includeClean = githubWorkflowIncludeClean.value
       val cleanContents = readCleanContents.value
 
+      val targets = githubWorkflowGenerationTargets.value
+      val workflowContents = customWorkflowContents.value
+      val workflowsDir = workflowsDirTask.value
+
       val ciYml = ciYmlFile.value
       val cleanYml = cleanYmlFile.value
 
-      IO.write(ciYml, ciContents)
+      if (targets(GenerationTarget.CI)) {
+        IO.write(ciYml, ciContents)
+      }
 
-      if(includeClean)
+      if (targets(GenerationTarget.Clean) || includeClean) {
         IO.write(cleanYml, cleanContents)
+      }
+
+      if (targets(GenerationTarget.Custom)) {
+        workflowContents.foreach { case (file, content) => IO.write(workflowsDir / file, content) }
+      }
     },
 
     githubWorkflowCheck := {

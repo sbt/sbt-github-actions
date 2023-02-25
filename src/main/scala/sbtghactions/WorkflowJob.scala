@@ -16,6 +16,16 @@
 
 package sbtghactions
 
+sealed trait WorkflowJobBase
+
+final case class ReusableWorkflowJob(
+  id: String,
+  name: String,
+  uses: WorkflowRef,
+  cond: Option[String] = None,
+  needs: List[String] = List(),
+) extends WorkflowJobBase
+
 final case class WorkflowJob(
     id: String,
     name: String,
@@ -34,4 +44,8 @@ final case class WorkflowJob(
     matrixExcs: List[MatrixExclude] = List(),
     runsOnExtraLabels: List[String] = List(),
     container: Option[JobContainer] = None,
-    environment: Option[JobEnvironment] = None)
+    environment: Option[JobEnvironment] = None) extends WorkflowJobBase {
+
+  def needsJob(job: WorkflowJob): WorkflowJob =
+    copy(needs = needs :+ job.id)
+}

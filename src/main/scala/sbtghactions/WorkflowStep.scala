@@ -23,6 +23,13 @@ sealed trait WorkflowStep extends Product with Serializable {
   def name: Option[String]
   def cond: Option[String]
   def env: Map[String, String]
+  def params: Map[String, String]
+  def renderEnv: String =
+    RenderFunctions.renderMap(env, "env").drop(1)
+
+  def renderParams: String =
+    RenderFunctions.renderMap(params, "with")
+
 }
 
 object WorkflowStep {

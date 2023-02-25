@@ -12,10 +12,8 @@ on:
     branches: ['**']
   push:
     branches: ['**']
-
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
 jobs:
   build:
     name: Build and Test
