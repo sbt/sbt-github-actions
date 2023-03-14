@@ -16,6 +16,8 @@
 
 package sbtghactions
 
+import scala.collection.immutable.ListMap
+
 import scala.concurrent.duration.FiniteDuration
 
 sealed trait WorkflowStep extends Product with Serializable {
@@ -28,32 +30,38 @@ sealed trait WorkflowStep extends Product with Serializable {
 
 object WorkflowStep {
 
+  val DefaultSbtStepPreamble: List[String] = List(s"++$${{ matrix.scala }}")
+
   val CheckoutFull: WorkflowStep = Use(
-    UseRef.Public("actions", "checkout", "v2"),
+    UseRef.Public("actions", "checkout", "v3"),
     name = Some("Checkout current branch (full)"),
     params = Map("fetch-depth" -> "0"))
 
-  val Checkout: WorkflowStep = Use(UseRef.Public("actions", "checkout", "v2"), name = Some("Checkout current branch (fast)"))
+  val Checkout: WorkflowStep = Use(UseRef.Public("actions", "checkout", "v3"), name = Some("Checkout current branch (fast)"))
 
   def SetupJava(versions: List[JavaSpec]): List[WorkflowStep] =
     versions map {
       case jv @ JavaSpec(JavaSpec.Distribution.GraalVM(graalVersion), version) =>
         WorkflowStep.Use(
-          UseRef.Public("DeLaGuardo", "setup-graalvm", "5.0"),
+          UseRef.Public("graalvm", "setup-graalvm", "v1"),
           name = Some(s"Setup GraalVM (${jv.render})"),
           cond = Some(s"matrix.java == '${jv.render}'"),
-          params = Map(
-            "graalvm" -> graalVersion,
-            "java" -> s"java$version"))
+          params = ListMap(
+            "version" -> graalVersion,
+            "java-version" -> s"$version",
+            "components" -> "native-image",
+            "github-token" -> s"$${{ secrets.GITHUB_TOKEN }}",
+            "cache" -> "sbt"))
 
       case jv @ JavaSpec(dist, version) =>
         WorkflowStep.Use(
-          UseRef.Public("actions", "setup-java", "v2"),
+          UseRef.Public("actions", "setup-java", "v3"),
           name = Some(s"Setup Java (${jv.render})"),
           cond = Some(s"matrix.java == '${jv.render}'"),
-          params = Map(
+          params = ListMap(
             "distribution" -> dist.rendering,
-            "java-version" -> version))
+            "java-version" -> version,
+            "cache" -> "sbt"))
     }
 
   val Tmate: WorkflowStep = Use(UseRef.Public("mxschmitt", "action-tmate", "v2"), name = Some("Setup tmate session"))

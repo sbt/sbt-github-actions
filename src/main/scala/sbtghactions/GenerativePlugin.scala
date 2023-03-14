@@ -187,18 +187,65 @@ s"""$prefix:
 ${indent(rendered.mkString("\n"), 1)}"""
     }
 
-  def renderTimeout(timeout: Option[FiniteDuration], prefix: String = ""): String = {
+  def compilePermissionScope(permissionScope: PermissionScope): String = permissionScope match {
+    case PermissionScope.Actions => "actions"
+    case PermissionScope.Checks => "checks"
+    case PermissionScope.Contents => "contents"
+    case PermissionScope.Deployments => "deployments"
+    case PermissionScope.IdToken => "id-token"
+    case PermissionScope.Issues => "issues"
+    case PermissionScope.Discussions => "discussions"
+    case PermissionScope.Packages => "packages"
+    case PermissionScope.Pages => "pages"
+    case PermissionScope.PullRequests => "pull-requests"
+    case PermissionScope.RepositoryProjects => "repository-projects"
+    case PermissionScope.SecurityEvents => "security-events"
+    case PermissionScope.Statuses => "statuses"
+  }
+
+  def compilePermissionsValue(permissionValue: PermissionValue): String = permissionValue match {
+    case PermissionValue.Read => "read"
+    case PermissionValue.Write => "write"
+    case PermissionValue.None => "none"
+  }
+
+  def compilePermissions(permissions: Option[Permissions]): String = {
+    permissions match {
+      case Some(perms) =>
+        val rendered = perms match {
+          case Permissions.ReadAll => " read-all"
+          case Permissions.WriteAll => " write-all"
+          case Permissions.None => " {}"
+          case Permissions.Specify(permMap) =>
+            val map = permMap.map{
+              case (key, value) =>
+                s"${compilePermissionScope(key)}: ${compilePermissionsValue(value)}"
+            }
+            "\n" + indent(map.mkString("\n"), 1)
+        }
+        s"permissions:$rendered"
+
+      case None => ""
+    }
+  }
+
+  def compileTimeout(timeout: Option[FiniteDuration], prefix: String = ""): String = {
     timeout.map(_.toMinutes.toString).map(s"${prefix}timeout-minutes: " + _ + "\n").getOrElse("")
   }
 
-  def compileStep(step: WorkflowStep, sbt: String, declareShell: Boolean = false): String = {
+  def compileStep(
+    step: WorkflowStep,
+    sbt: String,
+    sbtStepPreamble: List[String] = WorkflowStep.DefaultSbtStepPreamble,
+    declareShell: Boolean = false
+  ): String = {
     import WorkflowStep._
 
     val renderedName = step.name.map(wrap).map("name: " + _ + "\n").getOrElse("")
     val renderedId = step.id.map(wrap).map("id: " + _ + "\n").getOrElse("")
     val renderedCond = step.cond.map(wrap).map("if: " + _ + "\n").getOrElse("")
     val renderedShell = if (declareShell) "shell: bash\n" else ""
-    val renderedTimeout = renderTimeout(step.timeout)
+    val renderedTimeout = compileTimeout(step.timeout)
 
     val renderedEnvPre = compileEnv(step.env)
     val renderedEnv = if (renderedEnvPre.isEmpty)
@@ -220,16 +267,15 @@ ${indent(rendered.mkString("\n"), 1)}"""
       case sbtStep: Sbt =>
         import sbtStep.commands
 
-        val version = "++${{ matrix.scala }}"
         val sbtClientMode = sbt.matches("""sbt.* --client($| .*)""")
         val safeCommands = if (sbtClientMode)
-          s"'${(version :: commands).mkString("; ")}'"
-        else commands.map { c =>
+          s"'${(sbtStepPreamble ::: commands).mkString("; ")}'"
+        else (sbtStepPreamble ::: commands).map { c =>
           if (c.indexOf(' ') >= 0)
             s"'$c'"
           else
             c
-        }.mkString(version + " ", " ", "")
+        }.mkString(" ")
 
         renderRunBody(
           commands = List(s"$sbt $safeCommands"),
@@ -286,7 +332,7 @@ ${indent(rendered.mkString("\n"), 1)}"""
       s"\nneeds: [${job.needs.mkString(", ")}]"
 
     val renderedEnvironment = job.environment.map(compileEnvironment).map("\n" + _).getOrElse("")
-    val renderedTimeout = renderTimeout(job.timeout, prefix = "\n")
+    val renderedTimeout = compileTimeout(job.timeout, prefix = "\n")
 
     val renderedCond = job.cond.map(wrap).map("\nif: " + _).getOrElse("")
 
@@ -337,6 +383,12 @@ ${indent(rendered.mkString("\n"), 1)}"""
       ""
     else
       "\n" + renderedEnvPre
+
+    val renderedPermPre = compilePermissions(job.permissions)
+    val renderedPerm = if (renderedPermPre.isEmpty)
+      ""
+    else
+      "\n" + renderedPermPre
 
     List("include", "exclude") foreach { key =>
       if (job.matrixAdds.contains(key)) {
@@ -414,9 +466,9 @@ strategy:${renderedFailFast}
     os:${compileList(job.oses, 3)}
     scala:${compileList(job.scalas, 3)}
     java:${compileList(job.javas.map(_.render), 3)}${renderedMatrices}
-runs-on: ${runsOn}${renderedEnvironment}${renderedContainer}${renderedTimeout}${renderedEnv}
+runs-on: ${runsOn}${renderedEnvironment}${renderedContainer}${renderedTimeout}${renderedPerm}${renderedEnv}
 steps:
-${indent(job.steps.map(compileStep(_, sbt, declareShell = declareShell)).mkString("\n\n"), 1)}"""
+${indent(job.steps.map(compileStep(_, sbt, job.sbtStepPreamble, declareShell = declareShell)).mkString("\n\n"), 1)}"""
 
     s"${job.id}:\n${indent(body, 1)}"
   }
@@ -427,16 +479,22 @@ ${indent(job.steps.map(compileStep(_, sbt, declareShell = declareShell)).mkStrin
       tags: List[String],
       paths: Paths,
       prEventTypes: List[PREventType],
+      permissions: Option[Permissions],
       env: Map[String, String],
       jobs: List[WorkflowJob],
       sbt: String)
       : String = {
 
+    val renderedPermissionsPre = compilePermissions(permissions)
     val renderedEnvPre = compileEnv(env)
     val renderedEnv = if (renderedEnvPre.isEmpty)
       ""
     else
       renderedEnvPre + "\n\n"
+    val renderedPerm = if (renderedPermissionsPre.isEmpty)
+      ""
+    else
+      renderedPermissionsPre + "\n\n"
 
     val renderedTypesPre = prEventTypes.map(compilePREventType).mkString("[", ", ", "]")
     val renderedTypes = if (prEventTypes.sortBy(_.toString) == PREventType.Defaults)
@@ -474,7 +532,7 @@ on:
   push:
     branches: [${branches.map(wrap).mkString(", ")}]$renderedTags$renderedPaths
 
-${renderedEnv}jobs:
+${renderedPerm}${renderedEnv}jobs:
 ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
 """
 }
@@ -494,11 +552,13 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
 
     githubWorkflowBuildPreamble := Seq(),
     githubWorkflowBuildPostamble := Seq(),
+    githubWorkflowBuildSbtStepPreamble := WorkflowStep.DefaultSbtStepPreamble,
     githubWorkflowBuildTimeout := None,
     githubWorkflowBuild := Seq(WorkflowStep.Sbt(List("test"), name = Some("Build project"))),
 
     githubWorkflowPublishPreamble := Seq(),
     githubWorkflowPublishPostamble := Seq(),
+    githubWorkflowPublishSbtStepPreamble := Seq(),
     githubWorkflowPublish := Seq(WorkflowStep.Sbt(List("+publish"), name = Some("Publish project"))),
     githubWorkflowPublishTargetBranches := Seq(RefPredicate.Equals(Ref.Branch("main"))),
     githubWorkflowPublishCond := None,
@@ -513,7 +573,12 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
     githubWorkflowTargetPaths := Paths.None,
 
     githubWorkflowEnv := Map("GITHUB_TOKEN" -> s"$${{ secrets.GITHUB_TOKEN }}"),
-    githubWorkflowAddedJobs := Seq())
+    githubWorkflowPermissions := None,
+    githubWorkflowAddedJobs := Seq(),
+    githubWorkflowWindowsPagefileFix := Some(
+      windows.PagefileFix("2GB", "8GB")
+    )
+  )
 
   private lazy val internalTargetAggregation = settingKey[Seq[File]]("Aggregates target directories from all subprojects")
 
@@ -561,7 +626,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
           UseRef.Public(
             "actions",
             "upload-artifact",
-            "v2"),
+            "v3"),
           name = Some(s"Upload target directories"),
           params = Map(
             "name" -> s"target-$${{ matrix.os }}-$${{ matrix.scala }}-$${{ matrix.java }}",
@@ -582,7 +647,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
             UseRef.Public(
               "actions",
               "download-artifact",
-              "v2"),
+              "v3"),
             name = Some(s"Download target directories ($v)"),
             params = Map(
               "name" -> s"target-$${{ matrix.os }}-$v-$${{ matrix.java }}"))
@@ -600,40 +665,28 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
       }
     },
 
-    githubWorkflowGeneratedCacheSteps := {
-      val hashes = githubWorkflowDependencyPatterns.value map { glob =>
-        s"$${{ hashFiles('$glob') }}"
-      }
-
-      Seq(
-        WorkflowStep.Use(
-          UseRef.Public(
-            "actions",
-            "cache",
-            "v2"),
-          name = Some("Cache sbt"),
-          params = Map(
-            "path" -> Seq(
-              "~/.sbt",
-              "~/.ivy2/cache",
-              "~/.coursier/cache/v1",
-              "~/.cache/coursier/v1",
-              "~/AppData/Local/Coursier/Cache/v1",
-              "~/Library/Caches/Coursier/v1"
-            ).mkString("\n"),
-            "key" -> s"$${{ runner.os }}-sbt-cache-v2-${hashes.mkString("-")}"
-          )
-        )
-      )
-    },
+    githubWorkflowGeneratedCacheSteps := Nil,
 
     githubWorkflowJobSetup := {
       val autoCrlfOpt = if (githubWorkflowOSes.value.exists(_.contains("windows"))) {
+        val optionalPagefileFix = githubWorkflowWindowsPagefileFix.value.map(pageFileFix =>
+          WorkflowStep.Use(
+            name = Some("Configure pagefile for Windows"),
+            ref = UseRef.Public("al-cheb", "configure-pagefile-action", "v1.3"),
+            params = Map(
+              "minimum-size" -> s"${pageFileFix.minSize}",
+              "maximum-size" -> s"${pageFileFix.maxSize}"
+            ),
+            cond = windowsGuard
+          )
+        ).toList
+
         List(
           WorkflowStep.Run(
             List("git config --global core.autocrlf false"),
             name = Some("Ignore line ending differences in git"),
-            cond = windowsGuard))
+            cond = windowsGuard)
+        ) ++ optionalPagefileFix
       } else {
         Nil
       }
@@ -667,6 +720,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
             githubWorkflowPublishPreamble.value.toList :::
             githubWorkflowPublish.value.toList :::
             githubWorkflowPublishPostamble.value.toList,
+          sbtStepPreamble = githubWorkflowPublishSbtStepPreamble.value.toList,
           cond = Some(s"github.event_name != 'pull_request' && $publicationCond"),
           scalas = List(scalaVersion.value),
           javas = List(githubWorkflowJavaVersions.value.head),
@@ -685,6 +739,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
             githubWorkflowBuild.value.toList :::
             githubWorkflowBuildPostamble.value.toList :::
             uploadStepsOpt,
+          sbtStepPreamble = githubWorkflowBuildSbtStepPreamble.value.toList,
           oses = githubWorkflowOSes.value.toList,
           scalas = githubWorkflowScalaVersions.value.toList,
           javas = githubWorkflowJavaVersions.value.toList,
@@ -708,6 +763,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
       githubWorkflowTargetTags.value.toList,
       githubWorkflowTargetPaths.value,
       githubWorkflowPREventTypes.value.toList,
+      githubWorkflowPermissions.value,
       githubWorkflowEnv.value,
       githubWorkflowGeneratedCI.value.toList,
       sbt)

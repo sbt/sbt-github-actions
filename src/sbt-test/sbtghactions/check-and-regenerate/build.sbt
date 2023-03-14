@@ -21,7 +21,15 @@ ThisBuild / githubWorkflowBuildMatrixExclusions +=
   MatrixExclude(Map("scala" -> "2.12.15", "test" -> "is"))
 
 ThisBuild / githubWorkflowBuild += WorkflowStep.Run(List("echo yo"))
+
+ThisBuild / githubWorkflowPublish :=
+  Seq(
+    WorkflowStep.Sbt(
+      commands = List("ci-release"),
+      name = Some("Publish project"),
+    ),
+    WorkflowStep.Run(List("echo sup")),
+  )
 ThisBuild / githubWorkflowBuildTimeout := Some(2.hours)
 
-ThisBuild / githubWorkflowPublish += WorkflowStep.Run(List("echo sup"))
 ThisBuild / githubWorkflowPublishTimeout := Some(1.hour)
