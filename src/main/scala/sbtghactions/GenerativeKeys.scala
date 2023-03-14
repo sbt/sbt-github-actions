@@ -66,6 +66,9 @@ trait GenerativeKeys {
   lazy val githubWorkflowEnv = settingKey[Map[String, String]](s"A map of static environment variable assignments global to the workflow (default: { GITHUB_TOKEN: $${{ secrets.GITHUB_TOKEN }} })")
   lazy val githubWorkflowPermissions = settingKey[Option[Permissions]](s"Permissions to use for the global workflow (default: None)")
   lazy val githubWorkflowAddedJobs = settingKey[Seq[WorkflowJob]]("A list of additional jobs to add to the CI workflow (default: [])")
+
+  // Windows related settings
+  lazy val githubWorkflowWindowsPagefileFix = settingKey[Option[windows.PagefileFix]]("If defined adds a workflow step that increases the pagefile size for Windows workflow's which can sometimes necessary in certain cases, i.e. when using scala-native (default: windows.PagefileFix(2GB,8GB))")
 }
 
 object GenerativeKeys extends GenerativeKeys
