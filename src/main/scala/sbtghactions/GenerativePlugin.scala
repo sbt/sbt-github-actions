@@ -565,7 +565,11 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
 
     githubWorkflowEnv := Map("GITHUB_TOKEN" -> s"$${{ secrets.GITHUB_TOKEN }}"),
     githubWorkflowPermissions := None,
-    githubWorkflowAddedJobs := Seq())
+    githubWorkflowAddedJobs := Seq(),
+    githubWorkflowWindowsPagefileFix := Some(
+      windows.PagefileFix("2GB", "8GB")
+    )
+  )
 
   private lazy val internalTargetAggregation = settingKey[Seq[File]]("Aggregates target directories from all subprojects")
 
@@ -656,11 +660,24 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
 
     githubWorkflowJobSetup := {
       val autoCrlfOpt = if (githubWorkflowOSes.value.exists(_.contains("windows"))) {
+        val optionalPagefileFix = githubWorkflowWindowsPagefileFix.value.map(pageFileFix =>
+          WorkflowStep.Use(
+            name = Some("Configure pagefile for Windows"),
+            ref = UseRef.Public("al-cheb", "configure-pagefile-action", "v1.3"),
+            params = Map(
+              "minimum-size" -> s"${pageFileFix.minSize}",
+              "maximum-size" -> s"${pageFileFix.maxSize}"
+            ),
+            cond = windowsGuard
+          )
+        ).toList
+
         List(
           WorkflowStep.Run(
             List("git config --global core.autocrlf false"),
             name = Some("Ignore line ending differences in git"),
-            cond = windowsGuard))
+            cond = windowsGuard)
+        ) ++ optionalPagefileFix
       } else {
         Nil
       }
