@@ -20,6 +20,7 @@ import sbt.Keys._
 import sbt._
 
 import java.nio.file.FileSystems
+import scala.concurrent.duration.FiniteDuration
 import scala.io.Source
 
 object GenerativePlugin extends AutoPlugin {
@@ -228,6 +229,10 @@ ${indent(rendered.mkString("\n"), 1)}"""
     }
   }
 
+  def compileTimeout(timeout: Option[FiniteDuration], prefix: String = ""): String = {
+    timeout.map(_.toMinutes.toString).map(s"${prefix}timeout-minutes: " + _ + "\n").getOrElse("")
+  }
+
   def compileStep(
     step: WorkflowStep,
     sbt: String,
@@ -240,6 +245,7 @@ ${indent(rendered.mkString("\n"), 1)}"""
     val renderedId = step.id.map(wrap).map("id: " + _ + "\n").getOrElse("")
     val renderedCond = step.cond.map(wrap).map("if: " + _ + "\n").getOrElse("")
     val renderedShell = if (declareShell) "shell: bash\n" else ""
+    val renderedTimeout = compileTimeout(step.timeout)
 
     val renderedEnvPre = compileEnv(step.env)
     val renderedEnv = if (renderedEnvPre.isEmpty)
@@ -247,7 +253,7 @@ ${indent(rendered.mkString("\n"), 1)}"""
     else
       renderedEnvPre + "\n"
 
-    val preamblePre = renderedName + renderedId + renderedCond + renderedEnv
+    val preamblePre = renderedName + renderedId + renderedCond + renderedEnv + renderedTimeout
 
     val preamble = if (preamblePre.isEmpty)
       ""
@@ -326,6 +332,7 @@ ${indent(rendered.mkString("\n"), 1)}"""
       s"\nneeds: [${job.needs.mkString(", ")}]"
 
     val renderedEnvironment = job.environment.map(compileEnvironment).map("\n" + _).getOrElse("")
+    val renderedTimeout = compileTimeout(job.timeout, prefix = "\n")
 
     val renderedCond = job.cond.map(wrap).map("\nif: " + _).getOrElse("")
 
@@ -459,7 +466,7 @@ strategy:${renderedFailFast}
     os:${compileList(job.oses, 3)}
     scala:${compileList(job.scalas, 3)}
     java:${compileList(job.javas.map(_.render), 3)}${renderedMatrices}
-runs-on: ${runsOn}${renderedEnvironment}${renderedContainer}${renderedPerm}${renderedEnv}
+runs-on: ${runsOn}${renderedEnvironment}${renderedContainer}${renderedTimeout}${renderedPerm}${renderedEnv}
 steps:
 ${indent(job.steps.map(compileStep(_, sbt, job.sbtStepPreamble, declareShell = declareShell)).mkString("\n\n"), 1)}"""
 
@@ -546,6 +553,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
     githubWorkflowBuildPreamble := Seq(),
     githubWorkflowBuildPostamble := Seq(),
     githubWorkflowBuildSbtStepPreamble := WorkflowStep.DefaultSbtStepPreamble,
+    githubWorkflowBuildTimeout := None,
     githubWorkflowBuild := Seq(WorkflowStep.Sbt(List("test"), name = Some("Build project"))),
 
     githubWorkflowPublishPreamble := Seq(),
@@ -554,6 +562,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
     githubWorkflowPublish := Seq(WorkflowStep.Sbt(List("+publish"), name = Some("Publish project"))),
     githubWorkflowPublishTargetBranches := Seq(RefPredicate.Equals(Ref.Branch("main"))),
     githubWorkflowPublishCond := None,
+    githubWorkflowPublishTimeout := None,
 
     githubWorkflowJavaVersions := Seq(JavaSpec.temurin("11")),
     githubWorkflowScalaVersions := crossScalaVersions.value,
@@ -715,7 +724,8 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
           cond = Some(s"github.event_name != 'pull_request' && $publicationCond"),
           scalas = List(scalaVersion.value),
           javas = List(githubWorkflowJavaVersions.value.head),
-          needs = List("build"))).filter(_ => !githubWorkflowPublishTargetBranches.value.isEmpty)
+          needs = List("build"),
+          timeout = githubWorkflowPublishTimeout.value)).filter(_ => !githubWorkflowPublishTargetBranches.value.isEmpty)
 
       Seq(
         WorkflowJob(
@@ -737,7 +747,8 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
           matrixAdds = githubWorkflowBuildMatrixAdditions.value,
           matrixIncs = githubWorkflowBuildMatrixInclusions.value.toList,
           matrixExcs = githubWorkflowBuildMatrixExclusions.value.toList,
-          runsOnExtraLabels = githubWorkflowBuildRunsOnExtraLabels.value.toList )) ++ publishJobOpt ++ githubWorkflowAddedJobs.value
+          runsOnExtraLabels = githubWorkflowBuildRunsOnExtraLabels.value.toList,
+          timeout = githubWorkflowBuildTimeout.value)) ++ publishJobOpt ++ githubWorkflowAddedJobs.value
     })
 
   private val generateCiContents = Def task {

@@ -1,3 +1,5 @@
+import scala.concurrent.duration._
+
 organization := "com.codecommit"
 version := "0.0.1"
 
@@ -28,3 +30,6 @@ ThisBuild / githubWorkflowPublish :=
     ),
     WorkflowStep.Run(List("echo sup")),
   )
+ThisBuild / githubWorkflowBuildTimeout := Some(2.hours)
+
+ThisBuild / githubWorkflowPublishTimeout := Some(1.hour)

@@ -19,6 +19,7 @@ package sbtghactions
 import org.specs2.mutable.Specification
 
 import java.net.URL
+import scala.concurrent.duration.DurationInt
 
 class GenerativePluginSpec extends Specification {
   import GenerativePlugin._
@@ -468,6 +469,12 @@ class GenerativePluginSpec extends Specification {
                         |    abc: def
                         |    cafe: '@42'""".stripMargin
     }
+
+    "compile a run step with a timeout" in {
+      compileStep(
+        Run(List("users"), timeout = Some(1.hour)),
+        "") mustEqual "- timeout-minutes: 60\n  run: users"
+    }
   }
 
   "job compilation" should {
@@ -735,6 +742,30 @@ class GenerativePluginSpec extends Specification {
   runs-on: [ "${{ matrix.os }}", runner-label, runner-group ]
   steps:
     - run: echo hello"""
+    }
+
+    "compile a job with a timeout" in {
+      val results = compileJob(
+        WorkflowJob(
+          "publish",
+          "Publish Release",
+          List(
+            WorkflowStep.Sbt(List("ci-release"))),
+          timeout = Some(1.hour)),
+        "csbt")
+
+      results mustEqual s"""publish:
+  name: Publish Release
+  strategy:
+    matrix:
+      os: [ubuntu-latest]
+      scala: [2.13.6]
+      java: [temurin@11]
+  runs-on: $${{ matrix.os }}
+  timeout-minutes: 60
+
+  steps:
+    - run: csbt ci-release"""
     }
 
     "produce an error when compiling a job with `include` key in matrix" in {

@@ -16,6 +16,8 @@
 
 package sbtghactions
 
+import scala.concurrent.duration.FiniteDuration
+
 final case class WorkflowJob(
     id: String,
     name: String,
@@ -34,4 +36,5 @@ final case class WorkflowJob(
     matrixExcs: List[MatrixExclude] = List(),
     runsOnExtraLabels: List[String] = List(),
     container: Option[JobContainer] = None,
-    environment: Option[JobEnvironment] = None)
+    environment: Option[JobEnvironment] = None,
+    timeout: Option[FiniteDuration] = None)

@@ -59,7 +59,8 @@ pluginCrossBuild / sbtVersion := "1.5.5"
 
 publishMavenStyle := true
 
-scalacOptions += "-Xlint:_,-missing-interpolator"
+scalacOptions +=
+  "-Xlint:_,-missing-interpolator"
 
 libraryDependencies += "org.specs2" %% "specs2-core" % "4.12.12" % Test
 
