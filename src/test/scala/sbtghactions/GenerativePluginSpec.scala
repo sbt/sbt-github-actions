@@ -109,7 +109,7 @@ class GenerativePluginSpec extends Specification {
         |      matrix:
         |        os: [ubuntu-latest]
         |        scala: [2.13.6]
-        |        java: [temurin@11]
+        |        java: [temurin@8]
         |    runs-on: $${{ matrix.os }}
         |    steps:
         |      - run: echo Hello World
@@ -151,7 +151,7 @@ class GenerativePluginSpec extends Specification {
         |      matrix:
         |        os: [ubuntu-latest]
         |        scala: [2.13.6]
-        |        java: [temurin@11]
+        |        java: [temurin@8]
         |    runs-on: $${{ matrix.os }}
         |    steps:
         |      - run: echo yikes
@@ -162,7 +162,7 @@ class GenerativePluginSpec extends Specification {
         |      matrix:
         |        os: [ubuntu-latest]
         |        scala: [2.13.6]
-        |        java: [temurin@11]
+        |        java: [temurin@8]
         |    runs-on: $${{ matrix.os }}
         |    steps:
         |      - run: whoami
@@ -206,7 +206,7 @@ class GenerativePluginSpec extends Specification {
         |      matrix:
         |        os: [ubuntu-latest]
         |        scala: [2.13.6]
-        |        java: [temurin@11]
+        |        java: [temurin@8]
         |    runs-on: $${{ matrix.os }}
         |    container: 'not:real-thing'
         |    steps:
@@ -248,7 +248,7 @@ class GenerativePluginSpec extends Specification {
         |      matrix:
         |        os: [ubuntu-latest]
         |        scala: [2.13.6]
-        |        java: [temurin@11]
+        |        java: [temurin@8]
         |    runs-on: $${{ matrix.os }}
         |    container:
         |      image: 'also:not-real'
@@ -494,7 +494,7 @@ class GenerativePluginSpec extends Specification {
     matrix:
       os: [ubuntu-latest]
       scala: [2.13.6]
-      java: [temurin@11]
+      java: [temurin@8]
   runs-on: $${{ matrix.os }}
   steps:
     - run: echo hello
@@ -519,7 +519,7 @@ class GenerativePluginSpec extends Specification {
     matrix:
       os: [ubuntu-latest, windows-latest, macos-latest]
       scala: [2.13.6]
-      java: [temurin@11]
+      java: [temurin@8]
   runs-on: $${{ matrix.os }}
   steps:
     - shell: bash
@@ -527,7 +527,7 @@ class GenerativePluginSpec extends Specification {
     }
 
     "compile a job with java setup, two JVMs and two Scalas" in {
-      val javas = List(JavaSpec.temurin("11"), JavaSpec.graalvm("20.0.0", "8"))
+      val javas = List(JavaSpec.temurin("17"), JavaSpec.graalvm("22.3.0", "11"))
 
       val results = compileJob(
         WorkflowJob(
@@ -544,23 +544,23 @@ class GenerativePluginSpec extends Specification {
     matrix:
       os: [ubuntu-latest]
       scala: [2.12.15, 2.13.6]
-      java: [temurin@11, graal_20.0.0@8]
+      java: [temurin@17, graal_22.3.0@11]
   runs-on: $${{ matrix.os }}
   steps:
-    - name: Setup Java (temurin@11)
-      if: matrix.java == 'temurin@11'
+    - name: Setup Java (temurin@17)
+      if: matrix.java == 'temurin@17'
       uses: actions/setup-java@v3
       with:
         distribution: temurin
-        java-version: 11
+        java-version: 17
         cache: sbt
 
-    - name: Setup GraalVM (graal_20.0.0@8)
-      if: matrix.java == 'graal_20.0.0@8'
+    - name: Setup GraalVM (graal_22.3.0@11)
+      if: matrix.java == 'graal_22.3.0@11'
       uses: graalvm/setup-graalvm@v1
       with:
-        version: 20.0.0
-        java-version: 8
+        version: 22.3.0
+        java-version: 11
         components: native-image
         github-token: $${{ secrets.GITHUB_TOKEN }}
         cache: sbt"""
@@ -587,7 +587,7 @@ class GenerativePluginSpec extends Specification {
     matrix:
       os: [ubuntu-latest]
       scala: [2.13.6]
-      java: [temurin@11]
+      java: [temurin@8]
   runs-on: $${{ matrix.os }}
   env:
     not: now
@@ -611,7 +611,7 @@ class GenerativePluginSpec extends Specification {
     matrix:
       os: [ubuntu-latest]
       scala: [2.13.6]
-      java: [temurin@11]
+      java: [temurin@8]
   runs-on: $${{ matrix.os }}
   environment: release
   steps:
@@ -638,7 +638,7 @@ class GenerativePluginSpec extends Specification {
     matrix:
       os: [ubuntu-latest]
       scala: [2.13.6]
-      java: [temurin@11]
+      java: [temurin@8]
   runs-on: $${{ matrix.os }}
   permissions:
     id-token: write
@@ -663,7 +663,7 @@ class GenerativePluginSpec extends Specification {
     matrix:
       os: [ubuntu-latest]
       scala: [2.13.6]
-      java: [temurin@11]
+      java: [temurin@8]
   runs-on: $${{ matrix.os }}
   permissions: read-all
   steps:
@@ -686,7 +686,7 @@ class GenerativePluginSpec extends Specification {
     matrix:
       os: [ubuntu-latest]
       scala: [2.13.6]
-      java: [temurin@11]
+      java: [temurin@8]
   runs-on: $${{ matrix.os }}
   environment:
     name: release
@@ -714,7 +714,7 @@ class GenerativePluginSpec extends Specification {
     matrix:
       os: [ubuntu-latest]
       scala: [2.13.6]
-      java: [temurin@11]
+      java: [temurin@8]
       test: [1, 2]
   runs-on: $${{ matrix.os }}
   steps:
@@ -738,7 +738,7 @@ class GenerativePluginSpec extends Specification {
     matrix:
       os: [ubuntu-latest]
       scala: [2.13.6]
-      java: [temurin@11]
+      java: [temurin@8]
   runs-on: [ "${{ matrix.os }}", runner-label, runner-group ]
   steps:
     - run: echo hello"""
@@ -760,7 +760,7 @@ class GenerativePluginSpec extends Specification {
     matrix:
       os: [ubuntu-latest]
       scala: [2.13.6]
-      java: [temurin@11]
+      java: [temurin@8]
   runs-on: $${{ matrix.os }}
   timeout-minutes: 60
 
@@ -807,7 +807,7 @@ class GenerativePluginSpec extends Specification {
     matrix:
       os: [ubuntu-latest]
       scala: [2.13.6]
-      java: [temurin@11]
+      java: [temurin@8]
       include:
         - scala: 2.13.6
           foo: bar
@@ -862,7 +862,7 @@ class GenerativePluginSpec extends Specification {
     matrix:
       os: [ubuntu-latest]
       scala: [2.13.6]
-      java: [temurin@11]
+      java: [temurin@8]
       exclude:
         - scala: 2.13.6
   runs-on: $${{ matrix.os }}
@@ -905,7 +905,7 @@ class GenerativePluginSpec extends Specification {
             WorkflowStep.Run(List("echo ${{ matrix.scala }}"))),
           matrixExcs = List(
             MatrixExclude(
-              Map("java" -> JavaSpec.temurin("11").render)))),
+              Map("java" -> JavaSpec.temurin("8").render)))),
         "") must not(throwA[RuntimeException])
     }
 
@@ -938,7 +938,7 @@ class GenerativePluginSpec extends Specification {
         - the
         - bounds
         - checking
-      java: [temurin@11]
+      java: [temurin@8]
   runs-on: $${{ matrix.os }}
   steps:
     - run: echo hello
