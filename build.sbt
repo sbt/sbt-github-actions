@@ -70,11 +70,29 @@ ThisBuild / startYear := Some(2020)
 ThisBuild / dynverSonatypeSnapshots := true
 ThisBuild / developers := List(
   Developer(
+    id = "armanbilge",
+    name = "Arman Bilge",
+    email = "@armanbilge",
+    url = url("https://github.com/armanbilge")
+  ),
+  Developer(
     id = "djspiewak",
     name = "Daniel Spiewak",
     email = "@djspiewak",
     url = url("https://github.com/djspiewak")
   ),
+  Developer(
+    id = "eed3si9n",
+    name = "Eugene Yokota",
+    email = "@eed3si9n",
+    url = url("https://github.com/eed3si9n")
+  ),
+  Developer(
+    id = "mdedetrich",
+    name = "Matthew de Detrich",
+    email = "mdedetrich@gmail.com",
+    url = url("https://github.com/mdedetrich")
+  )
 )
 ThisBuild / description := "An sbt plugin which makes it easier to build with GitHub Actions"
 ThisBuild / licenses := List("Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0"))
