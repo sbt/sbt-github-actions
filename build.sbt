@@ -16,7 +16,7 @@
 
 name := "sbt-github-actions"
 
-lazy val scala212 = "2.12.15"
+lazy val scala212 = "2.12.17"
 ThisBuild / organization := "com.github.sbt"
 ThisBuild / crossScalaVersions := Seq(scala212)
 ThisBuild / scalaVersion := scala212
