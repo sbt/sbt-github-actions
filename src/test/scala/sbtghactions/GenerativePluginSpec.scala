@@ -380,7 +380,7 @@ class GenerativePluginSpec extends Specification {
     "compile sbt using the command provided" in {
       compileStep(
         Sbt(List("show scalaVersion", "compile", "test")),
-        "$SBT") mustEqual s"- run: $$SBT '++$${{ matrix.scala }}' 'show scalaVersion' compile test"
+        "$SBT") mustEqual s"- run: $$SBT '++ $${{ matrix.scala }}' 'show scalaVersion' compile test"
     }
 
     "compile sbt without switch command" in {
@@ -393,7 +393,7 @@ class GenerativePluginSpec extends Specification {
     "compile sbt with parameters" in {
       compileStep(
         Sbt(List("compile", "test"), params = Map("abc" -> "def", "cafe" -> "@42")),
-        "$SBT") mustEqual s"""- run: $$SBT '++$${{ matrix.scala }}' compile test
+        "$SBT") mustEqual s"""- run: $$SBT '++ $${{ matrix.scala }}' compile test
                          |  with:
                          |    abc: def
                          |    cafe: '@42'""".stripMargin
@@ -592,7 +592,7 @@ class GenerativePluginSpec extends Specification {
   env:
     not: now
   steps:
-    - run: csbt '++$${{ matrix.scala }}' +compile"""
+    - run: csbt '++ $${{ matrix.scala }}' +compile"""
     }
 
     "compile a job with an environment" in {

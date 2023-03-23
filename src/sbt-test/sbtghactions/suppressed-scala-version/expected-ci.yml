@@ -41,10 +41,10 @@ jobs:
           cache: sbt
 
       - name: Check that workflows are up to date
-        run: sbt '++${{ matrix.scala }}' githubWorkflowCheck
+        run: sbt '++ ${{ matrix.scala }}' githubWorkflowCheck
 
       - name: Build project
-        run: sbt '++${{ matrix.scala }}' test
+        run: sbt '++ ${{ matrix.scala }}' test
 
       - name: Compress target directories
         run: tar cf targets.tar target project/target
