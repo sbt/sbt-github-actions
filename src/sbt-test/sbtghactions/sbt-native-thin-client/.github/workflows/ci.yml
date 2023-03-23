@@ -40,26 +40,26 @@ jobs:
           cache: sbt
 
       - name: Check that workflows are up to date
-        run: sbt --client '++${{ matrix.scala }}; githubWorkflowCheck'
+        run: sbt --client '++ ${{ matrix.scala }}; githubWorkflowCheck'
 
       - name: Build project
-        run: sbt --client '++${{ matrix.scala }}; test'
+        run: sbt --client '++ ${{ matrix.scala }}; test'
 
-      - run: sbt --client '++${{ matrix.scala }}; lots'
+      - run: sbt --client '++ ${{ matrix.scala }}; lots'
 
-      - run: sbt --client '++${{ matrix.scala }}; of'
+      - run: sbt --client '++ ${{ matrix.scala }}; of'
 
-      - run: sbt --client '++${{ matrix.scala }}; sbt'
+      - run: sbt --client '++ ${{ matrix.scala }}; sbt'
 
-      - run: sbt --client '++${{ matrix.scala }}; tasks'
+      - run: sbt --client '++ ${{ matrix.scala }}; tasks'
 
-      - run: sbt --client '++${{ matrix.scala }}; run'
+      - run: sbt --client '++ ${{ matrix.scala }}; run'
 
-      - run: sbt --client '++${{ matrix.scala }}; as; separate; steps'
+      - run: sbt --client '++ ${{ matrix.scala }}; as; separate; steps'
 
-      - run: sbt --client '++${{ matrix.scala }}; using'
+      - run: sbt --client '++ ${{ matrix.scala }}; using'
 
-      - run: sbt --client '++${{ matrix.scala }}; sbtn'
+      - run: sbt --client '++ ${{ matrix.scala }}; sbtn'
 
       - name: Compress target directories
         run: tar cf targets.tar target project/target
