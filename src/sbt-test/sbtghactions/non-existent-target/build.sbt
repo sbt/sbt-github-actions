@@ -1,7 +1,7 @@
-organization := "com.codecommit"
+organization := "com.github.sbt"
 version := "0.0.1"
 
-ThisBuild / crossScalaVersions := Seq("2.13.6")
+ThisBuild / crossScalaVersions := Seq("2.13.10")
 ThisBuild / scalaVersion := crossScalaVersions.value.head
 
 // explicitly don't build `withoutTarget`

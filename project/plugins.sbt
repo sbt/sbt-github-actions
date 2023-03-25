@@ -18,11 +18,4 @@
 // necessary hack to avoid an infinite project loading recursion.
 val sbtGithubActionsSources = ProjectRef(file("project"), "sbtGithubActionsSources")
 
-// Convoluted hack to force linking between the binary distribution of
-// `sbt-spiewak-sonatype` with the `GitHubActionsPlugin` built from the sources
-// of this repository.
-val root = (project in file("."))
-  .dependsOn(sbtGithubActionsSources)
-  .settings(
-    addSbtPlugin("com.codecommit" % "sbt-spiewak-sonatype" % "0.22.1" exclude("com.codecommit", "sbt-github-actions"))
-  )
+addSbtPlugin("com.github.sbt" % "sbt-ci-release" % "1.5.11")
