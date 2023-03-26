@@ -10,14 +10,6 @@ Add the following to your `plugins.sbt`:
 addSbtPlugin("com.github.sbt" % "sbt-github-actions" % <latest>)
 ```
 
-**Note**: We recommend you set the following setting in `build.sbt`:
-
-```scala
-// sbt-github-actions defaults to using JDK 17.
-// Change to "11" or "8" if needed.
-ThisBuild / githubWorkflowJavaVersions := Seq(JavaSpec.temurin("17"))
-```
-
 To use the generative functionality, run `sbt githubWorkflowGenerate` and *commit the results*. If your sbt build is ever changed such that the generated workflow is no longer in sync, the workflow run in GitHub Actions will begin failing and you will need to re-run this task (and commit the results).
 
 ## General Plugin
@@ -39,6 +31,17 @@ sbt and Coursier caching are all handled by the generated **ci.yml** by default,
 **clean.yml** is generated based on a static description because it *should* just be the default in all GitHub Actions projects. This is basically a hack to work around the fact that artifacts produced by GitHub Actions workflows count against personal and organization storage limits, but those artifacts also are retained *indefinitely* up until 2 GB. This is entirely unnecessary and egregious, since artifacts are transient and only useful for passing state between jobs within the same workflow. To make matters more complicated, artifacts from a given workflow are invisible to the GitHub API until that workflow is finished, which is why **clean.yml** has to be a *separate* workflow rather than part of **ci.yml**. It runs on every push to the repository.
 
 This plugin is quite prescriptive in that it forcibly manages the contents of the **ci.yml** and **clean.yml** files. By default, **ci.yml** will contain a step which *verifies* that its contents (and the contents of **clean.yml**) correspond precisely to the most up-to-date generated version of themselves. If this is not the case, then the build is failed. However, there is no restriction in adding *other* workflows not named **ci.yml** or **clean.yml**. These will be ignored entirely by the plugin.
+
+### JDK settings
+
+We recommend you set the following setting in `build.sbt`:
+
+```scala
+// sbt-github-actions defaults to using JDK 8 for testing and publishing.
+// The following adds JDK 17 for testing.
+ThisBuild / githubWorkflowJavaVersions += JavaSpec.temurin("17")
+```
+
 
 ### Integration with sbt-ci-release
 
