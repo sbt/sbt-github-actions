@@ -172,13 +172,15 @@ object GenerativePlugin extends AutoPlugin {
         s"environment: ${wrap(environment.name)}"
     }
 
-  def compileEnv(env: Map[String, String], prefix: String = "env"): String =
+  def compileEnv(env: Map[String, String], prefix: String = "env", ignoreWhiteSpace: Boolean = false): String =
     if (env.isEmpty) {
       ""
     } else {
       val rendered = env map {
         case (key, value) =>
-          if (!isSafeString(key) || key.indexOf(' ') >= 0)
+          val whitSpaceValidation = if(ignoreWhiteSpace) false else key.indexOf(' ') >= 0
+
+          if (!isSafeString(key) || whitSpaceValidation)
             sys.error(s"'$key' is not a valid environment variable name")
 
           s"""$key: ${wrap(value)}"""
@@ -315,7 +317,7 @@ ${indent(rendered.mkString("\n"), 1)}"""
       renderedShell + "run: " + wrap(commands.mkString("\n")) + renderParams(params)
 
   def renderParams(params: Map[String, String]): String = {
-    val renderedParamsPre = compileEnv(params, prefix = "with")
+    val renderedParamsPre = compileEnv(params, prefix = "with", ignoreWhiteSpace = true)
     val renderedParams = if (renderedParamsPre.isEmpty)
       ""
     else

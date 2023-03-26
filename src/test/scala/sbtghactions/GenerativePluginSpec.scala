@@ -475,6 +475,22 @@ class GenerativePluginSpec extends Specification {
         Run(List("users"), timeout = Some(1.hour)),
         "") mustEqual "- timeout-minutes: 60\n  run: users"
     }
+
+    "compile a run with parameters with space" in {
+      compileStep(
+        Run(List("echo foo"), params = Map("abc space" -> "def", "cafe test 1" -> "@42")),
+        "") mustEqual """- run: echo foo
+                        |  with:
+                        |    abc space: def
+                        |    cafe test 1: '@42'""".stripMargin
+    }
+
+    "throw error run with environment variables with space" in {
+      compileStep(
+        Run(List("echo foo"), env = Map("abc space" -> "def", "cafe test 1" -> "@42")),
+        "") must throwA[RuntimeException]
+    }
+
   }
 
   "job compilation" should {
