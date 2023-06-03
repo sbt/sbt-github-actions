@@ -154,3 +154,4 @@ Any and all settings which affect the behavior of the generative plugin should b
 #### Windows related
 
 - `githubWorkflowWindowsPagefileFix` : `Option[windows.PagefileFix]` - Due to the fact that Windows is more strict in how it treats pagefile size compared to *unix systems, certain windows related workflows (typically scala-native) can run out of memory without this fix. Defaults to `Some(windows.PagefileFix(2GB,8GB))`.
+
