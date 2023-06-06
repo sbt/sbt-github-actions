@@ -61,6 +61,15 @@ object GenerativePlugin extends AutoPlugin {
 
     type JavaSpec = sbtghactions.JavaSpec
     val JavaSpec = sbtghactions.JavaSpec
+
+    type Permissions = sbtghactions.Permissions
+    val Permissions = sbtghactions.Permissions
+
+    type PermissionScope = sbtghactions.PermissionScope
+    val PermissionScope = sbtghactions.PermissionScope
+
+    type PermissionValue = sbtghactions.PermissionValue
+    val PermissionValue = sbtghactions.PermissionValue
   }
 
   import autoImport._
