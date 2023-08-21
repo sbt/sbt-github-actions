@@ -23,8 +23,8 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
-        scala: [2.12.17]
-        java: [temurin@8, graal_22.3.0@17]
+        scala: [2.12.18]
+        java: [temurin@8, graal_23.0.0@17]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout current branch (full)
@@ -40,11 +40,11 @@ jobs:
           java-version: 8
           cache: sbt
 
-      - name: Setup GraalVM (graal_22.3.0@17)
-        if: matrix.java == 'graal_22.3.0@17'
+      - name: Setup GraalVM (graal_23.0.0@17)
+        if: matrix.java == 'graal_23.0.0@17'
         uses: graalvm/setup-graalvm@v1
         with:
-          version: 22.3.0
+          version: 23.0.0
           java-version: 17
           components: native-image
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -71,7 +71,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        scala: [2.12.17]
+        scala: [2.12.18]
         java: [temurin@8]
     runs-on: ${{ matrix.os }}
     steps:
@@ -88,22 +88,22 @@ jobs:
           java-version: 8
           cache: sbt
 
-      - name: Setup GraalVM (graal_22.3.0@17)
-        if: matrix.java == 'graal_22.3.0@17'
+      - name: Setup GraalVM (graal_23.0.0@17)
+        if: matrix.java == 'graal_23.0.0@17'
         uses: graalvm/setup-graalvm@v1
         with:
-          version: 22.3.0
+          version: 23.0.0
           java-version: 17
           components: native-image
           github-token: ${{ secrets.GITHUB_TOKEN }}
           cache: sbt
 
-      - name: Download target directories (2.12.17)
+      - name: Download target directories (2.12.18)
         uses: actions/download-artifact@v3
         with:
-          name: target-${{ matrix.os }}-2.12.17-${{ matrix.java }}
+          name: target-${{ matrix.os }}-2.12.18-${{ matrix.java }}
 
-      - name: Inflate target directories (2.12.17)
+      - name: Inflate target directories (2.12.18)
         run: |
           tar xf targets.tar
           rm targets.tar
