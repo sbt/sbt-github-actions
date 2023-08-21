@@ -16,7 +16,7 @@
 
 name := "sbt-github-actions"
 
-lazy val scala212 = "2.12.17"
+lazy val scala212 = "2.12.18"
 ThisBuild / organization := "com.github.sbt"
 ThisBuild / crossScalaVersions := Seq(scala212)
 ThisBuild / scalaVersion := scala212
@@ -24,7 +24,7 @@ ThisBuild / scalaVersion := scala212
 // Add windows-latest when https://github.com/sbt/sbt/issues/7082 is resolved
 ThisBuild / githubWorkflowOSes := Seq("ubuntu-latest", "macos-latest")
 ThisBuild / githubWorkflowBuild := Seq(WorkflowStep.Sbt(List("test", "scripted")))
-ThisBuild / githubWorkflowJavaVersions += JavaSpec.graalvm("22.3.0", "17")
+ThisBuild / githubWorkflowJavaVersions += JavaSpec.graalvm("23.0.0", "17")
 
 ThisBuild / githubWorkflowTargetTags ++= Seq("v*")
 ThisBuild / githubWorkflowPublishTargetBranches :=
@@ -58,7 +58,7 @@ publishMavenStyle := true
 scalacOptions +=
   "-Xlint:_,-missing-interpolator"
 
-libraryDependencies += "org.specs2" %% "specs2-core" % "4.12.12" % Test
+libraryDependencies += "org.specs2" %% "specs2-core" % "4.19.2" % Test
 
 enablePlugins(SbtPlugin)
 
