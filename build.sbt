@@ -24,7 +24,7 @@ ThisBuild / scalaVersion := scala212
 // Add windows-latest when https://github.com/sbt/sbt/issues/7082 is resolved
 ThisBuild / githubWorkflowOSes := Seq("ubuntu-latest", "macos-latest")
 ThisBuild / githubWorkflowBuild := Seq(WorkflowStep.Sbt(List("test", "scripted")))
-ThisBuild / githubWorkflowJavaVersions += JavaSpec.graalvm("23.0.0", "17")
+ThisBuild / githubWorkflowJavaVersions += JavaSpec.graalvm("22.3.0", "17")
 
 ThisBuild / githubWorkflowTargetTags ++= Seq("v*")
 ThisBuild / githubWorkflowPublishTargetBranches :=
