@@ -16,7 +16,7 @@
 
 name := "sbt-github-actions"
 
-lazy val scala212 = "2.12.17"
+lazy val scala212 = "2.12.18"
 ThisBuild / organization := "com.github.sbt"
 ThisBuild / crossScalaVersions := Seq(scala212)
 ThisBuild / scalaVersion := scala212
@@ -58,7 +58,7 @@ publishMavenStyle := true
 scalacOptions +=
   "-Xlint:_,-missing-interpolator"
 
-libraryDependencies += "org.specs2" %% "specs2-core" % "4.12.12" % Test
+libraryDependencies += "org.specs2" %% "specs2-core" % "4.19.2" % Test
 
 enablePlugins(SbtPlugin)
 
