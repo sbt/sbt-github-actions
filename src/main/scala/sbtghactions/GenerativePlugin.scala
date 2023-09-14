@@ -70,6 +70,9 @@ object GenerativePlugin extends AutoPlugin {
 
     type PermissionValue = sbtghactions.PermissionValue
     val PermissionValue = sbtghactions.PermissionValue
+
+    type Graalvm = sbtghactions.Graalvm
+    val Graalvm = sbtghactions.Graalvm
   }
 
   import autoImport._
