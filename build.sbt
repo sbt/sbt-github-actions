@@ -21,8 +21,7 @@ ThisBuild / organization := "com.github.sbt"
 ThisBuild / crossScalaVersions := Seq(scala212)
 ThisBuild / scalaVersion := scala212
 
-// Add windows-latest when https://github.com/sbt/sbt/issues/7082 is resolved
-ThisBuild / githubWorkflowOSes := Seq("ubuntu-latest", "macos-latest")
+ThisBuild / githubWorkflowOSes := Seq("ubuntu-latest", "macos-latest", "windows-latest")
 ThisBuild / githubWorkflowBuild := Seq(WorkflowStep.Sbt(List("test", "scripted")))
 ThisBuild / githubWorkflowJavaVersions += JavaSpec.graalvm(Graalvm.Distribution("graalvm"), "17")
 
@@ -64,6 +63,9 @@ enablePlugins(SbtPlugin)
 
 scriptedLaunchOpts ++= Seq("-Dplugin.version=" + version.value)
 scriptedBufferLog := true
+// This sbt version is necessary for CI to work on windows with
+// scripted tests, see https://github.com/sbt/sbt/pull/7087
+scriptedSbt := "1.9.6"
 
 ThisBuild / homepage := Some(url("https://github.com/sbt/sbt-github-actions"))
 ThisBuild / startYear := Some(2020)
