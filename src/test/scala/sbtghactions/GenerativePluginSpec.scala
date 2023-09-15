@@ -543,7 +543,7 @@ class GenerativePluginSpec extends Specification {
     }
 
     "compile a job with java setup, two JVMs and two Scalas" in {
-      val javas = List(JavaSpec.temurin("17"), JavaSpec.graalvm("22.3.0", "11"))
+      val javas = List(JavaSpec.temurin("17"), JavaSpec.graalvm(Graalvm.Version("22.3.0"), "11"))
 
       val results = compileJob(
         WorkflowJob(
@@ -580,6 +580,46 @@ class GenerativePluginSpec extends Specification {
         components: native-image
         github-token: $${{ secrets.GITHUB_TOKEN }}
         cache: sbt"""
+    }
+
+    "compile a job with java setup using new Graalvm distribution scheme" in {
+      val javas = List(JavaSpec.graalvm(Graalvm.Distribution("graalvm"), "17"))
+
+      val results = compileJob(
+        WorkflowJob(
+          "abc",
+          "How to get to...",
+          WorkflowStep.SetupJava(javas),
+          scalas = List("2.12.17", "2.13.10"),
+          javas = javas),
+        "")
+
+            results mustEqual s"""abc:
+  name: How to get to...
+  strategy:
+    matrix:
+      os: [ubuntu-latest]
+      scala: [2.12.17, 2.13.10]
+      java: [graal_graalvm@17]
+  runs-on: $${{ matrix.os }}
+  steps:
+    - name: Setup GraalVM (graal_graalvm@17)
+      if: matrix.java == 'graal_graalvm@17'
+      uses: graalvm/setup-graalvm@v1
+      with:
+        java-version: 17
+        distribution: graalvm
+        components: native-image
+        github-token: $${{ secrets.GITHUB_TOKEN }}
+        cache: sbt"""
+    }
+
+    "throw an exception when using Graalvm.Distribution for JDK's older than 17" in {
+      JavaSpec.graalvm(Graalvm.Distribution("graalvm"), "11") must throwA[IllegalArgumentException]
+    }
+
+    "throw an exception when using Graalvm.Version for JDK's newer than 17" in {
+      JavaSpec.graalvm(Graalvm.Version("22.3.0"), "20") must throwA[IllegalArgumentException]
     }
 
     "compile a job with environment variables, conditional, and needs with an sbt step" in {

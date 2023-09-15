@@ -18,15 +18,62 @@ package sbtghactions
 
 final case class JavaSpec(dist: JavaSpec.Distribution, version: String) {
   def render: String = dist match {
-    case JavaSpec.Distribution.GraalVM(gversion) => s"graal_$gversion@$version"
+    case JavaSpec.Distribution.GraalVM(Graalvm.Version(gversion)) =>
+      s"graal_$gversion@$version"
+    case JavaSpec.Distribution.GraalVM(Graalvm.Distribution(distribution)) =>
+      s"graal_$distribution@$version"
     case dist => s"${dist.rendering}@$version"
+  }
+}
+
+/**
+ * @see https://github.com/graalvm/setup-graalvm#migrating-from-graalvm-223-or-earlier-to-the-new-graalvm-for-jdk-17-and-later
+ */
+sealed trait Graalvm extends Product with Serializable {
+  private[sbtghactions] def compile: String
+}
+
+object Graalvm {
+  /**
+   * For versions of Graalvm JDK 17 or earlier
+   */
+  final case class Version(version: String) extends Graalvm {
+    override private[sbtghactions] val compile: String = version
+  }
+
+  /**
+   * For versions of Graalvm JDK 17 or later. Currently valid distributions are
+   * graalvm, graalvm-community or mandrel
+   */
+  final case class Distribution(distribution: String) extends Graalvm {
+    override private[sbtghactions] val compile: String = distribution
   }
 }
 
 object JavaSpec {
 
   def temurin(version: String): JavaSpec = JavaSpec(Distribution.Temurin, version)
-  def graalvm(graal: String, version: String): JavaSpec = JavaSpec(Distribution.GraalVM(graal), version)
+
+  private[sbtghactions] object JavaVersionExtractor {
+    def unapply(version: String): Option[Int] =
+      version.split("\\.").headOption.map(_.toInt)
+  }
+
+  def graalvm(graal: Graalvm, version: String): JavaSpec = {
+    (graal, version) match {
+      case (Graalvm.Version(_), JavaVersionExtractor(javaVersion)) if javaVersion > 17 =>
+        throw new IllegalArgumentException("Please use Graalvm.Distribution for JDK's newer than 17")
+      case (Graalvm.Distribution(_), JavaVersionExtractor(javaVersion)) if javaVersion < 17 =>
+        throw new IllegalArgumentException("Graalvm.Distribution is not compatible with JDK's older than 17")
+      case _ =>
+    }
+
+    JavaSpec(Distribution.GraalVM(graal), version)
+  }
+
+  @deprecated("Use graalvm(graal: Graalvm, version: String) instead", "0.17.0")
+  def graalvm(graal: String, version: String): JavaSpec =
+    graalvm(Graalvm.Version(graal), version: String)
 
   sealed abstract class Distribution(val rendering: String) extends Product with Serializable
 
@@ -36,6 +83,6 @@ object JavaSpec {
     case object Adopt extends Distribution("adopt-hotspot")
     case object OpenJ9 extends Distribution("adopt-openj9")
     case object Liberica extends Distribution("liberica")
-    final case class GraalVM(version: String) extends Distribution(version)
+    final case class GraalVM(graalvm: Graalvm) extends Distribution(graalvm.compile)
   }
 }

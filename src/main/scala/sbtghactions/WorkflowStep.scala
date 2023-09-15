@@ -41,7 +41,7 @@ object WorkflowStep {
 
   def SetupJava(versions: List[JavaSpec]): List[WorkflowStep] =
     versions map {
-      case jv @ JavaSpec(JavaSpec.Distribution.GraalVM(graalVersion), version) =>
+      case jv @ JavaSpec(JavaSpec.Distribution.GraalVM(Graalvm.Version(graalVersion)), version) =>
         WorkflowStep.Use(
           UseRef.Public("graalvm", "setup-graalvm", "v1"),
           name = Some(s"Setup GraalVM (${jv.render})"),
@@ -52,7 +52,17 @@ object WorkflowStep {
             "components" -> "native-image",
             "github-token" -> s"$${{ secrets.GITHUB_TOKEN }}",
             "cache" -> "sbt"))
-
+      case jv @ JavaSpec(JavaSpec.Distribution.GraalVM(Graalvm.Distribution(distribution)), version) =>
+        WorkflowStep.Use(
+          UseRef.Public("graalvm", "setup-graalvm", "v1"),
+          name = Some(s"Setup GraalVM (${jv.render})"),
+          cond = Some(s"matrix.java == '${jv.render}'"),
+          params = ListMap(
+            "java-version" -> s"$version",
+            "distribution" -> distribution,
+            "components" -> "native-image",
+            "github-token" -> s"$${{ secrets.GITHUB_TOKEN }}",
+            "cache" -> "sbt"))
       case jv @ JavaSpec(dist, version) =>
         WorkflowStep.Use(
           UseRef.Public("actions", "setup-java", "v3"),
