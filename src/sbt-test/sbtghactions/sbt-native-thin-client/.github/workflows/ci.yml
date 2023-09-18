@@ -67,7 +67,7 @@ jobs:
       - name: Upload target directories
         uses: actions/upload-artifact@v3
         with:
-          name: target-${{ matrix.os }}-${{ matrix.java }}-${{ matrix.scala }}-
+          name: target-${{ matrix.os }}-${{ matrix.java }}-${{ matrix.scala }}
           path: targets.tar
 
   publish:

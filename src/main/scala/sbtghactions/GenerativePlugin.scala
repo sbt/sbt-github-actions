@@ -636,8 +636,11 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
           List(s"tar cf targets.tar ${sanitized.mkString(" ")} project/target"),
           name = Some("Compress target directories"))
 
-        val keys = githubWorkflowBuildMatrixAdditions
-          .value
+        val matrixAdditions = githubWorkflowBuildMatrixAdditions.value
+        val keys = if (matrixAdditions.isEmpty)
+          ""
+        else
+          matrixAdditions
           .keys
           .toList
           .sorted
