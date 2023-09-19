@@ -25,6 +25,7 @@ trait GenerativeKeys {
   lazy val githubWorkflowGenerate = taskKey[Unit]("Generates (and overwrites if extant) a ci.yml and clean.yml actions description according to configuration")
   lazy val githubWorkflowCheck = taskKey[Unit]("Checks to see if the ci.yml and clean.yml files are equivalent to what would be generated and errors if otherwise")
 
+  lazy val githubWorkflowDir = settingKey[File]("Where to place the workflow directory which contains the generated ci.yml and clean.yml files. (default: baseDirectory.value / \".github\")")
   lazy val githubWorkflowGeneratedCI = settingKey[Seq[WorkflowJob]]("The sequence of jobs which will make up the generated ci workflow (ci.yml)")
   lazy val githubWorkflowGeneratedUploadSteps = settingKey[Seq[WorkflowStep]]("The sequence of steps used to upload intermediate build artifacts for an adjacent job")
   lazy val githubWorkflowGeneratedDownloadSteps = settingKey[Seq[WorkflowStep]]("The sequence of steps used to download intermediate build artifacts published by an adjacent job")

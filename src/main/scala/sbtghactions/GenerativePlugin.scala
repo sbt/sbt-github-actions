@@ -793,7 +793,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
   }
 
   private val workflowsDirTask = Def task {
-    val githubDir = baseDirectory.value / ".github"
+    val githubDir = githubWorkflowDir.value
     val workflowsDir = githubDir / "workflows"
 
     if (!githubDir.exists()) {
@@ -867,7 +867,8 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
 
       if (includeClean)
         compare(cleanYml, expectedCleanContents)
-    })
+    },
+    githubWorkflowDir := baseDirectory.value / ".github")
 
   private[sbtghactions] def diff(expected: String, actual: String): String = {
     val expectedLines = expected.split("\n", -1)
