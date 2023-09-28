@@ -21,7 +21,7 @@ ThisBuild / organization := "com.github.sbt"
 ThisBuild / crossScalaVersions := Seq(scala212)
 ThisBuild / scalaVersion := scala212
 
-ThisBuild / githubWorkflowOSes := Seq("ubuntu-latest", "macos-latest", "windows-latest")
+ThisBuild / githubWorkflowOSes := Seq("windows-latest", "ubuntu-latest", "macos-latest")
 ThisBuild / githubWorkflowBuild := Seq(WorkflowStep.Sbt(List("test", "scripted")))
 ThisBuild / githubWorkflowJavaVersions += JavaSpec.graalvm(Graalvm.Distribution("graalvm"), "17")
 

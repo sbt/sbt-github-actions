@@ -794,7 +794,12 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
          |
          |name: Clean
          |
-         |on: push
+         |on:
+         |  pull_request:
+         |    branches: ['**']
+         |  push:
+         |    branches: ['**']
+         |    tags: [v*]
          |
          |jobs:
          |  delete-artifacts:
