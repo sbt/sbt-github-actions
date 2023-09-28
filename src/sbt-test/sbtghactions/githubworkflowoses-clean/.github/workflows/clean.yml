@@ -12,11 +12,20 @@ on: push
 jobs:
   delete-artifacts:
     name: Delete Artifacts
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
+      - name: Download mktemp and add it to path
+        if: contains(runner.os, 'windows')
+        uses: supplypike/setup-bin@v3
+        with:
+          uri: 'http://downloads.sourceforge.net/gnuwin32/mktemp-1.6-bin.zip'
+          name: 'mktemp.exe'
+          subPath: 'bin'
+          version: '1.6'
       - name: Delete artifacts
+        shell: bash
         run: |
           # Customize those three lines with your repository and credentials:
           REPO=${GITHUB_API_URL}/repos/${{ github.repository }}
@@ -25,7 +34,7 @@ jobs:
           ghapi() { curl --silent --location --user _:$GITHUB_TOKEN "$@"; }
 
           # A temporary file which receives HTTP response headers.
-          TMPFILE=/tmp/tmp.$$
+          TMPFILE=$(mktemp)
 
           # An associative array, key: artifact name, value: number of artifacts of that name.
           declare -A ARTCOUNT
