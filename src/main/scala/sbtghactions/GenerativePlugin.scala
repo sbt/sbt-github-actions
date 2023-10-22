@@ -735,6 +735,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
             githubWorkflowPublish.value.toList :::
             githubWorkflowPublishPostamble.value.toList,
           sbtStepPreamble = githubWorkflowPublishSbtStepPreamble.value.toList,
+          oses = List(githubWorkflowOSes.value.headOption.getOrElse("ubuntu-latest")),
           cond = Some(s"github.event_name != 'pull_request' && $publicationCond"),
           scalas = List(scalaVersion.value),
           javas = List(githubWorkflowJavaVersions.value.head),
