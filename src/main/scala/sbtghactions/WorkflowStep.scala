@@ -65,7 +65,7 @@ object WorkflowStep {
             "cache" -> "sbt"))
       case jv @ JavaSpec(dist, version) =>
         WorkflowStep.Use(
-          UseRef.Public("actions", "setup-java", "v3"),
+          UseRef.Public("actions", "setup-java", "v4"),
           name = Some(s"Setup Java (${jv.render})"),
           cond = Some(s"matrix.java == '${jv.render}'"),
           params = ListMap(
