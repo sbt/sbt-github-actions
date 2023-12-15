@@ -622,7 +622,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
 
   override def buildSettings = settingDefaults ++ Seq(
     githubWorkflowPREventTypes := PREventType.Defaults,
-
+    githubWorkflowArtifactDownloadExtraKeys := Set.empty,
     githubWorkflowGeneratedUploadSteps := {
       if (githubWorkflowArtifactUpload.value) {
         val sanitized = pathStrs.value map { str =>
@@ -636,6 +636,17 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
           List(s"tar cf targets.tar ${sanitized.mkString(" ")} project/target"),
           name = Some("Compress target directories"))
 
+        val matrixAdditions = githubWorkflowBuildMatrixAdditions.value
+        val keys = if (matrixAdditions.isEmpty)
+          ""
+        else
+          matrixAdditions
+          .keys
+          .toList
+          .sorted
+          .map(k => s"$${{ matrix.$k }}")
+          .mkString("-", "-", "")
+
         val upload = WorkflowStep.Use(
           UseRef.Public(
             "actions",
@@ -643,7 +654,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
             "v3"),
           name = Some(s"Upload target directories"),
           params = Map(
-            "name" -> s"target-$${{ matrix.os }}-$${{ matrix.scala }}-$${{ matrix.java }}",
+            "name" -> s"target-$${{ matrix.os }}-$${{ matrix.java }}-$${{ matrix.scala }}$keys",
             "path" -> "targets.tar"))
 
         Seq(tar, upload)
@@ -653,24 +664,54 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
     },
 
     githubWorkflowGeneratedDownloadSteps := {
-      val scalas = githubWorkflowScalaVersions.value
+      val extraKeys = githubWorkflowArtifactDownloadExtraKeys.value
+      val additions = githubWorkflowBuildMatrixAdditions.value
+      val matrixAdds = additions.map {
+        case (key, values) =>
+          if (extraKeys(key))
+            key -> values // we want to iterate over all values
+          else
+            key -> values.take(1) // we only want the primary value
+      }
+
+      val keys = "scala" :: additions.keys.toList.sorted
+      val oses = githubWorkflowOSes.value.toList
+      val scalas = githubWorkflowScalaVersions.value.toList
+      val javas = githubWorkflowJavaVersions.value.toList
+      val exclusions = githubWorkflowBuildMatrixExclusions.value.toList
+
+      // we build the list of artifacts, by iterating over all combinations of keys
+      val artifacts =
+        expandMatrix(
+          oses,
+          scalas,
+          javas,
+          matrixAdds,
+          Nil,
+          exclusions
+        ).map {
+          case _ :: scala :: _ :: tail => scala :: tail
+          case _ => sys.error("Bug generating artifact download steps") // shouldn't happen
+        }
 
       if (githubWorkflowArtifactUpload.value) {
-        scalas flatMap { v =>
+        artifacts flatMap { v =>
+          val pretty = v.mkString(", ")
+
           val download = WorkflowStep.Use(
             UseRef.Public(
               "actions",
               "download-artifact",
               "v3"),
-            name = Some(s"Download target directories ($v)"),
+            name = Some(s"Download target directories ($pretty)"),
             params = Map(
-              "name" -> s"target-$${{ matrix.os }}-$v-$${{ matrix.java }}"))
+              "name" -> s"target-$${{ matrix.os }}-$${{ matrix.java }}${v.mkString("-", "-", "")}"))
 
           val untar = WorkflowStep.Run(
             List(
               "tar xf targets.tar",
               "rm targets.tar"),
-            name = Some(s"Inflate target directories ($v)"))
+            name = Some(s"Inflate target directories ($pretty)"))
 
           Seq(download, untar)
         }
@@ -931,7 +972,37 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
     },
     githubWorkflowDir := baseDirectory.value / ".github")
 
-  private[sbtghactions] def diff(expected: String, actual: String): String = {
+  private def expandMatrix(
+      oses: List[String],
+      scalas: List[String],
+      javas: List[JavaSpec],
+      matrixAdds: Map[String, List[String]],
+      includes: List[MatrixInclude],
+      excludes: List[MatrixExclude]
+  ): List[List[String]] = {
+    val keys = "os" :: "scala" :: "java" :: matrixAdds.keys.toList.sorted
+    val matrix =
+      matrixAdds + ("os" -> oses) + ("scala" -> scalas) + ("java" -> javas.map(_.render))
+
+    // expand the matrix
+    keys
+      .foldLeft(List(List.empty[String])) { (cells, key) =>
+        val values = matrix.getOrElse(key, Nil)
+        cells.flatMap { cell => values.map(v => cell ::: v :: Nil) }
+      }
+      .filterNot { cell => // remove the excludes
+        val job = keys.zip(cell).toMap
+        excludes.exists { // there is an exclude that matches the current job
+          case MatrixExclude(matching) => matching.toSet.subsetOf(job.toSet)
+        }
+      } ::: includes.map { // add the includes
+      case MatrixInclude(matching, additions) =>
+        // yoloing here, but let's wait for the bug report
+        keys.map(matching) ::: additions.values.toList
+    }
+  }
+
+  private def diff(expected: String, actual: String): String = {
     val expectedLines = expected.split("\n", -1)
     val actualLines = actual.split("\n", -1)
     val (lines, _) = expectedLines.zipAll(actualLines, "", "").foldLeft((Vector.empty[String], false)) {

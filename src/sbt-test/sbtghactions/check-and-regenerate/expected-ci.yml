@@ -73,7 +73,7 @@ jobs:
       - name: Upload target directories
         uses: actions/upload-artifact@v3
         with:
-          name: target-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
+          name: target-${{ matrix.os }}-${{ matrix.java }}-${{ matrix.scala }}-${{ matrix.test }}
           path: targets.tar
 
   publish:
@@ -112,22 +112,12 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           cache: sbt
 
-      - name: Download target directories (2.13.10)
+      - name: Download target directories (2.13.10, 2.12.17, this)
         uses: actions/download-artifact@v3
         with:
-          name: target-${{ matrix.os }}-2.13.10-${{ matrix.java }}
+          name: target-${{ matrix.os }}-${{ matrix.java }}-2.13.10-2.12.17-this
 
-      - name: Inflate target directories (2.13.10)
-        run: |
-          tar xf targets.tar
-          rm targets.tar
-
-      - name: Download target directories (2.12.17)
-        uses: actions/download-artifact@v3
-        with:
-          name: target-${{ matrix.os }}-2.12.17-${{ matrix.java }}
-
-      - name: Inflate target directories (2.12.17)
+      - name: Inflate target directories (2.13.10, 2.12.17, this)
         run: |
           tar xf targets.tar
           rm targets.tar
