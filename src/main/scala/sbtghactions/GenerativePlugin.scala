@@ -640,7 +640,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
           UseRef.Public(
             "actions",
             "upload-artifact",
-            "v3"),
+            "v4"),
           name = Some(s"Upload target directories"),
           params = Map(
             "name" -> s"target-$${{ matrix.os }}-$${{ matrix.scala }}-$${{ matrix.java }}",
@@ -661,7 +661,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
             UseRef.Public(
               "actions",
               "download-artifact",
-              "v3"),
+              "v4"),
             name = Some(s"Download target directories ($v)"),
             params = Map(
               "name" -> s"target-$${{ matrix.os }}-$v-$${{ matrix.java }}"))

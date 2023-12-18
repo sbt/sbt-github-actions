@@ -49,7 +49,7 @@ jobs:
         run: tar cf targets.tar target project/target
 
       - name: Upload target directories
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: target-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
           path: targets.tar
@@ -79,7 +79,7 @@ jobs:
           cache: sbt
 
       - name: Download target directories (2.13.10)
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: target-${{ matrix.os }}-2.13.10-${{ matrix.java }}
 
@@ -89,7 +89,7 @@ jobs:
           rm targets.tar
 
       - name: Download target directories (2.12.17)
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: target-${{ matrix.os }}-2.12.17-${{ matrix.java }}
 
