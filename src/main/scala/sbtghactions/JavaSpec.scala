@@ -54,6 +54,8 @@ object JavaSpec {
 
   def temurin(version: String): JavaSpec = JavaSpec(Distribution.Temurin, version)
 
+  def corretto(version: String): JavaSpec = JavaSpec(Distribution.Corretto, version)
+
   private[sbtghactions] object JavaVersionExtractor {
     def unapply(version: String): Option[Int] =
       version.split("\\.").headOption.map(_.toInt)
@@ -83,6 +85,7 @@ object JavaSpec {
     case object Adopt extends Distribution("adopt-hotspot")
     case object OpenJ9 extends Distribution("adopt-openj9")
     case object Liberica extends Distribution("liberica")
+    case object Corretto extends Distribution("corretto")
     final case class GraalVM(graalvm: Graalvm) extends Distribution(graalvm.compile)
   }
 }

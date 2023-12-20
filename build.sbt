@@ -23,7 +23,10 @@ ThisBuild / scalaVersion := scala212
 
 ThisBuild / githubWorkflowOSes := Seq("ubuntu-latest", "macos-latest", "windows-latest")
 ThisBuild / githubWorkflowBuild := Seq(WorkflowStep.Sbt(List("test", "scripted")))
-ThisBuild / githubWorkflowJavaVersions += JavaSpec.graalvm(Graalvm.Distribution("graalvm"), "17")
+ThisBuild / githubWorkflowJavaVersions ++= Seq(
+  JavaSpec.graalvm(Graalvm.Distribution("graalvm"), "17"),
+  JavaSpec.corretto("17")
+)
 
 ThisBuild / githubWorkflowTargetTags ++= Seq("v*")
 ThisBuild / githubWorkflowPublishTargetBranches :=
