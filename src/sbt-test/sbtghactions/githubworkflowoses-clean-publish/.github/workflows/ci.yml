@@ -37,6 +37,7 @@ jobs:
         with:
           minimum-size: 2GB
           maximum-size: 8GB
+          disk-root: 'C:'
 
       - name: Checkout current branch (full)
         uses: actions/checkout@v4
@@ -91,6 +92,7 @@ jobs:
         with:
           minimum-size: 2GB
           maximum-size: 8GB
+          disk-root: 'C:'
 
       - name: Checkout current branch (full)
         uses: actions/checkout@v4
