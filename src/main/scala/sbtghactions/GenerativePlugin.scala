@@ -690,7 +690,9 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
             params = Map(
               "minimum-size" -> s"${pageFileFix.minSize}",
               "maximum-size" -> s"${pageFileFix.maxSize}"
-            ),
+            ) ++ pageFileFix.diskRoot.map(diskRoot =>
+              Map("disk-root" -> s"$diskRoot")
+            ).getOrElse(Map.empty),
             cond = windowsGuard
           )
         ).toList
