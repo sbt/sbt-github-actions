@@ -686,7 +686,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
         val optionalPagefileFix = githubWorkflowWindowsPagefileFix.value.map(pageFileFix =>
           WorkflowStep.Use(
             name = Some("Configure pagefile for Windows"),
-            ref = UseRef.Public("al-cheb", "configure-pagefile-action", "v1.3"),
+            ref = UseRef.Public("al-cheb", "configure-pagefile-action", "v1.4"),
             params = Map(
               "minimum-size" -> s"${pageFileFix.minSize}",
               "maximum-size" -> s"${pageFileFix.maxSize}"
