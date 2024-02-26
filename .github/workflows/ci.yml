@@ -22,7 +22,11 @@ jobs:
     name: Build and Test
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+          - macos-14
         scala: [2.12.18]
         java: [temurin@8, graal_graalvm@17, corretto@17]
     runs-on: ${{ matrix.os }}
