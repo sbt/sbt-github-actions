@@ -56,6 +56,8 @@ object JavaSpec {
 
   def corretto(version: String): JavaSpec = JavaSpec(Distribution.Corretto, version)
 
+  def zulu(version: String): JavaSpec = JavaSpec(Distribution.Zulu, version)
+
   private[sbtghactions] object JavaVersionExtractor {
     def unapply(version: String): Option[Int] =
       version.split("\\.").headOption.map(_.toInt)
