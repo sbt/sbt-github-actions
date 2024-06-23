@@ -54,6 +54,8 @@ object JavaSpec {
 
   def temurin(version: String): JavaSpec = JavaSpec(Distribution.Temurin, version)
 
+  def zulu(version: String): JavaSpec = JavaSpec(Distribution.Zulu, version)
+
   def corretto(version: String): JavaSpec = JavaSpec(Distribution.Corretto, version)
 
   private[sbtghactions] object JavaVersionExtractor {

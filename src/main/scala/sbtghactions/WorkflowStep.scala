@@ -74,6 +74,16 @@ object WorkflowStep {
             "cache" -> "sbt"))
     }
 
+  def SetupSbt(runnerVersion: Option[String] = None): WorkflowStep =
+    Use(
+      ref = UseRef.Public("sbt", "setup-sbt", "v1"),
+      params = runnerVersion match {
+        case Some(v) => Map("sbt-runner-version" -> v)
+        case None    => Map()
+      },
+      name = Some("Setup sbt"),
+    )
+
   val Tmate: WorkflowStep = Use(UseRef.Public("mxschmitt", "action-tmate", "v2"), name = Some("Setup tmate session"))
 
   def ComputeVar(name: String, cmd: String): WorkflowStep =

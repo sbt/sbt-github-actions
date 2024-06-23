@@ -578,7 +578,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
     githubWorkflowPublishCond := None,
     githubWorkflowPublishTimeout := None,
 
-    githubWorkflowJavaVersions := Seq(JavaSpec.temurin("8")),
+    githubWorkflowJavaVersions := Seq(JavaSpec.zulu("8")),
     githubWorkflowScalaVersions := crossScalaVersions.value,
     githubWorkflowOSes := Seq("ubuntu-latest"),
     githubWorkflowDependencyPatterns := Seq("**/*.sbt", "project/build.properties"),
@@ -710,6 +710,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
       autoCrlfOpt :::
         List(WorkflowStep.CheckoutFull) :::
         WorkflowStep.SetupJava(githubWorkflowJavaVersions.value.toList) :::
+        List(WorkflowStep.SetupSbt()) :::
         githubWorkflowGeneratedCacheSteps.value.toList
     },
 
