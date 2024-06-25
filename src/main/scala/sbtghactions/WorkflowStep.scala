@@ -76,7 +76,7 @@ object WorkflowStep {
 
   def SetupSbt(runnerVersion: Option[String] = None): WorkflowStep =
     Use(
-      ref = UseRef.Public("sbt", "setup-sbt", "v1"),
+      ref = UseRef.Public("sbt", "setup-sbt-runner", "v1"),
       params = runnerVersion match {
         case Some(v) => Map("sbt-runner-version" -> v)
         case None    => Map()
