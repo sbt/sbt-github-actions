@@ -14,4 +14,4 @@
  * limitations under the License.
  */
 
-libraryDependencies += "org.yaml" % "snakeyaml" % "2.0"
+libraryDependencies += "org.yaml" % "snakeyaml" % "2.3"
