@@ -16,7 +16,7 @@
 
 name := "sbt-github-actions"
 
-lazy val scala212 = "2.12.18"
+lazy val scala212 = "2.12.20"
 ThisBuild / organization := "com.github.sbt"
 ThisBuild / crossScalaVersions := Seq(scala212)
 ThisBuild / scalaVersion := scala212
@@ -71,7 +71,7 @@ publishMavenStyle := true
 scalacOptions +=
   "-Xlint:_,-missing-interpolator"
 
-libraryDependencies += "org.specs2" %% "specs2-core" % "4.19.2" % Test
+libraryDependencies += "org.specs2" %% "specs2-core" % "4.20.8" % Test
 
 enablePlugins(SbtPlugin)
 
@@ -79,7 +79,7 @@ scriptedLaunchOpts ++= Seq("-Dplugin.version=" + version.value)
 scriptedBufferLog := true
 // This sbt version is necessary for CI to work on windows with
 // scripted tests, see https://github.com/sbt/sbt/pull/7087
-scriptedSbt := "1.9.6"
+scriptedSbt := "1.10.2"
 
 ThisBuild / homepage := Some(url("https://github.com/sbt/sbt-github-actions"))
 ThisBuild / startYear := Some(2020)
