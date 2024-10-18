@@ -115,5 +115,5 @@ object GitHubActionsPlugin extends AutoPlugin {
   override def buildSettings = workflowParseSettings
 
   override def globalSettings = Seq(
-    githubIsWorkflowBuild := sys.env.get("GITHUB_ACTIONS").map("true" ==).getOrElse(false))
+    githubIsWorkflowBuild := sys.env.get("GITHUB_ACTIONS").map("true" == _).getOrElse(false))
 }

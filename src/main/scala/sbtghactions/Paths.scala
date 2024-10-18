@@ -23,5 +23,5 @@ object Paths {
 
   final case class Ignore(path: List[String]) extends Paths
 
-  final case object None extends Paths
+  case object None extends Paths
 }
