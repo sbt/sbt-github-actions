@@ -32,6 +32,7 @@ sealed trait PermissionScope extends Product with Serializable
 
 object PermissionScope {
   case object Actions extends PermissionScope
+  case object Attestations extends PermissionScope
   case object Checks extends PermissionScope
   case object Contents extends PermissionScope
   case object Deployments extends PermissionScope
