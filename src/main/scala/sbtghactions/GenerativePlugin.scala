@@ -203,6 +203,7 @@ ${indent(rendered.mkString("\n"), 1)}"""
 
   def compilePermissionScope(permissionScope: PermissionScope): String = permissionScope match {
     case PermissionScope.Actions => "actions"
+    case PermissionScope.Attestations => "attestations"
     case PermissionScope.Checks => "checks"
     case PermissionScope.Contents => "contents"
     case PermissionScope.Deployments => "deployments"
