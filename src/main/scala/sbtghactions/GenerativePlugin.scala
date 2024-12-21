@@ -21,7 +21,6 @@ import sbt._
 
 import java.nio.file.FileSystems
 import scala.concurrent.duration.FiniteDuration
-import scala.io.Source
 
 object GenerativePlugin extends AutoPlugin {
 
