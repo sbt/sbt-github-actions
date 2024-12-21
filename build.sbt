@@ -22,7 +22,7 @@ ThisBuild / crossScalaVersions := Seq(scala212)
 ThisBuild / scalaVersion := scala212
 
 ThisBuild / githubWorkflowOSes := Seq("ubuntu-latest", "macos-latest", "windows-latest")
-ThisBuild / githubWorkflowBuild := Seq(WorkflowStep.Sbt(List("test", "scripted")))
+ThisBuild / githubWorkflowBuild := Seq(WorkflowStep.Sbt(List("+ test", "scripted")))
 ThisBuild / githubWorkflowJavaVersions ++= Seq(
   JavaSpec.graalvm(Graalvm.Distribution("graalvm"), "17"),
   JavaSpec.corretto("17")
@@ -64,7 +64,15 @@ ThisBuild / dynver := {
 }
 
 sbtPlugin := true
-pluginCrossBuild / sbtVersion := "1.5.5"
+pluginCrossBuild / sbtVersion := {
+  scalaBinaryVersion.value match {
+    case "2.12" =>
+      "1.5.5"
+    case _ =>
+      "2.0.0-M3"
+  }
+}
+crossScalaVersions += "3.6.2"
 
 publishMavenStyle := true
 
@@ -79,7 +87,14 @@ scriptedLaunchOpts ++= Seq("-Dplugin.version=" + version.value)
 scriptedBufferLog := true
 // This sbt version is necessary for CI to work on windows with
 // scripted tests, see https://github.com/sbt/sbt/pull/7087
-scriptedSbt := "1.10.2"
+scriptedSbt := {
+  scalaBinaryVersion.value match {
+    case "2.12" =>
+      "1.10.2"
+    case _ =>
+      scriptedSbt.value
+  }
+}
 
 ThisBuild / homepage := Some(url("https://github.com/sbt/sbt-github-actions"))
 ThisBuild / startYear := Some(2020)
