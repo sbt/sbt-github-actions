@@ -17,7 +17,7 @@
 package sbtghactions
 
 import sbt.Keys._
-import sbt._
+import sbt.{given, _}
 
 import java.nio.file.FileSystems
 import scala.concurrent.duration.FiniteDuration
