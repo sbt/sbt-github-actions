@@ -23,6 +23,10 @@ ThisBuild / scalaVersion := scala212
 
 ThisBuild / githubWorkflowOSes := Seq("ubuntu-latest", "macos-latest", "windows-latest")
 ThisBuild / githubWorkflowBuild := Seq(WorkflowStep.Sbt(List("+ test", "scripted")))
+ThisBuild / githubWorkflowBuildPostamble += WorkflowStep.Run(
+  commands = List("""rm -rf "$HOME/.ivy2/local""""),
+  name = Some("Clean up Ivy Local repo")
+)
 ThisBuild / githubWorkflowJavaVersions ++= Seq(
   JavaSpec.graalvm(Graalvm.Distribution("graalvm"), "17"),
   JavaSpec.corretto("17")
@@ -47,23 +51,6 @@ ThisBuild / githubWorkflowPublish := Seq(
   )
 )
 
-// So that publishLocal doesn't continuously create new versions
-def versionFmt(out: sbtdynver.GitDescribeOutput): String = {
-  val snapshotSuffix = if
-    (out.isSnapshot()) "-SNAPSHOT"
-  else ""
-    out.ref.dropPrefix + snapshotSuffix
-}
-
-def fallbackVersion(d: java.util.Date): String = s"HEAD-${sbtdynver.DynVer timestamp d}"
-
-ThisBuild / version := dynverGitDescribeOutput.value.mkVersion(versionFmt, fallbackVersion(dynverCurrentDate.value))
-ThisBuild / dynver := {
-  val d = new java.util.Date
-  sbtdynver.DynVer.getGitDescribeOutput(d).mkVersion(versionFmt, fallbackVersion(d))
-}
-
-sbtPlugin := true
 pluginCrossBuild / sbtVersion := {
   scalaBinaryVersion.value match {
     case "2.12" =>
@@ -130,6 +117,5 @@ ThisBuild / licenses := List("Apache-2.0" -> url("https://www.apache.org/license
 ThisBuild / pomIncludeRepository := { _ =>
   false
 }
-ThisBuild / publishTo := sonatypePublishToBundle.value
 ThisBuild / publishMavenStyle := true
 Global / excludeLintKeys ++= Set(pomIncludeRepository, publishMavenStyle)
