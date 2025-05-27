@@ -81,6 +81,10 @@ jobs:
       - shell: bash
         run: sbt '++ ${{ matrix.scala }}' '+ test' scripted
 
+      - name: Clean up Ivy Local repo
+        shell: bash
+        run: rm -rf "$HOME/.ivy2/local"
+
       - name: Compress target directories
         shell: bash
         run: tar cf targets.tar target project/target
