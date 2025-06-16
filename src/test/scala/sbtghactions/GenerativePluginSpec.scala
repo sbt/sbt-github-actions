@@ -363,18 +363,19 @@ class GenerativePluginSpec extends Specification {
           UseRef.Public(
             "repo",
             "slug",
+            "rev",
             "v0")),
         "",
         Nil,
-        declareShell = true) mustEqual "- uses: repo/slug@v0"
+        declareShell = true) mustEqual "- uses: repo/slug@rev # v0"
     }
 
     "preserve wonky version in Use" in {
-      compileStep(Use(UseRef.Public("hello", "world", "v4.0.0")), "", Nil, declareShell = true) mustEqual "- uses: hello/world@v4.0.0"
+      compileStep(Use(UseRef.Public("hello", "world", "rev", "v4.0.0")), "", Nil, declareShell = true) mustEqual "- uses: hello/world@rev # v4.0.0"
     }
 
     "drop Use version prefix on anything that doesn't start with a number" in {
-      compileStep(Use(UseRef.Public("hello", "world", "main")), "", Nil, declareShell = true) mustEqual "- uses: hello/world@main"
+      compileStep(Use(UseRef.Public("hello", "world", "rev", "main")), "", Nil, declareShell = true) mustEqual "- uses: hello/world@rev # main"
     }
 
     "compile sbt using the command provided" in {
@@ -402,8 +403,8 @@ class GenerativePluginSpec extends Specification {
     "compile use without parameters" in {
       "public" >> {
         compileStep(
-          Use(UseRef.Public("olafurpg", "setup-scala", "v13")),
-          "") mustEqual "- uses: olafurpg/setup-scala@v13"
+          Use(UseRef.Public("olafurpg", "setup-scala", "rev", "v13")),
+          "") mustEqual "- uses: olafurpg/setup-scala@rev # v13"
       }
 
       "directory" >> {
@@ -435,8 +436,8 @@ class GenerativePluginSpec extends Specification {
 
     "compile use with two parameters" in {
       compileStep(
-        Use(UseRef.Public("olafurpg", "setup-scala", "v13"), params = Map("abc" -> "def", "cafe" -> "@42")),
-        "") mustEqual "- uses: olafurpg/setup-scala@v13\n  with:\n    abc: def\n    cafe: '@42'"
+        Use(UseRef.Public("olafurpg", "setup-scala", "rev", "v13"), params = Map("abc" -> "def", "cafe" -> "@42")),
+        "") mustEqual "- uses: olafurpg/setup-scala@rev # v13\n  with:\n    abc: def\n    cafe: '@42'"
     }
 
     "compile use with two parameters and environment variables" in {
@@ -445,10 +446,11 @@ class GenerativePluginSpec extends Specification {
           UseRef.Public(
             "derp",
             "nope",
+            "rev",
             "v0"),
           params = Map("teh" -> "schizzle", "think" -> "positive"),
           env = Map("hi" -> "there")),
-        "") mustEqual "- env:\n    hi: there\n  uses: derp/nope@v0\n  with:\n    teh: schizzle\n    think: positive"
+        "") mustEqual "- env:\n    hi: there\n  uses: derp/nope@rev # v0\n  with:\n    teh: schizzle\n    think: positive"
     }
 
     "compile a run step with multiple commands" in {
@@ -516,7 +518,7 @@ class GenerativePluginSpec extends Specification {
     - run: echo hello
 
     - name: Checkout current branch (fast)
-      uses: actions/checkout@v4"""
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2"""
     }
 
     "compile a job with one step and three oses" in {
@@ -565,7 +567,7 @@ class GenerativePluginSpec extends Specification {
   steps:
     - name: Setup Java (temurin@17)
       if: matrix.java == 'temurin@17'
-      uses: actions/setup-java@v4
+      uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
       with:
         distribution: temurin
         java-version: 17
@@ -573,7 +575,7 @@ class GenerativePluginSpec extends Specification {
 
     - name: Setup GraalVM (graal_22.3.0@11)
       if: matrix.java == 'graal_22.3.0@11'
-      uses: graalvm/setup-graalvm@v1
+      uses: graalvm/setup-graalvm@01ed653ac833fe80569f1ef9f25585ba2811baab # v1.3.3
       with:
         version: 22.3.0
         java-version: 11
@@ -605,7 +607,7 @@ class GenerativePluginSpec extends Specification {
   steps:
     - name: Setup GraalVM (graal_graalvm@17)
       if: matrix.java == 'graal_graalvm@17'
-      uses: graalvm/setup-graalvm@v1
+      uses: graalvm/setup-graalvm@01ed653ac833fe80569f1ef9f25585ba2811baab # v1.3.3
       with:
         java-version: 17
         distribution: graalvm
@@ -777,7 +779,7 @@ class GenerativePluginSpec extends Specification {
     - run: echo $${{ matrix.test }}
 
     - name: Checkout current branch (fast)
-      uses: actions/checkout@v4"""
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2"""
     }
 
     "compile a job with extra runs-on labels" in {
@@ -1000,7 +1002,7 @@ class GenerativePluginSpec extends Specification {
     - run: echo hello
 
     - name: Checkout current branch (fast)
-      uses: actions/checkout@v4"""
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2"""
     }
   }
 
