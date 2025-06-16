@@ -301,8 +301,8 @@ ${indent(rendered.mkString("\n"), 1)}"""
         import use.{ref, params}
 
         val decl = ref match {
-          case UseRef.Public(owner, repo, ref) =>
-            s"uses: $owner/$repo@$ref"
+          case UseRef.Public(owner, repo, rev, ref) =>
+            s"uses: $owner/$repo@$rev # $ref"
 
           case UseRef.Local(path) =>
             val cleaned = if (path.startsWith("./"))
@@ -640,7 +640,8 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
           UseRef.Public(
             "actions",
             "upload-artifact",
-            "v4"),
+            "ea165f8d65b6e75b540449e92b4886f43607fa02",
+            "v4.6.2"),
           name = Some(s"Upload target directories"),
           params = Map(
             "name" -> s"target-$${{ matrix.os }}-$${{ matrix.scala }}-$${{ matrix.java }}",
@@ -661,7 +662,8 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
             UseRef.Public(
               "actions",
               "download-artifact",
-              "v5"),
+              "634f93cb2916e3fdff6788551b99b062d0335ce0",
+              "v5.0.0"),
             name = Some(s"Download target directories ($v)"),
             params = Map(
               "name" -> s"target-$${{ matrix.os }}-$v-$${{ matrix.java }}"))
@@ -686,7 +688,11 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
         val optionalPagefileFix = githubWorkflowWindowsPagefileFix.value.map(pageFileFix =>
           WorkflowStep.Use(
             name = Some("Configure pagefile for Windows"),
-            ref = UseRef.Public("al-cheb", "configure-pagefile-action", "v1.4"),
+            ref = UseRef.Public(
+              "al-cheb",
+              "configure-pagefile-action",
+              "a3b6ebd6b634da88790d9c58d4b37a7f4a7b8708",
+              "v1.4"),
             params = Map(
               "minimum-size" -> s"${pageFileFix.minSize}",
               "maximum-size" -> s"${pageFileFix.maxSize}"
