@@ -800,6 +800,9 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
          |
          |on: push
          |
+         |permissions:
+         |  actions: write
+         |
          |jobs:
          |  delete-artifacts:
          |    name: Delete Artifacts
