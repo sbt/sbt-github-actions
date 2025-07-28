@@ -19,7 +19,7 @@ package sbtghactions
 sealed trait UseRef extends Product with Serializable
 
 object UseRef {
-  final case class Public(owner: String, repo: String, ref: String) extends UseRef
+  final case class Public(owner: String, repo: String, rev: String, ref: String) extends UseRef
   final case class Local(path: String) extends UseRef
   final case class Docker(image: String, tag: String, host: Option[String] = None) extends UseRef
 }
