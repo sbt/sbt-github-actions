@@ -33,11 +33,11 @@ object WorkflowStep {
   val DefaultSbtStepPreamble: List[String] = List(s"++ $${{ matrix.scala }}")
 
   val CheckoutFull: WorkflowStep = Use(
-    UseRef.Public("actions", "checkout", "v4"),
+    UseRef.Public("actions", "checkout", "v5"),
     name = Some("Checkout current branch (full)"),
     params = Map("fetch-depth" -> "0"))
 
-  val Checkout: WorkflowStep = Use(UseRef.Public("actions", "checkout", "v4"), name = Some("Checkout current branch (fast)"))
+  val Checkout: WorkflowStep = Use(UseRef.Public("actions", "checkout", "v5"), name = Some("Checkout current branch (fast)"))
 
   def SetupJava(versions: List[JavaSpec]): List[WorkflowStep] =
     versions map {
