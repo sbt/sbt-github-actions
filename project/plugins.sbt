@@ -18,4 +18,4 @@
 // necessary hack to avoid an infinite project loading recursion.
 val sbtGithubActionsSources = ProjectRef(file("project"), "sbtGithubActionsSources")
 
-addSbtPlugin("com.github.sbt" % "sbt-ci-release" % "1.11.0")
+addSbtPlugin("com.github.sbt" % "sbt-ci-release" % "1.11.2")
