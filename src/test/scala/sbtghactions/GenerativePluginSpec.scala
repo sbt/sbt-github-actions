@@ -18,7 +18,7 @@ package sbtghactions
 
 import org.specs2.mutable.Specification
 
-import java.net.URL
+import java.net.URI
 import scala.concurrent.duration.DurationInt
 
 class GenerativePluginSpec extends Specification {
@@ -733,7 +733,7 @@ class GenerativePluginSpec extends Specification {
           "Publish Release",
           List(
             WorkflowStep.Sbt(List("ci-release"))),
-          environment = Some(JobEnvironment("release", Some(new URL("https://github.com"))))),
+          environment = Some(JobEnvironment("release", Some(new URI("https://github.com").toURL)))),
         "csbt")
 
       results mustEqual s"""publish:
