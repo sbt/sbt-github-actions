@@ -22,7 +22,9 @@ import scala.concurrent.duration.FiniteDuration
 
 trait GenerativeKeys {
 
+  @transient
   lazy val githubWorkflowGenerate = taskKey[Unit]("Generates (and overwrites if extant) a ci.yml and clean.yml actions description according to configuration")
+  @transient
   lazy val githubWorkflowCheck = taskKey[Unit]("Checks to see if the ci.yml and clean.yml files are equivalent to what would be generated and errors if otherwise")
 
   lazy val githubWorkflowDir = settingKey[File]("Where to place the workflow directory which contains the generated ci.yml and clean.yml files. (default: baseDirectory.value / \".github\")")
