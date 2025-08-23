@@ -1,5 +1,6 @@
 > githubWorkflowGenerate
 > githubWorkflowCheck
+> patchIfSbt2
 $ copy-file expected-ci.yml .github/workflows/ci.yml
 $ copy-file expected-clean.yml .github/workflows/clean.yml
 > githubWorkflowCheck
