@@ -37,6 +37,14 @@ object GenerativePlugin extends AutoPlugin {
     type WorkflowStep = sbtghactions.WorkflowStep
     val WorkflowStep = sbtghactions.WorkflowStep
 
+    type WorkflowAction = sbtghactions.WorkflowAction
+
+    type WorkflowSteps = sbtghactions.WorkflowSteps
+    val WorkflowSteps = sbtghactions.WorkflowSteps
+
+    type WorkflowApply = sbtghactions.WorkflowApply
+    val WorkflowApply = sbtghactions.WorkflowApply
+
     type RefPredicate = sbtghactions.RefPredicate
     val RefPredicate = sbtghactions.RefPredicate
 
@@ -72,6 +80,9 @@ object GenerativePlugin extends AutoPlugin {
 
     type Concurrency = sbtghactions.Concurrency
     val Concurrency = sbtghactions.Concurrency
+
+    type Secrets = sbtghactions.Secrets
+    val Secrets = sbtghactions.Secrets
 
     type Graalvm = sbtghactions.Graalvm
     val Graalvm = sbtghactions.Graalvm
@@ -185,6 +196,12 @@ object GenerativePlugin extends AutoPlugin {
 
       case None =>
         s"concurrency: ${wrap(concurrency.group)}"
+    }
+
+  def compileSecrets(secrets: Secrets): String =
+    secrets match {
+      case Secrets.Inherit => "secrets: inherit"
+      case Secrets.Explicit(secretMap) => compileEnv(secretMap, "secrets")
     }
 
   def compileEnvironment(environment: JobEnvironment): String =
@@ -355,6 +372,8 @@ ${indent(rendered.mkString("\n"), 1)}"""
 
 
   def compileJob(job: WorkflowJob, sbt: String): String = {
+    val renderedName = s"""name: ${wrap(job.name)}"""
+
     val renderedNeeds = if (job.needs.isEmpty)
       ""
     else
@@ -485,24 +504,59 @@ ${indent(rendered.mkString("\n"), 1)}"""
 
     val declareShell = job.oses.exists(_.contains("windows"))
 
-    val runsOn = if (job.runsOnExtraLabels.isEmpty)
-      s"$${{ matrix.os }}"
-    else
-      job.runsOnExtraLabels.mkString(s"""[ "$${{ matrix.os }}", """, ", ", " ]" )
+    val runsOn = job.action match {
+      case steps: WorkflowSteps if steps.runsOnExtraLabels.isEmpty =>
+        "\nruns-on: ${{ matrix.os }}"
+      case steps: WorkflowSteps =>
+          steps.runsOnExtraLabels.mkString(s"""\nruns-on: [ "$${{ matrix.os }}", """, ", ", " ]")
+      case _ =>
+        ""
+    }
 
     val renderedFailFast = job.matrixFailFast.fold("")("\n  fail-fast: " + _)
 
-    val body = s"""name: ${wrap(job.name)}${renderedNeeds}${renderedCond}
-strategy:${renderedFailFast}
+    val renderedStrategy = s"""\nstrategy:${renderedFailFast}
   matrix:
     os:${compileList(job.oses, 3)}
     scala:${compileList(job.scalas, 3)}
-    java:${compileList(job.javas.map(_.render), 3)}${renderedMatrices}
-runs-on: ${runsOn}${renderedEnvironment}${renderedContainer}${renderedTimeout}${renderedPerm}${renderedEnv}${renderedConcurrency}
-steps:
-${indent(job.steps.map(compileStep(_, sbt, job.sbtStepPreamble, declareShell = declareShell)).mkString("\n\n"), 1)}"""
+    java:${compileList(job.javas.map(_.render), 3)}"""
 
-    s"${job.id}:\n${indent(body, 1)}"
+    val renderedSteps = job.action match {
+      case steps: WorkflowSteps =>
+        "\nsteps:\n" +
+          indent(steps.steps.map(compileStep(_, sbt, steps.sbtStepPreamble, declareShell = declareShell)).mkString("\n\n"), 1)
+      case _ =>
+        ""
+    }
+
+    val renderedUses = job.action match {
+      case apply: WorkflowApply =>
+        val renderedSecrets =
+          apply.secrets.map(compileSecrets).map("\n" + _).getOrElse("")
+
+        s"\nuses: ${apply.ref}${renderParams(apply.params)}${renderedSecrets}"
+      case _ =>
+        ""
+    }
+
+    val content = List(
+      renderedName,
+      renderedNeeds,
+      renderedCond,
+      renderedStrategy,
+      renderedMatrices,
+      runsOn,
+      renderedEnvironment,
+      renderedContainer,
+      renderedTimeout,
+      renderedPerm,
+      renderedEnv,
+      renderedConcurrency,
+      renderedSteps,
+      renderedUses,
+    ).reduce(_ ++ _)
+
+    s"${job.id}:\n${indent(content, 1)}"
   }
 
   def compileWorkflow(

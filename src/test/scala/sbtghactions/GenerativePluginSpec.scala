@@ -1092,6 +1092,124 @@ class GenerativePluginSpec extends Specification {
     - name: Checkout current branch (fast)
       uses: actions/checkout@v5"""
     }
+
+    "compile a job which delegates to another via 'using'" in {
+      val results = compileJob(
+        WorkflowJob.use(
+          "publish",
+          "Publish Release",
+          "./.github/workflows/dependant.yml"),
+        "csbt")
+
+      results mustEqual s"""publish:
+  name: Publish Release
+  strategy:
+    matrix:
+      os: [ubuntu-latest]
+      scala: [2.13.10]
+      java: [zulu@8]
+  uses: ./.github/workflows/dependant.yml"""
+    }
+
+    "compile a job which delegates to another via 'using', with parameters" in {
+      val results = compileJob(
+        WorkflowJob.use(
+          "publish",
+          "Publish Release",
+          "sbt/sbt-github-actions/.github/workflows/dependant.yml@main",
+          Map("abc" -> "def")
+          ),
+        "csbt")
+
+      results mustEqual s"""publish:
+  name: Publish Release
+  strategy:
+    matrix:
+      os: [ubuntu-latest]
+      scala: [2.13.10]
+      java: [zulu@8]
+  uses: sbt/sbt-github-actions/.github/workflows/dependant.yml@main
+  with:
+    abc: def"""
+    }
+
+    "compile a job which delegates to another via 'using', with inherited secrets" in {
+      val results = compileJob(
+        WorkflowJob.use(
+          "publish",
+          "Publish Release",
+          "./.github/workflows/dependant.yml",
+          secrets = Some(Secrets.Inherit)
+          ),
+        "csbt")
+
+      results mustEqual s"""publish:
+  name: Publish Release
+  strategy:
+    matrix:
+      os: [ubuntu-latest]
+      scala: [2.13.10]
+      java: [zulu@8]
+  uses: ./.github/workflows/dependant.yml
+  secrets: inherit"""
+    }
+
+    "compile a job which delegates to another via 'using', with explicit secrets" in {
+      val results = compileJob(
+        WorkflowJob.use(
+          "publish",
+          "Publish Release",
+          "./.github/workflows/dependant.yml",
+          secrets = Some(Secrets.Explicit(Map("abc" -> "def")))
+          ),
+        "csbt")
+
+      results mustEqual s"""publish:
+  name: Publish Release
+  strategy:
+    matrix:
+      os: [ubuntu-latest]
+      scala: [2.13.10]
+      java: [zulu@8]
+  uses: ./.github/workflows/dependant.yml
+  secrets:
+    abc: def"""
+    }
+
+    "compile a job which delegates to another via 'using', with supported keywords" in {
+      val results = compileJob(
+        WorkflowJob.use(
+          "publish",
+          "Publish Release",
+          "./.github/workflows/dependant.yml",
+          params = Map("abc" -> "def"),
+          secrets = Some(Secrets.Explicit(Map("abc" -> "def"))),
+          cond = Some("true"),
+          permissions = Some(Permissions.ReadAll),
+          needs = List("build"),
+          concurrency = Some(Concurrency("publish-group", Some(true))),
+          ),
+        "csbt")
+
+      results mustEqual s"""publish:
+  name: Publish Release
+  needs: [build]
+  if: true
+  strategy:
+    matrix:
+      os: [ubuntu-latest]
+      scala: [2.13.10]
+      java: [zulu@8]
+  permissions: read-all
+  concurrency:
+    group: publish-group
+    cancel-in-progress: true
+  uses: ./.github/workflows/dependant.yml
+  with:
+    abc: def
+  secrets:
+    abc: def"""
+    }
   }
 
   "predicate compilation" >> {
