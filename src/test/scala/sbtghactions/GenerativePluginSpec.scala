@@ -47,7 +47,7 @@ class GenerativePluginSpec extends Specification {
         |${" " * 2}
         |""".stripMargin
 
-      compileWorkflow("test", List("main"), Nil, Paths.None, PREventType.Defaults, None, Map(), Nil, "sbt") mustEqual expected
+      compileWorkflow("test", List("main"), Nil, Paths.None, PREventType.Defaults, None, Map(), None, Nil, "sbt") mustEqual expected
     }
 
     "produce the appropriate skeleton around a zero-job workflow with non-empty tags" in {
@@ -65,7 +65,7 @@ class GenerativePluginSpec extends Specification {
         |${" " * 2}
         |""".stripMargin
 
-      compileWorkflow("test", List("main"), List("howdy"), Paths.None, PREventType.Defaults, None, Map(), Nil, "sbt") mustEqual expected
+      compileWorkflow("test", List("main"), List("howdy"), Paths.None, PREventType.Defaults, None, Map(), None, Nil, "sbt") mustEqual expected
     }
 
     "respect non-default pr types" in {
@@ -83,7 +83,7 @@ class GenerativePluginSpec extends Specification {
         |${" " * 2}
         |""".stripMargin
 
-      compileWorkflow("test", List("main"), Nil, Paths.None, List(PREventType.ReadyForReview, PREventType.ReviewRequested, PREventType.Opened), None, Map(), Nil, "sbt") mustEqual expected
+      compileWorkflow("test", List("main"), Nil, Paths.None, List(PREventType.ReadyForReview, PREventType.ReviewRequested, PREventType.Opened), None, Map(), None, Nil, "sbt") mustEqual expected
     }
 
     "compile a one-job workflow targeting multiple branch patterns with a environment variables" in {
@@ -126,6 +126,7 @@ class GenerativePluginSpec extends Specification {
         ))),
         Map(
           "GITHUB_TOKEN" -> s"$${{ secrets.GITHUB_TOKEN }}"),
+        None,
         List(
           WorkflowJob(
             "build",
@@ -176,6 +177,7 @@ class GenerativePluginSpec extends Specification {
         PREventType.Defaults,
         None,
         Map(),
+        None,
         List(
           WorkflowJob(
             "build",
@@ -221,6 +223,7 @@ class GenerativePluginSpec extends Specification {
         PREventType.Defaults,
         None,
         Map(),
+        None,
         List(
           WorkflowJob(
             "build",
@@ -273,6 +276,7 @@ class GenerativePluginSpec extends Specification {
         PREventType.Defaults,
         None,
         Map(),
+        None,
         List(
           WorkflowJob(
             "build",
@@ -305,7 +309,7 @@ class GenerativePluginSpec extends Specification {
         |${" " * 2}
         |""".stripMargin
 
-      compileWorkflow("test", List("main"), Nil, Paths.Include(List("**.scala", "**.sbt")), PREventType.Defaults, None, Map(), Nil, "sbt") mustEqual expected
+      compileWorkflow("test", List("main"), Nil, Paths.Include(List("**.scala", "**.sbt")), PREventType.Defaults, None, Map(), None, Nil, "sbt") mustEqual expected
     }
 
     "render ignored paths on pull_request and push" in {
@@ -324,7 +328,69 @@ class GenerativePluginSpec extends Specification {
         |${" " * 2}
         |""".stripMargin
 
-      compileWorkflow("test", List("main"), Nil, Paths.Ignore(List("docs/**")), PREventType.Defaults, None, Map(), Nil, "sbt") mustEqual expected
+      compileWorkflow("test", List("main"), Nil, Paths.Ignore(List("docs/**")), PREventType.Defaults, None, Map(), None, Nil, "sbt") mustEqual expected
+    }
+
+    "render shorthand form for concurrency without specific cancel-in-progress property" in {
+      val expected = header + s"""
+        |name: test
+        |
+        |on:
+        |  pull_request:
+        |    branches: [main]
+        |  push:
+        |    branches: [main]
+        |
+        |concurrency: test-group
+        |
+        |jobs:
+        |${" " * 2}
+        |""".stripMargin
+
+      compileWorkflow(
+        "test",
+        List("main"),
+        Nil,
+        Paths.None,
+        PREventType.Defaults,
+        None,
+        Map(),
+        Some(Concurrency("test-group")),
+        Nil,
+        "sbt",
+      ) mustEqual expected
+    }
+
+    "render extended form for concurrency with specific cancel-in-progress property" in {
+      val expected = header + s"""
+        |name: test
+        |
+        |on:
+        |  pull_request:
+        |    branches: [main]
+        |  push:
+        |    branches: [main]
+        |
+        |concurrency:
+        |  group: test-group
+        |  cancel-in-progress: true
+        |
+        |jobs:
+        |${" " * 2}
+        |""".stripMargin
+
+      compileWorkflow(
+        "test",
+        List("main"),
+        Nil,
+        Paths.None,
+        PREventType.Defaults,
+        None,
+        Map(),
+        Some(Concurrency("test-group", Some(true))),
+        Nil,
+        "sbt",
+      ) mustEqual expected
     }
   }
 
@@ -820,6 +886,30 @@ class GenerativePluginSpec extends Specification {
   runs-on: $${{ matrix.os }}
   timeout-minutes: 60
 
+  steps:
+    - run: csbt ci-release"""
+    }
+
+    "compile a job with concurrency" in {
+      val results = compileJob(
+        WorkflowJob(
+          "publish",
+          "Publish Release",
+          List(
+            WorkflowStep.Sbt(List("ci-release"))),
+          concurrency = Some(Concurrency("test-group")),
+        ),
+        "csbt")
+
+      results mustEqual s"""publish:
+  name: Publish Release
+  strategy:
+    matrix:
+      os: [ubuntu-latest]
+      scala: [2.13.10]
+      java: [zulu@8]
+  runs-on: $${{ matrix.os }}
+  concurrency: test-group
   steps:
     - run: csbt ci-release"""
     }
