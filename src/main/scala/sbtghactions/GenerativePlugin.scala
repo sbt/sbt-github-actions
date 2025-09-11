@@ -661,7 +661,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
             UseRef.Public(
               "actions",
               "download-artifact",
-              "v4"),
+              "v5"),
             name = Some(s"Download target directories ($v)"),
             params = Map(
               "name" -> s"target-$${{ matrix.os }}-$v-$${{ matrix.java }}"))
