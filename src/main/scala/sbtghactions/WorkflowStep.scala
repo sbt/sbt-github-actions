@@ -28,22 +28,35 @@ sealed trait WorkflowStep extends Product with Serializable {
   def timeout: Option[FiniteDuration]
 }
 
+object Action {
+  val checkout = UseRef.Public("actions", "checkout", "v5")
+  val setupGraalvm = UseRef.Public("graalvm", "setup-graalvm", "v1")
+  val setupJava = UseRef.Public("actions", "setup-java", "v5")
+  val setupSbt = UseRef.Public("sbt", "setup-sbt", "v1")
+  val tmate = UseRef.Public("mxschmitt", "action-tmate", "v2")
+  val upload = UseRef.Public("actions", "upload-artifact", "v4")
+  val download = UseRef.Public("actions", "download-artifact", "v5")
+  val configurePagefile = UseRef.Public("al-cheb", "configure-pagefile-action", "v1.4")
+
+  val all = Seq(checkout, setupGraalvm, setupJava, setupSbt, tmate, upload, download, configurePagefile)
+}
+
 object WorkflowStep {
 
   val DefaultSbtStepPreamble: List[String] = List(s"++ $${{ matrix.scala }}")
 
   val CheckoutFull: WorkflowStep = Use(
-    UseRef.Public("actions", "checkout", "v5"),
+    Action.checkout,
     name = Some("Checkout current branch (full)"),
     params = Map("fetch-depth" -> "0"))
 
-  val Checkout: WorkflowStep = Use(UseRef.Public("actions", "checkout", "v5"), name = Some("Checkout current branch (fast)"))
+  val Checkout: WorkflowStep = Use(Action.checkout, name = Some("Checkout current branch (fast)"))
 
   def SetupJava(versions: List[JavaSpec]): List[WorkflowStep] =
     versions map {
       case jv @ JavaSpec(JavaSpec.Distribution.GraalVM(Graalvm.Version(graalVersion)), version) =>
         WorkflowStep.Use(
-          UseRef.Public("graalvm", "setup-graalvm", "v1"),
+          Action.setupGraalvm,
           name = Some(s"Setup GraalVM (${jv.render})"),
           cond = Some(s"matrix.java == '${jv.render}'"),
           params = ListMap(
@@ -54,7 +67,7 @@ object WorkflowStep {
             "cache" -> "sbt"))
       case jv @ JavaSpec(JavaSpec.Distribution.GraalVM(Graalvm.Distribution(distribution)), version) =>
         WorkflowStep.Use(
-          UseRef.Public("graalvm", "setup-graalvm", "v1"),
+          Action.setupGraalvm,
           name = Some(s"Setup GraalVM (${jv.render})"),
           cond = Some(s"matrix.java == '${jv.render}'"),
           params = ListMap(
@@ -65,7 +78,7 @@ object WorkflowStep {
             "cache" -> "sbt"))
       case jv @ JavaSpec(dist, version) =>
         WorkflowStep.Use(
-          UseRef.Public("actions", "setup-java", "v5"),
+          Action.setupJava,
           name = Some(s"Setup Java (${jv.render})"),
           cond = Some(s"matrix.java == '${jv.render}'"),
           params = ListMap(
@@ -76,7 +89,7 @@ object WorkflowStep {
 
   def SetupSbt(runnerVersion: Option[String] = None): WorkflowStep =
     Use(
-      ref = UseRef.Public("sbt", "setup-sbt", "v1"),
+      ref = Action.setupSbt,
       params = runnerVersion match {
         case Some(v) => Map("sbt-runner-version" -> v)
         case None    => Map()
@@ -84,7 +97,7 @@ object WorkflowStep {
       name = Some("Setup sbt"),
     )
 
-  val Tmate: WorkflowStep = Use(UseRef.Public("mxschmitt", "action-tmate", "v2"), name = Some("Setup tmate session"))
+  val Tmate: WorkflowStep = Use(Action.tmate, name = Some("Setup tmate session"))
 
   def ComputeVar(name: String, cmd: String): WorkflowStep =
     Run(
