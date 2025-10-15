@@ -637,10 +637,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
           name = Some("Compress target directories"))
 
         val upload = WorkflowStep.Use(
-          UseRef.Public(
-            "actions",
-            "upload-artifact",
-            "v4"),
+          Action.upload,
           name = Some(s"Upload target directories"),
           params = Map(
             "name" -> s"target-$${{ matrix.os }}-$${{ matrix.scala }}-$${{ matrix.java }}",
@@ -658,10 +655,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
       if (githubWorkflowArtifactUpload.value) {
         scalas flatMap { v =>
           val download = WorkflowStep.Use(
-            UseRef.Public(
-              "actions",
-              "download-artifact",
-              "v5"),
+            Action.download,
             name = Some(s"Download target directories ($v)"),
             params = Map(
               "name" -> s"target-$${{ matrix.os }}-$v-$${{ matrix.java }}"))
@@ -686,7 +680,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
         val optionalPagefileFix = githubWorkflowWindowsPagefileFix.value.map(pageFileFix =>
           WorkflowStep.Use(
             name = Some("Configure pagefile for Windows"),
-            ref = UseRef.Public("al-cheb", "configure-pagefile-action", "v1.4"),
+            ref = Action.configurePagefile,
             params = Map(
               "minimum-size" -> s"${pageFileFix.minSize}",
               "maximum-size" -> s"${pageFileFix.maxSize}"
@@ -925,8 +919,21 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
 
       def compare(file: File, expected: String): Unit = {
         val actual = IO.read(file)
-        if (expected != actual) {
-          reportMismatch(file, expected, actual)
+        // If the workflow refers to different tags, we want to report a
+        // mismatch.
+        // However, if it refers to actions by hash, we want to allow this
+        // (and consider it the responsibility of the project to keep those hashes updated)
+
+        // To achieve this, we replace any hash with the expected version:
+        val cleanedActual =
+          Action.all.foldLeft(actual)((acc, action) =>
+            acc.replaceAll(
+              s"uses: ${action.owner}/${action.repo}@[a-z0-9]{40}.*",
+              s"uses: ${action.owner}/${action.repo}@${action.ref}"
+            )
+          )
+        if (expected != cleanedActual) {
+          reportMismatch(file, expected, cleanedActual)
         }
       }
 
