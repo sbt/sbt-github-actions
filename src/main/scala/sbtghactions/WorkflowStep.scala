@@ -36,7 +36,7 @@ object Action {
   val tmate = UseRef.Public("mxschmitt", "action-tmate", "v2")
   val upload = UseRef.Public("actions", "upload-artifact", "v5")
   val download = UseRef.Public("actions", "download-artifact", "v6")
-  val configurePagefile = UseRef.Public("al-cheb", "configure-pagefile-action", "v1.4")
+  val configurePagefile = UseRef.Public("al-cheb", "configure-pagefile-action", "v1.5")
 
   val all = Seq(checkout, setupGraalvm, setupJava, setupSbt, tmate, upload, download, configurePagefile)
 }
