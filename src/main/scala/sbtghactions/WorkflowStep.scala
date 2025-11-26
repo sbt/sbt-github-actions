@@ -29,14 +29,14 @@ sealed trait WorkflowStep extends Product with Serializable {
 }
 
 object Action {
-  val checkout = UseRef.Public("actions", "checkout", "v5")
+  val checkout = UseRef.Public("actions", "checkout", "v6")
   val setupGraalvm = UseRef.Public("graalvm", "setup-graalvm", "v1")
   val setupJava = UseRef.Public("actions", "setup-java", "v5")
   val setupSbt = UseRef.Public("sbt", "setup-sbt", "v1")
   val tmate = UseRef.Public("mxschmitt", "action-tmate", "v2")
   val upload = UseRef.Public("actions", "upload-artifact", "v5")
   val download = UseRef.Public("actions", "download-artifact", "v6")
-  val configurePagefile = UseRef.Public("al-cheb", "configure-pagefile-action", "v1.4")
+  val configurePagefile = UseRef.Public("al-cheb", "configure-pagefile-action", "v1.5")
 
   val all = Seq(checkout, setupGraalvm, setupJava, setupSbt, tmate, upload, download, configurePagefile)
 }
