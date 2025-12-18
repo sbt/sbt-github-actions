@@ -911,6 +911,18 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
 
       val log = state.value.log
 
+      val usedActions = githubWorkflowGeneratedCI.value
+        .flatMap(_.steps)
+        .flatMap {
+          case use: WorkflowStep.Use =>
+            use.ref match {
+              case action: UseRef.Public => Some(action)
+              case _ => None
+            }
+          case _ =>
+            None
+        }
+
       def reportMismatch(file: File, expected: String, actual: String): Unit = {
         log.error(s"Expected:\n$expected")
         log.error(s"Actual:\n${diff(expected, actual)}")
@@ -926,7 +938,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
 
         // To achieve this, we replace any hash with the expected version:
         val cleanedActual =
-          Action.all.foldLeft(actual)((acc, action) =>
+          usedActions.foldLeft(actual)((acc, action) =>
             acc.replaceAll(
               s"uses: ${action.owner}/${action.repo}@[a-z0-9]{40}.*",
               s"uses: ${action.owner}/${action.repo}@${action.ref}"
