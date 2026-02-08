@@ -45,7 +45,7 @@ ThisBuild / githubWorkflowJavaVersions += JavaSpec.temurin("17")
 
 ### Integration with sbt-ci-release
 
-Integrating with [sbt-ci-release](https://github.com/olafurpg/sbt-ci-release) is a relatively straightforward process, and the plugins are quite complementary. First, follow all of the setup instructions in sbt-ci-release's readme. Once this is complete, add the following to your **build.sbt**:
+Integrating with [sbt-ci-release](https://github.com/sbt/sbt-ci-release) is a relatively straightforward process, and the plugins are quite complementary. First, follow all of the setup instructions in sbt-ci-release's readme. Once this is complete, add the following to your **build.sbt**:
 
 ```scala
 ThisBuild / githubWorkflowTargetTags ++= Seq("v*")
