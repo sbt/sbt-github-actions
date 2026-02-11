@@ -37,6 +37,14 @@ object GenerativePlugin extends AutoPlugin {
     type WorkflowStep = sbtghactions.WorkflowStep
     val WorkflowStep = sbtghactions.WorkflowStep
 
+    type WorkflowAction = sbtghactions.WorkflowAction
+
+    type WorkflowSteps = sbtghactions.WorkflowSteps
+    val WorkflowSteps = sbtghactions.WorkflowSteps
+
+    type WorkflowApply = sbtghactions.WorkflowApply
+    val WorkflowApply = sbtghactions.WorkflowApply
+
     type RefPredicate = sbtghactions.RefPredicate
     val RefPredicate = sbtghactions.RefPredicate
 
@@ -69,6 +77,12 @@ object GenerativePlugin extends AutoPlugin {
 
     type PermissionValue = sbtghactions.PermissionValue
     val PermissionValue = sbtghactions.PermissionValue
+
+    type Concurrency = sbtghactions.Concurrency
+    val Concurrency = sbtghactions.Concurrency
+
+    type Secrets = sbtghactions.Secrets
+    val Secrets = sbtghactions.Secrets
 
     type Graalvm = sbtghactions.Graalvm
     val Graalvm = sbtghactions.Graalvm
@@ -171,6 +185,24 @@ object GenerativePlugin extends AutoPlugin {
     case RefPredicate.EndsWith(Ref.Branch(name)) =>
       s"(startsWith($target, 'refs/heads/') && endsWith($target, '$name'))"
   }
+
+  def compileConcurrency(concurrency: Concurrency): String =
+    concurrency.cancelInProgress match {
+      case Some(value) =>
+        val fields = s"""group: ${wrap(concurrency.group)}
+                        |cancel-in-progress: ${wrap(value.toString)}""".stripMargin
+        s"""concurrency:
+           |${indent(fields, 1)}""".stripMargin
+
+      case None =>
+        s"concurrency: ${wrap(concurrency.group)}"
+    }
+
+  def compileSecrets(secrets: Secrets): String =
+    secrets match {
+      case Secrets.Inherit => "secrets: inherit"
+      case Secrets.Explicit(secretMap) => compileEnv(secretMap, "secrets")
+    }
 
   def compileEnvironment(environment: JobEnvironment): String =
     environment.url match {
@@ -340,6 +372,8 @@ ${indent(rendered.mkString("\n"), 1)}"""
 
 
   def compileJob(job: WorkflowJob, sbt: String): String = {
+    val renderedName = s"""name: ${wrap(job.name)}"""
+
     val renderedNeeds = if (job.needs.isEmpty)
       ""
     else
@@ -349,6 +383,9 @@ ${indent(rendered.mkString("\n"), 1)}"""
     val renderedTimeout = compileTimeout(job.timeout, prefix = "\n")
 
     val renderedCond = job.cond.map(wrap).map("\nif: " + _).getOrElse("")
+
+    val renderedConcurrency =
+      job.concurrency.map(compileConcurrency).map("\n" + _).getOrElse("")
 
     val renderedContainer = job.container match {
       case Some(JobContainer(image, credentials, env, volumes, ports, options)) =>
@@ -467,24 +504,59 @@ ${indent(rendered.mkString("\n"), 1)}"""
 
     val declareShell = job.oses.exists(_.contains("windows"))
 
-    val runsOn = if (job.runsOnExtraLabels.isEmpty)
-      s"$${{ matrix.os }}"
-    else
-      job.runsOnExtraLabels.mkString(s"""[ "$${{ matrix.os }}", """, ", ", " ]" )
+    val runsOn = job.action match {
+      case steps: WorkflowSteps if steps.runsOnExtraLabels.isEmpty =>
+        "\nruns-on: ${{ matrix.os }}"
+      case steps: WorkflowSteps =>
+          steps.runsOnExtraLabels.mkString(s"""\nruns-on: [ "$${{ matrix.os }}", """, ", ", " ]")
+      case _ =>
+        ""
+    }
 
     val renderedFailFast = job.matrixFailFast.fold("")("\n  fail-fast: " + _)
 
-    val body = s"""name: ${wrap(job.name)}${renderedNeeds}${renderedCond}
-strategy:${renderedFailFast}
+    val renderedStrategy = s"""\nstrategy:${renderedFailFast}
   matrix:
     os:${compileList(job.oses, 3)}
     scala:${compileList(job.scalas, 3)}
-    java:${compileList(job.javas.map(_.render), 3)}${renderedMatrices}
-runs-on: ${runsOn}${renderedEnvironment}${renderedContainer}${renderedTimeout}${renderedPerm}${renderedEnv}
-steps:
-${indent(job.steps.map(compileStep(_, sbt, job.sbtStepPreamble, declareShell = declareShell)).mkString("\n\n"), 1)}"""
+    java:${compileList(job.javas.map(_.render), 3)}"""
 
-    s"${job.id}:\n${indent(body, 1)}"
+    val renderedSteps = job.action match {
+      case steps: WorkflowSteps =>
+        "\nsteps:\n" +
+          indent(steps.steps.map(compileStep(_, sbt, steps.sbtStepPreamble, declareShell = declareShell)).mkString("\n\n"), 1)
+      case _ =>
+        ""
+    }
+
+    val renderedUses = job.action match {
+      case apply: WorkflowApply =>
+        val renderedSecrets =
+          apply.secrets.map(compileSecrets).map("\n" + _).getOrElse("")
+
+        s"\nuses: ${apply.ref}${renderParams(apply.params)}${renderedSecrets}"
+      case _ =>
+        ""
+    }
+
+    val content = List(
+      renderedName,
+      renderedNeeds,
+      renderedCond,
+      renderedStrategy,
+      renderedMatrices,
+      runsOn,
+      renderedEnvironment,
+      renderedContainer,
+      renderedTimeout,
+      renderedPerm,
+      renderedEnv,
+      renderedConcurrency,
+      renderedSteps,
+      renderedUses,
+    ).reduce(_ ++ _)
+
+    s"${job.id}:\n${indent(content, 1)}"
   }
 
   def compileWorkflow(
@@ -495,6 +567,7 @@ ${indent(job.steps.map(compileStep(_, sbt, job.sbtStepPreamble, declareShell = d
       prEventTypes: List[PREventType],
       permissions: Option[Permissions],
       env: Map[String, String],
+      concurrency: Option[Concurrency],
       jobs: List[WorkflowJob],
       sbt: String)
       : String = {
@@ -509,6 +582,9 @@ ${indent(job.steps.map(compileStep(_, sbt, job.sbtStepPreamble, declareShell = d
       ""
     else
       renderedPermissionsPre + "\n\n"
+
+    val renderedConcurrency =
+      concurrency.map(compileConcurrency).map(_ + "\n\n").getOrElse("")
 
     val renderedTypesPre = prEventTypes.map(compilePREventType).mkString("[", ", ", "]")
     val renderedTypes = if (prEventTypes.sortBy(_.toString) == PREventType.Defaults)
@@ -546,7 +622,7 @@ on:
   push:
     branches: [${branches.map(wrap).mkString(", ")}]$renderedTags$renderedPaths
 
-${renderedPerm}${renderedEnv}jobs:
+${renderedPerm}${renderedEnv}${renderedConcurrency}jobs:
 ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
 """
 }
@@ -557,7 +633,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
     // This is currently set to false because of https://github.com/sbt/sbt/issues/6468. When a new SBT version is
     // released that fixes this issue then check for that SBT version (or higher) and set to true.
     githubWorkflowUseSbtThinClient := false,
-
+    githubWorkflowConcurrency := None,
     githubWorkflowBuildMatrixFailFast := None,
     githubWorkflowBuildMatrixAdditions := Map(),
     githubWorkflowBuildMatrixInclusions := Seq(),
@@ -777,6 +853,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
       githubWorkflowPREventTypes.value.toList,
       githubWorkflowPermissions.value,
       githubWorkflowEnv.value,
+      githubWorkflowConcurrency.value,
       githubWorkflowGeneratedCI.value.toList,
       sbt)
   }
