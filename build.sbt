@@ -22,14 +22,29 @@ ThisBuild / crossScalaVersions := Seq(scala212)
 ThisBuild / scalaVersion := scala212
 
 ThisBuild / githubWorkflowOSes := Seq("ubuntu-latest", "macos-latest", "windows-latest")
-ThisBuild / githubWorkflowBuild := Seq(WorkflowStep.Sbt(List("+ test", "+ scripted")))
+ThisBuild / githubWorkflowBuild := Seq(
+  WorkflowStep.Sbt(
+    commands = List("+ test", "+ scripted"),
+    cond = Some("matrix.java != 'zulu@8'")
+  ),
+  WorkflowStep.Sbt(
+    commands = List("test", "scripted"),
+    cond = Some("matrix.java == 'zulu@8'")
+  ),
+)
 ThisBuild / githubWorkflowBuildPostamble += WorkflowStep.Run(
   commands = List("""rm -rf "$HOME/.ivy2/local""""),
   name = Some("Clean up Ivy Local repo")
 )
-ThisBuild / githubWorkflowJavaVersions ++= Seq(
+
+def publishTaskJavaSpec = JavaSpec.corretto("17")
+
+ThisBuild / githubWorkflowJavaVersions := Seq(
+  // https://github.com/sbt/sbt-github-actions/issues/216
+  // https://github.com/sbt/sbt-github-actions/blob/6b89abdd5381ef61870b/src/main/scala/sbtghactions/GenerativePlugin.scala#L738
+  publishTaskJavaSpec,
   JavaSpec.graalvm(Graalvm.Distribution("graalvm"), "17"),
-  JavaSpec.corretto("17")
+  JavaSpec.zulu("8"),
 )
 
 ThisBuild / githubWorkflowTargetTags ++= Seq("v*")
@@ -56,15 +71,24 @@ pluginCrossBuild / sbtVersion := {
     case "2.12" =>
       "1.5.5"
     case _ =>
-      "2.0.0-RC6"
+      "2.0.0-RC9"
   }
 }
-crossScalaVersions += "3.7.3"
+crossScalaVersions += "3.8.1"
 
 publishMavenStyle := true
 
 scalacOptions +=
   "-Xlint:_,-missing-interpolator"
+
+scalacOptions ++= {
+  scalaBinaryVersion.value match {
+    case "2.12" =>
+      Seq("-release:8")
+    case "3" =>
+      Nil
+  }
+}
 
 libraryDependencies += "org.specs2" %% "specs2-core" % "4.20.8" % Test
 
