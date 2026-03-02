@@ -21,6 +21,28 @@ import scala.concurrent.duration.FiniteDuration
 final case class WorkflowJob(
     id: String,
     name: String,
+    action: WorkflowAction,
+    cond: Option[String],
+    permissions: Option[Permissions],
+    env: Map[String, String],
+    oses: List[String],
+    scalas: List[String],
+    javas: List[JavaSpec],
+    needs: List[String],
+    matrixFailFast: Option[Boolean],
+    matrixAdds: Map[String, List[String]],
+    matrixIncs: List[MatrixInclude],
+    matrixExcs: List[MatrixExclude],
+    container: Option[JobContainer],
+    environment: Option[JobEnvironment],
+    concurrency: Option[Concurrency],
+    timeout: Option[FiniteDuration],
+)
+
+object WorkflowJob {
+  def apply(
+    id: String,
+    name: String,
     steps: List[WorkflowStep],
     sbtStepPreamble: List[String] = List(),
     cond: Option[String] = None,
@@ -37,4 +59,71 @@ final case class WorkflowJob(
     runsOnExtraLabels: List[String] = List(),
     container: Option[JobContainer] = None,
     environment: Option[JobEnvironment] = None,
-    timeout: Option[FiniteDuration] = None)
+    concurrency: Option[Concurrency] = None,
+    timeout: Option[FiniteDuration] = None
+  ): WorkflowJob =
+    WorkflowJob(
+      id,
+      name,
+      action = WorkflowSteps(steps, sbtStepPreamble, runsOnExtraLabels),
+      cond,
+      permissions,
+      env,
+      oses,
+      scalas,
+      javas,
+      needs,
+      matrixFailFast,
+      matrixAdds,
+      matrixIncs,
+      matrixExcs,
+      container,
+      environment,
+      concurrency,
+      timeout
+    )
+
+  def use(
+    id: String,
+    name: String,
+    ref: String,
+    params: Map[String, String] = Map.empty,
+    secrets: Option[Secrets] = None,
+    cond: Option[String] = None,
+    permissions: Option[Permissions] = None,
+    env: Map[String, String] = Map(),
+    oses: List[String] = List("ubuntu-latest"),
+    scalas: List[String] = List("2.13.10"),
+    javas: List[JavaSpec] = List(JavaSpec.zulu("8")),
+    needs: List[String] = List(),
+    matrixFailFast: Option[Boolean] = None,
+    matrixAdds: Map[String, List[String]] = Map(),
+    matrixIncs: List[MatrixInclude] = List(),
+    matrixExcs: List[MatrixExclude] = List(),
+    container: Option[JobContainer] = None,
+    environment: Option[JobEnvironment] = None,
+    concurrency: Option[Concurrency] = None,
+    timeout: Option[FiniteDuration] = None,
+    ): WorkflowJob =
+    WorkflowJob(
+      id,
+      name,
+      action = WorkflowApply(ref, params, secrets),
+      cond,
+      permissions,
+      env,
+      oses,
+      scalas,
+      javas,
+      needs,
+      matrixFailFast,
+      matrixAdds,
+      matrixIncs,
+      matrixExcs,
+      container,
+      environment,
+      concurrency,
+      timeout
+    )
+
+}

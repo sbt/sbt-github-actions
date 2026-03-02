@@ -47,7 +47,7 @@ class GenerativePluginSpec extends Specification {
         |${" " * 2}
         |""".stripMargin
 
-      compileWorkflow("test", List("main"), Nil, Paths.None, PREventType.Defaults, None, Map(), Nil, "sbt") mustEqual expected
+      compileWorkflow("test", List("main"), Nil, Paths.None, PREventType.Defaults, None, Map(), None, Nil, "sbt") mustEqual expected
     }
 
     "produce the appropriate skeleton around a zero-job workflow with non-empty tags" in {
@@ -65,7 +65,7 @@ class GenerativePluginSpec extends Specification {
         |${" " * 2}
         |""".stripMargin
 
-      compileWorkflow("test", List("main"), List("howdy"), Paths.None, PREventType.Defaults, None, Map(), Nil, "sbt") mustEqual expected
+      compileWorkflow("test", List("main"), List("howdy"), Paths.None, PREventType.Defaults, None, Map(), None, Nil, "sbt") mustEqual expected
     }
 
     "respect non-default pr types" in {
@@ -83,7 +83,7 @@ class GenerativePluginSpec extends Specification {
         |${" " * 2}
         |""".stripMargin
 
-      compileWorkflow("test", List("main"), Nil, Paths.None, List(PREventType.ReadyForReview, PREventType.ReviewRequested, PREventType.Opened), None, Map(), Nil, "sbt") mustEqual expected
+      compileWorkflow("test", List("main"), Nil, Paths.None, List(PREventType.ReadyForReview, PREventType.ReviewRequested, PREventType.Opened), None, Map(), None, Nil, "sbt") mustEqual expected
     }
 
     "compile a one-job workflow targeting multiple branch patterns with a environment variables" in {
@@ -126,6 +126,7 @@ class GenerativePluginSpec extends Specification {
         ))),
         Map(
           "GITHUB_TOKEN" -> s"$${{ secrets.GITHUB_TOKEN }}"),
+        None,
         List(
           WorkflowJob(
             "build",
@@ -176,6 +177,7 @@ class GenerativePluginSpec extends Specification {
         PREventType.Defaults,
         None,
         Map(),
+        None,
         List(
           WorkflowJob(
             "build",
@@ -221,6 +223,7 @@ class GenerativePluginSpec extends Specification {
         PREventType.Defaults,
         None,
         Map(),
+        None,
         List(
           WorkflowJob(
             "build",
@@ -273,6 +276,7 @@ class GenerativePluginSpec extends Specification {
         PREventType.Defaults,
         None,
         Map(),
+        None,
         List(
           WorkflowJob(
             "build",
@@ -305,7 +309,7 @@ class GenerativePluginSpec extends Specification {
         |${" " * 2}
         |""".stripMargin
 
-      compileWorkflow("test", List("main"), Nil, Paths.Include(List("**.scala", "**.sbt")), PREventType.Defaults, None, Map(), Nil, "sbt") mustEqual expected
+      compileWorkflow("test", List("main"), Nil, Paths.Include(List("**.scala", "**.sbt")), PREventType.Defaults, None, Map(), None, Nil, "sbt") mustEqual expected
     }
 
     "render ignored paths on pull_request and push" in {
@@ -324,7 +328,69 @@ class GenerativePluginSpec extends Specification {
         |${" " * 2}
         |""".stripMargin
 
-      compileWorkflow("test", List("main"), Nil, Paths.Ignore(List("docs/**")), PREventType.Defaults, None, Map(), Nil, "sbt") mustEqual expected
+      compileWorkflow("test", List("main"), Nil, Paths.Ignore(List("docs/**")), PREventType.Defaults, None, Map(), None, Nil, "sbt") mustEqual expected
+    }
+
+    "render shorthand form for concurrency without specific cancel-in-progress property" in {
+      val expected = header + s"""
+        |name: test
+        |
+        |on:
+        |  pull_request:
+        |    branches: [main]
+        |  push:
+        |    branches: [main]
+        |
+        |concurrency: test-group
+        |
+        |jobs:
+        |${" " * 2}
+        |""".stripMargin
+
+      compileWorkflow(
+        "test",
+        List("main"),
+        Nil,
+        Paths.None,
+        PREventType.Defaults,
+        None,
+        Map(),
+        Some(Concurrency("test-group")),
+        Nil,
+        "sbt",
+      ) mustEqual expected
+    }
+
+    "render extended form for concurrency with specific cancel-in-progress property" in {
+      val expected = header + s"""
+        |name: test
+        |
+        |on:
+        |  pull_request:
+        |    branches: [main]
+        |  push:
+        |    branches: [main]
+        |
+        |concurrency:
+        |  group: test-group
+        |  cancel-in-progress: true
+        |
+        |jobs:
+        |${" " * 2}
+        |""".stripMargin
+
+      compileWorkflow(
+        "test",
+        List("main"),
+        Nil,
+        Paths.None,
+        PREventType.Defaults,
+        None,
+        Map(),
+        Some(Concurrency("test-group", Some(true))),
+        Nil,
+        "sbt",
+      ) mustEqual expected
     }
   }
 
@@ -824,6 +890,30 @@ class GenerativePluginSpec extends Specification {
     - run: csbt ci-release"""
     }
 
+    "compile a job with concurrency" in {
+      val results = compileJob(
+        WorkflowJob(
+          "publish",
+          "Publish Release",
+          List(
+            WorkflowStep.Sbt(List("ci-release"))),
+          concurrency = Some(Concurrency("test-group")),
+        ),
+        "csbt")
+
+      results mustEqual s"""publish:
+  name: Publish Release
+  strategy:
+    matrix:
+      os: [ubuntu-latest]
+      scala: [2.13.10]
+      java: [zulu@8]
+  runs-on: $${{ matrix.os }}
+  concurrency: test-group
+  steps:
+    - run: csbt ci-release"""
+    }
+
     "produce an error when compiling a job with `include` key in matrix" in {
       compileJob(
         WorkflowJob(
@@ -1001,6 +1091,124 @@ class GenerativePluginSpec extends Specification {
 
     - name: Checkout current branch (fast)
       uses: actions/checkout@v6"""
+    }
+
+    "compile a job which delegates to another via 'using'" in {
+      val results = compileJob(
+        WorkflowJob.use(
+          "publish",
+          "Publish Release",
+          "./.github/workflows/dependant.yml"),
+        "csbt")
+
+      results mustEqual s"""publish:
+  name: Publish Release
+  strategy:
+    matrix:
+      os: [ubuntu-latest]
+      scala: [2.13.10]
+      java: [zulu@8]
+  uses: ./.github/workflows/dependant.yml"""
+    }
+
+    "compile a job which delegates to another via 'using', with parameters" in {
+      val results = compileJob(
+        WorkflowJob.use(
+          "publish",
+          "Publish Release",
+          "sbt/sbt-github-actions/.github/workflows/dependant.yml@main",
+          Map("abc" -> "def")
+          ),
+        "csbt")
+
+      results mustEqual s"""publish:
+  name: Publish Release
+  strategy:
+    matrix:
+      os: [ubuntu-latest]
+      scala: [2.13.10]
+      java: [zulu@8]
+  uses: sbt/sbt-github-actions/.github/workflows/dependant.yml@main
+  with:
+    abc: def"""
+    }
+
+    "compile a job which delegates to another via 'using', with inherited secrets" in {
+      val results = compileJob(
+        WorkflowJob.use(
+          "publish",
+          "Publish Release",
+          "./.github/workflows/dependant.yml",
+          secrets = Some(Secrets.Inherit)
+          ),
+        "csbt")
+
+      results mustEqual s"""publish:
+  name: Publish Release
+  strategy:
+    matrix:
+      os: [ubuntu-latest]
+      scala: [2.13.10]
+      java: [zulu@8]
+  uses: ./.github/workflows/dependant.yml
+  secrets: inherit"""
+    }
+
+    "compile a job which delegates to another via 'using', with explicit secrets" in {
+      val results = compileJob(
+        WorkflowJob.use(
+          "publish",
+          "Publish Release",
+          "./.github/workflows/dependant.yml",
+          secrets = Some(Secrets.Explicit(Map("abc" -> "def")))
+          ),
+        "csbt")
+
+      results mustEqual s"""publish:
+  name: Publish Release
+  strategy:
+    matrix:
+      os: [ubuntu-latest]
+      scala: [2.13.10]
+      java: [zulu@8]
+  uses: ./.github/workflows/dependant.yml
+  secrets:
+    abc: def"""
+    }
+
+    "compile a job which delegates to another via 'using', with supported keywords" in {
+      val results = compileJob(
+        WorkflowJob.use(
+          "publish",
+          "Publish Release",
+          "./.github/workflows/dependant.yml",
+          params = Map("abc" -> "def"),
+          secrets = Some(Secrets.Explicit(Map("abc" -> "def"))),
+          cond = Some("true"),
+          permissions = Some(Permissions.ReadAll),
+          needs = List("build"),
+          concurrency = Some(Concurrency("publish-group", Some(true))),
+          ),
+        "csbt")
+
+      results mustEqual s"""publish:
+  name: Publish Release
+  needs: [build]
+  if: true
+  strategy:
+    matrix:
+      os: [ubuntu-latest]
+      scala: [2.13.10]
+      java: [zulu@8]
+  permissions: read-all
+  concurrency:
+    group: publish-group
+    cancel-in-progress: true
+  uses: ./.github/workflows/dependant.yml
+  with:
+    abc: def
+  secrets:
+    abc: def"""
     }
   }
 
