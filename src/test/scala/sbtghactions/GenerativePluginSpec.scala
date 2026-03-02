@@ -594,7 +594,9 @@ class GenerativePluginSpec extends Specification {
           javas = javas),
         "")
 
-            results mustEqual s"""abc:
+      // Note: components: native-image is not included for Graalvm.Distribution
+      // because native-image is bundled by default in GraalVM for JDK 17+
+      results mustEqual s"""abc:
   name: How to get to...
   strategy:
     matrix:
@@ -609,7 +611,6 @@ class GenerativePluginSpec extends Specification {
       with:
         java-version: 17
         distribution: graalvm
-        components: native-image
         github-token: $${{ secrets.GITHUB_TOKEN }}
         cache: sbt"""
     }
