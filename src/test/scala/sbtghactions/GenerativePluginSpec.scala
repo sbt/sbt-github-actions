@@ -231,6 +231,57 @@ class GenerativePluginSpec extends Specification {
         "") mustEqual expected
     }
 
+    "render a simple container with services" in {
+      val expected = header + s"""
+        |name: test5
+        |
+        |on:
+        |  pull_request:
+        |    branches: [main]
+        |  push:
+        |    branches: [main]
+        |
+        |jobs:
+        |  build:
+        |    name: Build and Test
+        |    strategy:
+        |      matrix:
+        |        os: [ubuntu-latest]
+        |        scala: [2.13.10]
+        |        java: [zulu@8]
+        |    runs-on: $${{ matrix.os }}
+        |    services:
+        |      dbservice:
+        |        image: 'someimage:1.0'
+        |        ports: ['20720:20720']
+        |      cacheservice:
+        |        image: 'someimage:3.0'
+        |        ports: ['35720:35720']
+        |    steps:
+        |      - run: echo yikes
+        |""".stripMargin
+
+
+      compileWorkflow(
+          "test5",
+          List("main"),
+          Nil,
+          Paths.None,
+          PREventType.Defaults,
+          None,
+          Map(),
+          List(
+            WorkflowJob(
+              "build",
+              "Build and Test",
+              List(WorkflowStep.Run(List("echo yikes"))),
+              services = List(
+                JobService(id = "dbservice", image = "someimage:1.0", ports = List("20720:20720")),
+                JobService(id = "cacheservice", image = "someimage:3.0", ports = List("35720:35720"))
+                ))),
+          "")  mustEqual expected
+    }
+
     "render a container with all the trimmings" in {
       val expected = header + s"""
         |name: test4

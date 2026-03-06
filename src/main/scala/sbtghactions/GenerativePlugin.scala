@@ -392,6 +392,47 @@ ${indent(rendered.mkString("\n"), 1)}"""
         ""
     }
 
+    val renderedServicesPre = job.services.map{ case JobService(id, image, credentials, env, volumes, ports, options)  =>
+        if (credentials.isEmpty && env.isEmpty && volumes.isEmpty && ports.isEmpty && options.isEmpty) {
+          s"container: ${wrap(image)}"
+        } else {
+          val renderedImage = s"image: ${wrap(image)}"
+
+          val renderedCredentials = credentials match {
+            case Some((username, password)) =>
+              s"\ncredentials:\n${indent(s"username: ${wrap(username)}\npassword: ${wrap(password)}", 1)}"
+
+            case None =>
+              ""
+          }
+
+          val renderedEnv = if (!env.isEmpty)
+            "\n" + compileEnv(env)
+          else
+            ""
+
+          val renderedVolumes = if (!volumes.isEmpty)
+            s"\nvolumes:${compileList(volumes.toList map { case (l, r) => s"$l:$r" }, 1)}"
+          else
+            ""
+
+          val renderedPorts = if (!ports.isEmpty)
+            s"\nports:${compileList(ports.map(_.toString), 1)}"
+          else
+            ""
+
+          val renderedOptions = if (!options.isEmpty)
+            s"\noptions: ${wrap(options.mkString(" "))}"
+          else
+            ""
+
+          s"$id:\n${indent(renderedImage + renderedCredentials + renderedEnv + renderedVolumes + renderedPorts + renderedOptions, 1)}"
+        }
+    }
+
+    val renderedServices = if(renderedServicesPre.isEmpty) ""  else  s"\nservices:\n${indent(renderedServicesPre.mkString("\n"),1)}"
+
+
     val renderedEnvPre = compileEnv(job.env)
     val renderedEnv = if (renderedEnvPre.isEmpty)
       ""
@@ -480,7 +521,7 @@ strategy:${renderedFailFast}
     os:${compileList(job.oses, 3)}
     scala:${compileList(job.scalas, 3)}
     java:${compileList(job.javas.map(_.render), 3)}${renderedMatrices}
-runs-on: ${runsOn}${renderedEnvironment}${renderedContainer}${renderedTimeout}${renderedPerm}${renderedEnv}
+runs-on: ${runsOn}${renderedEnvironment}${renderedContainer}${renderedServices}${renderedTimeout}${renderedPerm}${renderedEnv}
 steps:
 ${indent(job.steps.map(compileStep(_, sbt, job.sbtStepPreamble, declareShell = declareShell)).mkString("\n\n"), 1)}"""
 
