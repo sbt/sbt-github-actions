@@ -34,8 +34,8 @@ object Action {
   val setupJava = UseRef.Public("actions", "setup-java", "v5")
   val setupSbt = UseRef.Public("sbt", "setup-sbt", "v1")
   val tmate = UseRef.Public("mxschmitt", "action-tmate", "v2")
-  val upload = UseRef.Public("actions", "upload-artifact", "v5")
-  val download = UseRef.Public("actions", "download-artifact", "v6")
+  val upload = UseRef.Public("actions", "upload-artifact", "v7")
+  val download = UseRef.Public("actions", "download-artifact", "v8")
   val configurePagefile = UseRef.Public("al-cheb", "configure-pagefile-action", "v1.5")
 }
 
