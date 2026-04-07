@@ -71,7 +71,7 @@ pluginCrossBuild / sbtVersion := {
     case "2.12" =>
       "1.5.5"
     case _ =>
-      "2.0.0-RC10"
+      "2.0.0-RC11"
   }
 }
 crossScalaVersions += "3.8.2"
