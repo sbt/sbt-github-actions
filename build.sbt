@@ -43,7 +43,6 @@ ThisBuild / githubWorkflowJavaVersions := Seq(
   // https://github.com/sbt/sbt-github-actions/issues/216
   // https://github.com/sbt/sbt-github-actions/blob/6b89abdd5381ef61870b/src/main/scala/sbtghactions/GenerativePlugin.scala#L738
   publishTaskJavaSpec,
-  JavaSpec.graalvm(Graalvm.Distribution("graalvm"), "17"),
   JavaSpec.zulu("8"),
 )
 
