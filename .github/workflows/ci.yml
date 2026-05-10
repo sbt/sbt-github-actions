@@ -24,7 +24,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         scala: [2.12.20]
-        java: [corretto@17, graal_graalvm@17, zulu@8]
+        java: [corretto@17, zulu@8]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Ignore line ending differences in git
@@ -51,16 +51,6 @@ jobs:
         with:
           distribution: corretto
           java-version: 17
-          cache: sbt
-
-      - name: Setup GraalVM (graal_graalvm@17)
-        if: matrix.java == 'graal_graalvm@17'
-        uses: graalvm/setup-graalvm@v1
-        with:
-          java-version: 17
-          distribution: graalvm
-          components: native-image
-          github-token: ${{ secrets.GITHUB_TOKEN }}
           cache: sbt
 
       - name: Setup Java (zulu@8)
@@ -134,16 +124,6 @@ jobs:
         with:
           distribution: corretto
           java-version: 17
-          cache: sbt
-
-      - name: Setup GraalVM (graal_graalvm@17)
-        if: matrix.java == 'graal_graalvm@17'
-        uses: graalvm/setup-graalvm@v1
-        with:
-          java-version: 17
-          distribution: graalvm
-          components: native-image
-          github-token: ${{ secrets.GITHUB_TOKEN }}
           cache: sbt
 
       - name: Setup Java (zulu@8)
