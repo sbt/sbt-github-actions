@@ -34,14 +34,18 @@ This plugin is quite prescriptive in that it forcibly manages the contents of th
 
 ### JDK settings
 
-We recommend you set the following setting in `build.sbt`:
+sbt-github-actions currently defaults to using JDK 8 for testing and publishing. The following setting changes to using Temurin JDK 17 instead, which might be more common lately:
 
 ```scala
-// sbt-github-actions defaults to using JDK 8 for testing and publishing.
-// The following adds JDK 17 for testing.
-ThisBuild / githubWorkflowJavaVersions += JavaSpec.temurin("17")
+ThisBuild / githubWorkflowJavaVersions := List(JavaSpec.temurin("17"))
 ```
 
+The following setting changes to testing on Temurin JDK 17 and 25, and use JDK 17 for publishing:
+
+```scala
+ThisBuild / githubWorkflowJavaVersions := List(JavaSpec.temurin("17"), JavaSpec.temurin("25"))
+ThisBuild / githubWorkflowPublishJavaVersion := JavaSpec.temurin("17")
+```
 
 ### Integration with sbt-ci-release
 
