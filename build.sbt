@@ -68,10 +68,10 @@ pluginCrossBuild / sbtVersion := {
     case "2.12" =>
       "1.5.5"
     case _ =>
-      "2.0.0-RC11"
+      "2.0.0"
   }
 }
-crossScalaVersions += "3.8.2"
+crossScalaVersions += "3.8.4"
 
 publishMavenStyle := true
 
