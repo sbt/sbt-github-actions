@@ -281,18 +281,12 @@ ${indent(rendered.mkString("\n"), 1)}"""
       case sbtStep: Sbt =>
         import sbtStep.commands
 
-        val sbtClientMode = sbt.matches("""sbt.* --client($| .*)""")
-        val safeCommands = if (sbtClientMode)
-          s"'${(sbtStepPreamble ::: commands).mkString("; ")}'"
-        else (sbtStepPreamble ::: commands).map { c =>
-          if (c.indexOf(' ') >= 0)
-            s"'$c'"
-          else
-            c
-        }.mkString(" ")
-
+        val multi = (sbtStepPreamble ::: commands) match {
+          case x :: Nil => x
+          case xs       => s"'${xs.mkString("; ")}'"
+        }
         renderRunBody(
-          commands = List(s"$sbt $safeCommands"),
+          commands = List(s"$sbt $multi"),
           params = sbtStep.params,
           renderedShell = renderedShell
         )

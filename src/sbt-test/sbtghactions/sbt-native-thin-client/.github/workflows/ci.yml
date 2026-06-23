@@ -111,4 +111,4 @@ jobs:
           rm targets.tar
 
       - name: Publish project
-        run: sbt --client '+publish'
+        run: sbt --client +publish
