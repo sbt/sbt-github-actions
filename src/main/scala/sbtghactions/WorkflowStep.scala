@@ -31,7 +31,7 @@ sealed trait WorkflowStep extends Product with Serializable {
 object Action {
   val checkout = UseRef.Public("actions", "checkout", "v7")
   val setupGraalvm = UseRef.Public("graalvm", "setup-graalvm", "v1")
-  val setupJava = UseRef.Public("actions", "setup-java", "v5")
+  val setupJava = UseRef.Public("actions", "setup-java", "v6")
   val setupSbt = UseRef.Public("sbt", "setup-sbt", "v1")
   val tmate = UseRef.Public("mxschmitt", "action-tmate", "v2")
   val upload = UseRef.Public("actions", "upload-artifact", "v7")
