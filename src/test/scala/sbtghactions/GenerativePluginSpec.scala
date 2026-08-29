@@ -616,7 +616,7 @@ class GenerativePluginSpec extends Specification {
   steps:
     - name: Setup Java (temurin@17)
       if: matrix.java == 'temurin@17'
-      uses: actions/setup-java@v5
+      uses: actions/setup-java@v6
       with:
         distribution: temurin
         java-version: 17
