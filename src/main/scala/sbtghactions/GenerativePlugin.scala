@@ -20,6 +20,7 @@ import sbt.Keys._
 import sbt.{given, _}
 
 import java.nio.file.FileSystems
+import scala.annotation.tailrec
 import scala.concurrent.duration.FiniteDuration
 
 object GenerativePlugin extends AutoPlugin {
@@ -638,10 +639,38 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
     pathStr.replace(PlatformSep, "/")   // *force* unix separators
   }
 
+  /**
+   * The nearest ancestor of `target` which is not specific to `scalaVersion`, or `target`
+   * itself when it does not sit inside a Scala version directory.
+   *
+   * sbt 2 lays a project's target out as `target/out/<platform>/scala-<scalaVersion>/<module>`,
+   * so only the currently loaded Scala version's directory exists. Aggregating it verbatim
+   * would bake that version into the generated workflow, which `githubWorkflowCheck` would
+   * then reject on every other row of the build matrix.
+   *
+   * Targets which are already independent of the Scala version are returned unchanged: sbt 1's
+   * `<project>/target`, and sbt 2's `target/out/<platform>/u/<module>`, which is the layout
+   * used when `crossPaths` is `false`.
+   */
+  private[sbtghactions] def scalaVersionIndependentTarget(target: File, scalaVersion: String): File = {
+    val versionDirName = s"scala-$scalaVersion"
+
+    @tailrec
+    def parentOfVersionDir(candidate: File): Option[File] =
+      if (candidate == null)
+        None
+      else if (candidate.getName == versionDirName)
+        Option(candidate.getParentFile)
+      else
+        parentOfVersionDir(candidate.getParentFile)
+
+    parentOfVersionDir(target).getOrElse(target)
+  }
+
   private val pathStrs = Def setting {
     val base = (ThisBuild / baseDirectory).value.toPath
 
-    internalTargetAggregation.value map { file =>
+    internalTargetAggregation.value.distinct map { file =>
       val path = file.toPath
 
       if (path.isAbsolute)
@@ -914,7 +943,7 @@ ${indent(jobs.map(compileJob(_, sbt)).mkString("\n\n"), 1)}
   override def projectSettings = Seq(
     Global / internalTargetAggregation ++= {
       if (githubWorkflowArtifactUpload.value)
-        Seq(target.value)
+        Seq(scalaVersionIndependentTarget(target.value, scalaVersion.value))
       else
         Seq()
     },
