@@ -18,6 +18,7 @@ package sbtghactions
 
 import org.specs2.mutable.Specification
 
+import java.io.File
 import java.net.URI
 import scala.concurrent.duration.DurationInt
 
@@ -1152,6 +1153,34 @@ class GenerativePluginSpec extends Specification {
           |jkl""".stripMargin
       val actualDiff = GenerativePlugin.diff(expected, actual)
       expectedDiff mustEqual actualDiff
+    }
+  }
+
+  "target aggregation" should {
+    "produce the same path for an sbt 2 target regardless of the Scala version it was loaded at" in {
+      val at213 = new File("/build/target/out/jvm/scala-2.13.10/sub")
+      val at212 = new File("/build/target/out/jvm/scala-2.12.17/sub")
+
+      scalaVersionIndependentTarget(at213, "2.13.10") mustEqual
+        scalaVersionIndependentTarget(at212, "2.12.17")
+    }
+
+    "narrow an sbt 2 target no further than the Scala version directory" in {
+      scalaVersionIndependentTarget(
+        new File("/build/target/out/jvm/scala-2.13.10/sub"),
+        "2.13.10") mustEqual new File("/build/target/out/jvm")
+    }
+
+    "leave an sbt 2 target with crossPaths disabled untouched" in {
+      val target = new File("/build/target/out/jvm/u/sub")
+
+      scalaVersionIndependentTarget(target, "2.13.10") mustEqual target
+    }
+
+    "leave an sbt 1 target untouched" in {
+      val target = new File("/build/sub/target")
+
+      scalaVersionIndependentTarget(target, "2.13.10") mustEqual target
     }
   }
 }

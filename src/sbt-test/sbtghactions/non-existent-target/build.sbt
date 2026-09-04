@@ -12,13 +12,15 @@ lazy val root = project.in(file(".")).aggregate(withTarget, withoutTarget)
     TaskKey[Unit]("patchIfSbt2") := {
       if (sbtBinaryVersion.value == "2") {
         val yml = file(".github/workflows/ci.yml")
-        val targetPath = IO.relativize(baseDirectory.value, target.value).get.replace(java.io.File.separatorChar, '/')
-        val withTargetPath = IO.relativize(baseDirectory.value, (withTarget / target).value).get.replace(java.io.File.separatorChar, '/')
+        // sbt 2 nests targets under `target/out/<platform>/scala-<version>/<module>`; the plugin
+        // aggregates the Scala-version-independent parent of that, i.e. `target/out/<platform>`,
+        // which is shared by every project of the build
+        val targetPath = IO.relativize(baseDirectory.value, target.value.getParentFile.getParentFile).get.replace(java.io.File.separatorChar, '/')
         IO.write(
           yml,
           IO.read(yml).replace(
             "run: tar cf targets.tar target withTarget/target project/target",
-            s"run: tar cf targets.tar ${targetPath} ${withTargetPath} project/target"
+            s"run: tar cf targets.tar ${targetPath} project/target"
           )
         )
       }

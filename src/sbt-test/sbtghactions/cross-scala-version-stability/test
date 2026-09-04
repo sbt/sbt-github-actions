@@ -1,0 +1,7 @@
+# The generated workflow must not depend on which cross Scala version sbt was
+# loaded with: CI runs `githubWorkflowCheck` once per matrix row, each with a
+# different `++`, against a single committed ci.yml.
+> githubWorkflowGenerate
+> githubWorkflowCheck
+> ++2.12.17
+> githubWorkflowCheck
