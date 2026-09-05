@@ -64,6 +64,8 @@ object WorkflowStep {
             "github-token" -> s"$${{ secrets.GITHUB_TOKEN }}",
             "cache" -> "sbt"))
       case jv @ JavaSpec(JavaSpec.Distribution.GraalVM(Graalvm.Distribution(distribution)), version) =>
+        // Note: native-image is included by default in GraalVM for JDK 17+
+        // See: https://github.com/oracle/graal/pull/5995
         WorkflowStep.Use(
           Action.setupGraalvm,
           name = Some(s"Setup GraalVM (${jv.render})"),
@@ -71,7 +73,6 @@ object WorkflowStep {
           params = ListMap(
             "java-version" -> s"$version",
             "distribution" -> distribution,
-            "components" -> "native-image",
             "github-token" -> s"$${{ secrets.GITHUB_TOKEN }}",
             "cache" -> "sbt"))
       case jv @ JavaSpec(dist, version) =>
