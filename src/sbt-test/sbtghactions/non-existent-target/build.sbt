@@ -19,8 +19,8 @@ lazy val root = project.in(file(".")).aggregate(withTarget, withoutTarget)
         IO.write(
           yml,
           IO.read(yml).replace(
-            "run: tar cf targets.tar target withTarget/target project/target",
-            s"run: tar cf targets.tar ${targetPath} project/target"
+            "run: tar chf targets.tar target withTarget/target project/target",
+            s"run: tar chf targets.tar ${targetPath} project/target"
           )
         )
       }

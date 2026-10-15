@@ -14,8 +14,8 @@ TaskKey[Unit]("patchIfSbt2") := {
     IO.write(
       yml,
       IO.read(yml).replace(
-        "run: tar cf targets.tar target project/target",
-        s"run: tar cf targets.tar ${targetPath} project/target"
+        "run: tar chf targets.tar target project/target",
+        s"run: tar chf targets.tar ${targetPath} project/target"
       )
     )
   }
