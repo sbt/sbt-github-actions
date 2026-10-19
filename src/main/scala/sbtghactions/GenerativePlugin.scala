@@ -282,12 +282,16 @@ ${indent(rendered.mkString("\n"), 1)}"""
       case sbtStep: Sbt =>
         import sbtStep.commands
 
-        val multi = (sbtStepPreamble ::: commands) match {
+        // Arguments starting with '-' (-D..., -J..., -v) are options for the sbt launcher, not
+        // commands; inside the command string sbt would try to run them, so they stay separate.
+        val (launcherOptions, sbtCommands) = (sbtStepPreamble ::: commands).partition(_.startsWith("-"))
+        val renderedOptions = launcherOptions.map(o => if (o.indexOf(' ') >= 0) s"'$o'" else o)
+        val multi = sbtCommands match {
           case x :: Nil => x
           case xs       => s"'${xs.mkString("; ")}'"
         }
         renderRunBody(
-          commands = List(s"$sbt $multi"),
+          commands = List((sbt :: renderedOptions ::: List(multi)).mkString(" ")),
           params = sbtStep.params,
           renderedShell = renderedShell
         )

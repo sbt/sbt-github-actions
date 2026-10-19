@@ -442,6 +442,18 @@ class GenerativePluginSpec extends Specification {
         sbtStepPreamble = Nil) mustEqual s"- run: $$SBT ci-release"
     }
 
+    "keep sbt launcher options out of the command string" in {
+      compileStep(
+        Sbt(List("-Dslick.testkit-config=test-dbs/testkit-github.conf", "test")),
+        "$SBT") mustEqual s"- run: $$SBT -Dslick.testkit-config=test-dbs/testkit-github.conf '++ $${{ matrix.scala }}; test'"
+    }
+
+    "quote sbt launcher options containing spaces" in {
+      compileStep(
+        Sbt(List("-Dgreeting=hello world", "test")),
+        "$SBT") mustEqual s"- run: $$SBT '-Dgreeting=hello world' '++ $${{ matrix.scala }}; test'"
+    }
+
     "compile sbt with parameters" in {
       compileStep(
         Sbt(List("compile", "test"), params = Map("abc" -> "def", "cafe" -> "@42")),
