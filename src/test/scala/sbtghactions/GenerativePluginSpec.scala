@@ -1109,62 +1109,111 @@ class GenerativePluginSpec extends Specification {
   }
 
   "diff" should {
-    "highlight the first different character" in {
-      val expected =
-        """abc
-          |
-          |def
-          |
-          |ghi""".stripMargin
-      val actual =
-        """abc
-          |
-          |df
-          |
-          |ghi""".stripMargin
+    "show a changed line with its context" in {
+      val from =
+        """a
+          |b
+          |c
+          |d
+          |e
+          |f
+          |g
+          |h
+          |""".stripMargin
+      val to =
+        """a
+          |b
+          |c
+          |d
+          |E
+          |f
+          |g
+          |h
+          |""".stripMargin
       val expectedDiff =
-        """abc
-          |
-          |df
-          | ^ (different character)
-          |
-          |ghi""".stripMargin
-      val actualDiff = GenerativePlugin.diff(expected, actual)
-      expectedDiff mustEqual actualDiff
+        """@@ -2,7 +2,7 @@
+          | b
+          | c
+          | d
+          |-e
+          |+E
+          | f
+          | g
+          | h""".stripMargin
+      diff(from, to) mustEqual expectedDiff
     }
-    "highlight the missing lines" in {
-      val expected =
-        """abc
-          |def
-          |ghi""".stripMargin
-      val actual =
-        """abc
-          |def""".stripMargin
+
+    "show missing and additional lines" in {
+      val from =
+        """a
+          |b
+          |c
+          |""".stripMargin
+      val to =
+        """b
+          |c
+          |d
+          |""".stripMargin
       val expectedDiff =
-        """abc
-          |def
-          |   ^ (missing lines)""".stripMargin
-      val actualDiff = GenerativePlugin.diff(expected, actual)
-      expectedDiff mustEqual actualDiff
+        """@@ -1,3 +1,3 @@
+          |-a
+          | b
+          | c
+          |+d""".stripMargin
+      diff(from, to) mustEqual expectedDiff
     }
-    "highlight the additionl lines" in {
-      val expected =
-        """abc
-          |def
-          |ghi""".stripMargin
-      val actual =
-        """abc
-          |def
-          |ghi
-          |jkl""".stripMargin
+
+    "show changes that are far apart as separate hunks" in {
+      val numbers = (1 to 20).map(_.toString)
+      val from = numbers.map(_ + "\n").mkString
+      val to = numbers.map {
+        case "3" => "three\n"
+        case "18" => "eighteen\n"
+        case n => n + "\n"
+      }.mkString
       val expectedDiff =
-        """abc
-          |def
-          |ghi
-          |   ^ (additional lines)
-          |jkl""".stripMargin
-      val actualDiff = GenerativePlugin.diff(expected, actual)
-      expectedDiff mustEqual actualDiff
+        """@@ -1,6 +1,6 @@
+          | 1
+          | 2
+          |-3
+          |+three
+          | 4
+          | 5
+          | 6
+          |@@ -15,6 +15,6 @@
+          | 15
+          | 16
+          | 17
+          |-18
+          |+eighteen
+          | 19
+          | 20""".stripMargin
+      diff(from, to) mustEqual expectedDiff
+    }
+
+    "show a missing final line terminator as a changed line" in {
+      val expectedDiff =
+        """@@ -1,2 +1,2 @@
+          | a
+          |-b
+          |+b""".stripMargin
+      diff("a\nb", "a\nb\n") mustEqual expectedDiff
+    }
+
+    "be empty for equal contents" in {
+      diff("a\nb\n", "a\nb\n") mustEqual ""
+    }
+  }
+
+  "colorDiff" should {
+    "color removed lines red, added lines green and hunk headers cyan" in {
+      import scala.Console.{CYAN, GREEN, RED, RESET}
+      val expected =
+        s"""$CYAN@@ -1,2 +1,2 @@$RESET
+           | a
+           |$RED-b$RESET
+           |$GREEN+B$RESET""".stripMargin
+      colorDiff(diff("a\nb\n", "a\nB\n")) mustEqual expected
     }
   }
 
