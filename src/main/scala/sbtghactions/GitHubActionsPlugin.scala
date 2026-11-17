@@ -32,7 +32,7 @@ object GitHubActionsPlugin extends AutoPlugin {
 
   import autoImport._
 
-  private[this] def recursivelyConvert(a: Any): Any = a match {
+  private def recursivelyConvert(a: Any): Any = a match {
     case map: java.util.Map[_, _] =>
       map.asScala.toMap map { case (k, v) => k -> recursivelyConvert(v) }
 

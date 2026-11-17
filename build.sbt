@@ -16,7 +16,7 @@
 
 name := "sbt-github-actions"
 
-lazy val scala212 = "2.12.20"
+lazy val scala212 = "2.12.21"
 ThisBuild / organization := "com.github.sbt"
 ThisBuild / crossScalaVersions := Seq(scala212)
 ThisBuild / scalaVersion := scala212
@@ -41,6 +41,8 @@ ThisBuild / githubWorkflowPublishJavaVersion := JavaSpec.corretto("17")
 
 ThisBuild / githubWorkflowJavaVersions := Seq(
   JavaSpec.corretto("17"),
+  JavaSpec.corretto("21"),
+  JavaSpec.corretto("25"),
   JavaSpec.zulu("8"),
 )
 
@@ -68,10 +70,10 @@ pluginCrossBuild / sbtVersion := {
     case "2.12" =>
       "1.5.5"
     case _ =>
-      "2.0.0"
+      "2.1.0"
   }
 }
-crossScalaVersions += "3.8.4"
+crossScalaVersions := Seq(scala212, "3.9.0")
 
 publishMavenStyle := true
 
@@ -81,7 +83,7 @@ scalacOptions +=
 scalacOptions ++= {
   scalaBinaryVersion.value match {
     case "2.12" =>
-      Seq("-release:8")
+      Seq("-Xsource:3", "-release:8")
     case "3" =>
       Nil
   }
@@ -98,9 +100,9 @@ scriptedBufferLog := true
 scriptedSbt := {
   scalaBinaryVersion.value match {
     case "2.12" =>
-      "1.10.2"
+      "1.13.1"
     case _ =>
-      scriptedSbt.value
+      "2.1.0"
   }
 }
 
